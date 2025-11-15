@@ -1,0 +1,20 @@
+{
+  "short_name": "ExamRedi",
+  "name": "ExamRedi AI Study Platform",
+  "icons": [
+    {
+      "src": "https://assets.website-files.com/62e8f5c9dbfdcc62e8d28712/62e8f5c9dbfdccb465d28747_ExamRedi-Logo-512.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://assets.website-files.com/62e8f5c9dbfdcc62e8d28712/62e8f5c9dbfdccb465d28747_ExamRedi-Logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1E8449",
+  "background_color": "#f1f5f9"
+}
