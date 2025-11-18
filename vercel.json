@@ -1,13 +1,13 @@
 {
   "rewrites": [
     {
-      "src": "/api/(.*)",
-      "destination": "api/index.js"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "source": "/api/(.*)",
       "destination": "http://localhost:5000/api/$1"
     }
   ]
