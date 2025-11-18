@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 // Components
 import Header from './components/Header.tsx';
@@ -38,7 +38,7 @@ import ProtectedRoute from './components/ProtectedRoute.tsx';
 // --- Main Layout for the entire app ---
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-950 font-sans">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
@@ -54,71 +54,66 @@ const MainLayout: React.FC = () => {
   );
 };
 
-
 const App: React.FC = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
         <PwaInstallProvider>
 
-          {/* ✅ Hash Router enabled */}
-          <HashRouter>
+          <Routes>
 
-            <Routes>
+            {/* Main App Routes */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/flashcards" element={<Flashcards />} />
+              <Route path="/practice" element={<Quizzes />} />
+              <Route path="/ai-buddy" element={<ExamWithAI />} />
+              <Route path="/question-search" element={<QuestionSearch />} />
+              <Route path="/study-guides" element={<StudyGuides />} />
+              <Route path="/games" element={<EducationalGames />} />
+              <Route path="/games/memory-match" element={<MemoryMatchGame />} />
+              <Route path="/games/subject-sprint" element={<SubjectSprintGame />} />
+              <Route path="/performance" element={<Performance />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/career-institutions" element={<CareerInstitutions />} />
+              <Route path="/challenge" element={<UtmeChallenge />} />
+              <Route path="/literature" element={<ComingSoon title="UTME Literature Books" />} />
+              <Route path="/dictionary" element={<ComingSoon title="Dictionary" />} />
+            </Route>
 
-              {/* Main App Routes */}
-              <Route element={<MainLayout />}>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/flashcards" element={<Flashcards />} />
-                <Route path="/practice" element={<Quizzes />} />
-                <Route path="/ai-buddy" element={<ExamWithAI />} />
-                <Route path="/question-search" element={<QuestionSearch />} />
-                <Route path="/study-guides" element={<StudyGuides />} />
-                <Route path="/games" element={<EducationalGames />} />
-                <Route path="/games/memory-match" element={<MemoryMatchGame />} />
-                <Route path="/games/subject-sprint" element={<SubjectSprintGame />} />
-                <Route path="/performance" element={<Performance />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/career-institutions" element={<CareerInstitutions />} />
-                <Route path="/challenge" element={<UtmeChallenge />} />
-                <Route path="/literature" element={<ComingSoon title="UTME Literature Books" />} />
-                <Route path="/dictionary" element={<ComingSoon title="Dictionary" />} />
-              </Route>
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<ManageUsers />} />
+              <Route path="content" element={<ManageContent />} />
+            </Route>
 
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="users" element={<ManageUsers />} />
-                <Route path="content" element={<ManageContent />} />
-              </Route>
+            {/* Fullscreen route */}
+            <Route
+              path="/take-examination"
+              element={
+                <ProtectedRoute>
+                  <TakeExamination />
+                </ProtectedRoute>
+              }
+            />
 
-              {/* Fullscreen route */}
-              <Route
-                path="/take-examination"
-                element={
-                  <ProtectedRoute>
-                    <TakeExamination />
-                  </ProtectedRoute>
-                }
-              />
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
 
-            </Routes>
+          <PwaInstallBanner />
 
-            <PwaInstallBanner />
-
-          </HashRouter>
         </PwaInstallProvider>
       </AuthProvider>
     </ThemeProvider>
