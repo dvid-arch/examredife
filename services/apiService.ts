@@ -47,9 +47,11 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                     body: JSON.stringify({ token: refreshToken }),
                 });
 
+                console.log('Refresh token response status:', refreshResponse.status);
+
                 if (!refreshResponse.ok) {
                      // If refresh fails, logout
-                    console.error("Session expired. Please log in again.");
+                    console.error("Session expired. Please log in again. Refresh response:", refreshResponse.status, refreshResponse.statusText);
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('refreshToken');
                     localStorage.removeItem('examRediUser');

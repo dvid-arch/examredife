@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import OnboardingTour from '../components/OnboardingTour.tsx';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
@@ -52,6 +53,8 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
 
 const WelcomeBanner = () => {
     const { isAuthenticated, user } = useAuth();
+    const { canInstall, showInstallBanner } = usePwaInstall();
+    
     return (
         <div data-tour-id="welcome-banner" className="bg-primary text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
             <div className="absolute -right-8 -top-8 w-40 h-40 bg-green-600 rounded-full opacity-30"></div>

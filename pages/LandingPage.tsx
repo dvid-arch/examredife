@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { usePwaInstall } from '../contexts/PwaContext.tsx';
 
 const Logo = () => (
     <div className="flex items-center space-x-2">
@@ -14,17 +15,29 @@ const Logo = () => (
     </div>
 );
 
-const LandingHeader: React.FC = () => (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-20">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-            <Logo />
-            <div className="flex items-center gap-4">
-                <Link to="/login" className="font-semibold text-primary hover:underline">Login</Link>
-                <Link to="/register" className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors">Get Started</Link>
+const LandingHeader: React.FC = () => {
+    const { canInstall, showInstallBanner } = usePwaInstall();
+
+    return (
+        <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-20">
+            <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+                <Logo />
+                <div className="flex items-center gap-4">
+                    {canInstall && (
+                        <button
+                            onClick={showInstallBanner}
+                            className="font-semibold text-primary hover:underline"
+                        >
+                            Install App
+                        </button>
+                    )}
+                    <Link to="/login" className="font-semibold text-primary hover:underline">Login</Link>
+                    <Link to="/register" className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors">Get Started</Link>
+                </div>
             </div>
-        </div>
-    </header>
-);
+        </header>
+    );
+};
 
 const FeatureCard: React.FC<{ title: string; description: string; icon: React.ReactNode }> = ({ title, description, icon }) => (
     <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">

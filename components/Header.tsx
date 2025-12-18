@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { MenuIcon, NAV_ITEMS, AiCreditsIcon, ProfileIcon, LogoutIcon } from '../constants.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import ThemeToggle from './ThemeToggle.tsx';
 
 const Logo = () => (
@@ -35,6 +36,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const { isAuthenticated, user, requestLogin, requestUpgrade, isLoading, logout } = useAuth();
+    const { canInstall, showInstallBanner } = usePwaInstall();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 

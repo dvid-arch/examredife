@@ -72,6 +72,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const token = localStorage.getItem('authToken');
             const refreshToken = localStorage.getItem('refreshToken');
 
+            console.log('Initial auth check - tokens present:', !!token, !!refreshToken);
+
             if (token && refreshToken) {
                 await fetchUserProfile();
             }
@@ -81,6 +83,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         checkAuth();
     }, []);
 
+    // Listen for storage changes (e.g., logout from another tab)
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'authToken' || e.key === 'refreshToken' || e.key === 'examRediUser') {
+                console.log('Storage changed for key:', e.key, 'old value existed:', !!e.oldValue, 'new value exists:', !!e.newValue);
+                if (!e.newValue && e.oldValue) {
+                    // Token was removed
+                    console.log('Token was cleared, logging out');
+                    setIsAuthenticated(false);
+                    setUser(null);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
     // When the user returns to the tab or the window gains focus, try to refresh profile
     // This helps avoid being unexpectedly logged out after the access token expires while the tab was inactive.
     useEffect(() => {
@@ -88,9 +108,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (document.visibilityState === 'visible') {
                 const token = localStorage.getItem('authToken');
                 const refreshToken = localStorage.getItem('refreshToken');
+                console.log('Tab became visible/focused. Tokens present:', !!token, !!refreshToken);
                 if (token && refreshToken) {
                     // attempt to refresh profile (apiService will rotate tokens if needed)
-                    fetchUserProfile().catch(() => { /* ignore errors here — fetchUserProfile will handle logout */ });
+                    fetchUserProfile().catch((error) => { 
+                        console.error('Profile refresh failed on tab focus:', error);
+                        /* ignore errors here — fetchUserProfile will handle logout */ 
+                    });
                 }
             }
         };
