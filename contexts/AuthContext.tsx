@@ -128,15 +128,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, []);
 
-    const handleAuthSuccess = (data: any, navigatePath = '/dashboard') => {
+    const handleAuthSuccess = async (data: any, navigatePath = '/dashboard') => {
         const { accessToken, refreshToken, ...userData } = data;
         
-        setUser(userData);
-        setIsAuthenticated(true);
-        
-        localStorage.setItem('examRediUser', JSON.stringify(userData));
         localStorage.setItem('authToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
+        
+        // Verify the login by fetching the profile
+        const profile = await fetchUserProfile();
+        if (!profile) {
+            // Clear tokens since invalid
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            throw new Error('Invalid credentials');
+        }
         
         setIsAuthModalOpen(false);
         
@@ -154,7 +159,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 body: details,
                 useAuth: false,
             });
-            handleAuthSuccess(data);
+            await handleAuthSuccess(data);
         } catch (error: any) {
             // Clear any stale user data and tokens on failed login
             localStorage.removeItem('examRediUser');
@@ -184,7 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 body: details,
                 useAuth: false,
             });
-            handleAuthSuccess(data);
+            await handleAuthSuccess(data);
         } catch (error: any) {
             // Clear any stale user data and tokens on failed register
             localStorage.removeItem('examRediUser');
