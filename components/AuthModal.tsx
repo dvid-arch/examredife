@@ -61,9 +61,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={isSubmitting ? undefined : onClose}>
             <div className="max-w-md w-full" onClick={e => e.stopPropagation()}>
                 <Card className="p-8">
+                    <div className="flex justify-end mb-4">
+                        <button 
+                            onClick={onClose} 
+                            disabled={isSubmitting}
+                            className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            aria-label="Close modal"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                     <Logo />
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-1">
                         {isLoginView ? 'Welcome Back!' : 'Create Your Account'}
@@ -72,7 +84,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         {isLoginView ? 'Login to save your progress and track performance.' : 'Join to start your journey to exam success!'}
                     </p>
                     <form onSubmit={handleSubmit} className="space-y-4">
-                         {error && <p className="text-red-500 text-sm text-center bg-red-50 p-2 rounded-md">{error}</p>}
+                         {error && (
+                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                                <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">{error}</p>
+                            </div>
+                         )}
                         {!isLoginView && (
                             <div>
                                 <label htmlFor="name-modal" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>

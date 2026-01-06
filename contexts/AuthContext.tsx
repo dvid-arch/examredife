@@ -139,7 +139,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.setItem('refreshToken', refreshToken);
         
         setIsAuthModalOpen(false);
-        setIsLoading(false);
         
         if (userData.role === 'admin') {
             navigate('/admin/dashboard');
@@ -149,7 +148,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const login = async (details: AuthDetails) => {
-        setIsLoading(true);
         try {
             const data = await apiService('/auth/login', {
                 method: 'POST',
@@ -157,21 +155,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 useAuth: false,
             });
             handleAuthSuccess(data);
-        } catch (error) {
+        } catch (error: any) {
             // Clear any stale user data and tokens on failed login
             localStorage.removeItem('examRediUser');
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
             setUser(null);
             setIsAuthenticated(false);
-            // Optionally, show error to user (could use a toast/alert)
+            
+            // Provide user-friendly error messages
+            const errorMessage = error?.message || 'Login failed';
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                throw new Error('Invalid email or password. Please check your credentials and try again.');
+            } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                throw new Error('Network error. Please check your internet connection and try again.');
+            } else {
+                throw new Error(errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     const register = async (details: AuthDetails) => {
-        setIsLoading(true);
         try {
             const data = await apiService('/auth/register', {
                 method: 'POST',
@@ -179,14 +185,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 useAuth: false,
             });
             handleAuthSuccess(data);
-        } catch (error) {
+        } catch (error: any) {
             // Clear any stale user data and tokens on failed register
             localStorage.removeItem('examRediUser');
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
             setUser(null);
             setIsAuthenticated(false);
-            // Optionally, show error to user (could use a toast/alert)
+            
+            // Provide user-friendly error messages
+            const errorMessage = error?.message || 'Registration failed';
+            if (errorMessage.includes('409') || errorMessage.includes('already exists')) {
+                throw new Error('An account with this email already exists. Please try logging in instead.');
+            } else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+                throw new Error('Please check your information and try again.');
+            } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                throw new Error('Network error. Please check your internet connection and try again.');
+            } else {
+                throw new Error(errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }
