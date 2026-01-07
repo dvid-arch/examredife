@@ -101,6 +101,9 @@ const Quizzes: React.FC = () => {
             alert('Please select exactly 4 subjects (including the compulsory English subject).');
             return;
         }
+        // Clear any previous session flags before starting new practice
+        sessionStorage.removeItem('practiceExited');
+        sessionStorage.removeItem('practiceCompleted');
         navigate('/take-examination', {
             state: {
                 subjects: selectedSubjects,
@@ -109,6 +112,8 @@ const Quizzes: React.FC = () => {
                 timestamp: Date.now(),
             },
         });
+        // Mark that practice was properly started
+        sessionStorage.setItem('practiceStarted', 'true');
     };
 
     const handleStartCustomPractice = (e: React.FormEvent) => {
@@ -120,6 +125,9 @@ const Quizzes: React.FC = () => {
             return;
         }
         
+        // Clear any previous session flags before starting new practice
+        sessionStorage.removeItem('practiceExited');
+        sessionStorage.removeItem('practiceCompleted');
         navigate('/take-examination', {
             state: {
                 selections: selectionsArray,
@@ -128,6 +136,8 @@ const Quizzes: React.FC = () => {
                 timestamp: Date.now(),
             },
         });
+        // Mark that practice was properly started
+        sessionStorage.setItem('practiceStarted', 'true');
     };
 
 

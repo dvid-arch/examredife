@@ -94,6 +94,13 @@ const TakeExamination: React.FC = () => {
     useEffect(() => {
         if (!validatePracticeState(location.state)) {
             navigate('/practice', { replace: true });
+        } else if (sessionStorage.getItem('practiceExited') === 'true') {
+            // User previously exited this session, prevent re-entry
+            sessionStorage.removeItem('practiceExited');
+            navigate('/practice', { replace: true });
+        } else if (sessionStorage.getItem('practiceStarted') !== 'true') {
+            // Practice was not started through proper flow
+            navigate('/practice', { replace: true });
         }
     }, [location.state, navigate]);
 
@@ -124,6 +131,7 @@ const TakeExamination: React.FC = () => {
         setFinalScore(score);
         setIsFinished(true);
         sessionStorage.setItem('practiceCompleted', 'true');
+        sessionStorage.removeItem('practiceStarted');
 
         if (isAuthenticated && user) {
             if (user.subscription === 'free') {
@@ -596,6 +604,8 @@ const TakeExamination: React.FC = () => {
                             <button
                                 onClick={() => {
                                     setShowExitConfirm(false);
+                                    sessionStorage.setItem('practiceExited', 'true');
+                                    sessionStorage.removeItem('practiceStarted');
                                     navigate('/practice', { replace: true });
                                 }}
                                 className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
