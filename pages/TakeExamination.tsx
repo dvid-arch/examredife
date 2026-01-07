@@ -54,20 +54,6 @@ const TakeExamination: React.FC = () => {
     const { isAuthenticated, user, requestLogin } = useAuth();
     const { showInstallBanner } = usePwaInstall();
     
-    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
-    const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
-    const [activeSubject, setActiveSubject] = useState<string>('');
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [userAnswers, setUserAnswers] = useState<{[key: string]: string}>({});
-    const [timeLeft, setTimeLeft] = useState(0);
-    const [isFinished, setIsFinished] = useState(false);
-    const [finalScore, setFinalScore] = useState(0);
-    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
-
-    const examTitle = location.state?.examTitle;
-
     // Validate that the route was accessed properly with required state
     const validatePracticeState = (state: any) => {
         if (!state) return false;
@@ -89,20 +75,34 @@ const TakeExamination: React.FC = () => {
 
         return false;
     };
-
-    // Redirect if accessed without proper state
+    
+    // IMMEDIATE REDIRECT: Block any access not from proper practice start
     useEffect(() => {
-        if (!validatePracticeState(location.state)) {
+        const isValidAccess = 
+            sessionStorage.getItem('practiceStarted') === 'true' &&
+            validatePracticeState(location.state) &&
+            sessionStorage.getItem('practiceExited') !== 'true' &&
+            sessionStorage.getItem('practiceCompleted') !== 'true';
+
+        if (!isValidAccess) {
             navigate('/practice', { replace: true });
-        } else if (sessionStorage.getItem('practiceExited') === 'true') {
-            // User previously exited this session, prevent re-entry
-            sessionStorage.removeItem('practiceExited');
-            navigate('/practice', { replace: true });
-        } else if (sessionStorage.getItem('practiceStarted') !== 'true') {
-            // Practice was not started through proper flow
-            navigate('/practice', { replace: true });
+            return;
         }
-    }, [location.state, navigate]);
+    }, []); // Run only once on mount
+    
+    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
+    const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
+    const [activeSubject, setActiveSubject] = useState<string>('');
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [userAnswers, setUserAnswers] = useState<{[key: string]: string}>({});
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [isFinished, setIsFinished] = useState(false);
+    const [finalScore, setFinalScore] = useState(0);
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+    const examTitle = location.state?.examTitle;
 
     // Check if practice was already completed
     useEffect(() => {
@@ -238,28 +238,75 @@ const TakeExamination: React.FC = () => {
 
     useEffect(() => {
         if (!isFinished && questions.length > 0) {
+            // Prevent browser back/forward navigation during exam
+            const handlePopState = (event: PopStateEvent) => {
+                // Always prevent navigation and show confirmation
+                event.preventDefault();
+                setShowExitConfirm(true);
+                // Force stay on current page
+                window.history.pushState(null, '', window.location.pathname);
+            };
+
+            // Block all navigation attempts
             const handleBeforeUnload = (event: BeforeUnloadEvent) => {
                 event.preventDefault();
                 event.returnValue = 'Are you sure you want to leave this practice session? Your progress will be lost.';
                 return event.returnValue;
             };
 
+            // Add listeners
+            window.addEventListener('popstate', handlePopState);
             window.addEventListener('beforeunload', handleBeforeUnload);
-            return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-        }
-    }, [isFinished, questions.length]);
 
-    useEffect(() => {
-        if (!isFinished && questions.length > 0) {
-            const handlePopState = (event: PopStateEvent) => {
-                event.preventDefault();
-                setShowExitConfirm(true);
-                // Push state back to stay on practice
-                window.history.pushState(null, '', window.location.pathname);
+            // Override history methods to prevent programmatic navigation
+            const originalPushState = history.pushState;
+            const originalReplaceState = history.replaceState;
+            const originalBack = history.back;
+            const originalForward = history.forward;
+            const originalGo = history.go;
+
+            history.pushState = function(state, title, url) {
+                // Allow internal navigation but show warning
+                if (url && url !== window.location.pathname) {
+                    setShowExitConfirm(true);
+                    return;
+                }
+                return originalPushState.apply(this, arguments as any);
             };
 
-            window.addEventListener('popstate', handlePopState);
-            return () => window.removeEventListener('popstate', handlePopState);
+            history.replaceState = function(state, title, url) {
+                // Allow internal navigation but show warning for external
+                if (url && url !== window.location.pathname) {
+                    setShowExitConfirm(true);
+                    return;
+                }
+                return originalReplaceState.apply(this, arguments as any);
+            };
+
+            history.back = function() {
+                setShowExitConfirm(true);
+            };
+
+            history.forward = function() {
+                setShowExitConfirm(true);
+            };
+
+            history.go = function(delta) {
+                if (delta !== 0) {
+                    setShowExitConfirm(true);
+                }
+            };
+
+            return () => {
+                window.removeEventListener('popstate', handlePopState);
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+                // Restore original methods
+                history.pushState = originalPushState;
+                history.replaceState = originalReplaceState;
+                history.back = originalBack;
+                history.forward = originalForward;
+                history.go = originalGo;
+            };
         }
     }, [isFinished, questions.length]);
     
