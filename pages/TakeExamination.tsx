@@ -62,10 +62,16 @@ const TakeExamination: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
     const [finalScore, setFinalScore] = useState(0);
-    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     const examTitle = location.state?.examTitle;
+
+    // Check if practice was already completed
+    useEffect(() => {
+        if (sessionStorage.getItem('practiceCompleted') === 'true' && !isFinished) {
+            navigate('/practice', { replace: true });
+        }
+    }, [navigate, isFinished]);
 
     const subjects = useMemo(() => {
         if (!questions.length) return [];
@@ -86,6 +92,7 @@ const TakeExamination: React.FC = () => {
         });
         setFinalScore(score);
         setIsFinished(true);
+        sessionStorage.setItem('practiceCompleted', 'true');
 
         if (isAuthenticated && user) {
             if (user.subscription === 'free') {
@@ -153,6 +160,8 @@ const TakeExamination: React.FC = () => {
                 setQuestions(preparedQuestions);
                 setActiveSubject(preparedQuestions[0].subject);
                 setTimeLeft(preparedQuestions.length * 60);
+                // Clear completed flag when starting new practice
+                sessionStorage.removeItem('practiceCompleted');
             }
             setIsLoading(false);
         };
@@ -183,10 +192,10 @@ const TakeExamination: React.FC = () => {
 
     useEffect(() => {
         if (isFinished) {
-            // Replace current history entry and navigate away to prevent back/forward navigation
-            navigate('/practice', { replace: true });
+            // Session completed, user can view results and navigate manually
+            // Navigation protection prevents re-access via sessionStorage
         }
-    }, [isFinished, navigate]);
+    }, [isFinished]);
 
     useEffect(() => {
         if (!isFinished && questions.length > 0) {
@@ -204,19 +213,16 @@ const TakeExamination: React.FC = () => {
     useEffect(() => {
         if (!isFinished && questions.length > 0) {
             const handlePopState = (event: PopStateEvent) => {
-                if (window.confirm('Are you sure you want to leave this practice session? Your progress will be lost.')) {
-                    // User confirmed leaving, navigate away
-                    navigate('/practice', { replace: true });
-                } else {
-                    // User cancelled, push state back to stay on practice
-                    window.history.pushState(null, '', window.location.pathname);
-                }
+                event.preventDefault();
+                setShowExitConfirm(true);
+                // Push state back to stay on practice
+                window.history.pushState(null, '', window.location.pathname);
             };
 
             window.addEventListener('popstate', handlePopState);
             return () => window.removeEventListener('popstate', handlePopState);
         }
-    }, [isFinished, questions.length, navigate]);
+    }, [isFinished, questions.length]);
     
     const subjectBoundaries = useMemo(() => {
         const boundaries: Record<string, { start: number, end: number }> = {};
@@ -377,10 +383,10 @@ const TakeExamination: React.FC = () => {
                     <p className="text-slate-600 mt-2">Here is your score:</p>
                     <p className="text-7xl font-extrabold text-primary my-6">{finalScore} <span className="text-5xl text-slate-500">/ {totalQuestionsForSession}</span></p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                         <Link to="/practice" className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light transition-colors">
+                         <Link to="/practice" replace className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light transition-colors">
                             New Practice
                         </Link>
-                         <Link to="/performance" className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
+                         <Link to="/performance" replace className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
                             View Performance
                         </Link>
                     </div>
@@ -557,6 +563,32 @@ const TakeExamination: React.FC = () => {
                     </div>
                 </footer>
             </div>
+
+            {showExitConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <h2 className="text-xl font-bold text-slate-800 mb-4">Exit Practice Session?</h2>
+                        <p className="text-slate-600 mb-6">Are you sure you want to leave this practice session? Your progress will be lost.</p>
+                        <div className="flex justify-end gap-4">
+                            <button
+                                onClick={() => setShowExitConfirm(false)}
+                                className="px-4 py-2 text-slate-600 hover:text-slate-800 font-semibold"
+                            >
+                                Stay
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowExitConfirm(false);
+                                    navigate('/practice', { replace: true });
+                                }}
+                                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
+                            >
+                                Leave
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
