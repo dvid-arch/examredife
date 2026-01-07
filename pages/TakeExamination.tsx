@@ -182,10 +182,28 @@ const TakeExamination: React.FC = () => {
     }, [questions, isFinished, handleSubmit]);
 
     useEffect(() => {
-        if (isAuthenticated) {
-            setShowLoginPrompt(false); // Close prompt on successful login
+        if (isFinished) {
+            // Replace current history entry to prevent back navigation to the practice
+            window.history.replaceState(null, '', window.location.pathname);
         }
-    }, [isAuthenticated]);
+    }, [isFinished]);
+
+    useEffect(() => {
+        if (!isFinished && questions.length > 0) {
+            const handlePopState = (event: PopStateEvent) => {
+                const confirmLeave = window.confirm(
+                    'Are you sure you want to leave this practice session? Your progress will be lost.'
+                );
+                if (!confirmLeave) {
+                    // Push the current state back to prevent navigation
+                    window.history.pushState(null, '', window.location.pathname);
+                }
+            };
+
+            window.addEventListener('popstate', handlePopState);
+            return () => window.removeEventListener('popstate', handlePopState);
+        }
+    }, [isFinished, questions.length]);
     
     const subjectBoundaries = useMemo(() => {
         const boundaries: Record<string, { start: number, end: number }> = {};
@@ -367,7 +385,7 @@ const TakeExamination: React.FC = () => {
     }
 
     return (
-        <div className="relative flex flex-col h-screen bg-white font-sans">
+        <div className="relative flex flex-col h-screen bg-white font-sans light">
             <header className="bg-primary text-white p-3 flex justify-between items-center shadow-md flex-shrink-0">
                 <div className="font-bold text-xl">{examTitle || 'ExamRedi Practice'}</div>
                 <div className="bg-orange-500 text-white font-bold text-lg tracking-wider px-4 py-1 rounded-full w-32 text-center">
@@ -420,6 +438,7 @@ const TakeExamination: React.FC = () => {
                                     <QuestionRenderer 
                                         question={currentQuestion}
                                         className="text-lg text-slate-800 mb-4 min-h-[40px]"
+                                        forceLightMode={true}
                                     />
                                     <div className="space-y-4">
                                         {Object.keys(currentQuestion.options).map((key) => {
@@ -437,7 +456,7 @@ const TakeExamination: React.FC = () => {
                                                 <div className="flex-1">
                                                     <div className="flex items-start gap-2">
                                                         <span className="font-bold text-slate-800">{key}.</span>
-                                                        <div className="text-slate-700"><MarkdownRenderer content={value.text} /></div>
+                                                        <div className="text-slate-700"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
                                                     </div>
                                                     {value.diagram && (
                                                         <div className="mt-3">

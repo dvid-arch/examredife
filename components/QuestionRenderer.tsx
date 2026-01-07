@@ -7,9 +7,10 @@ interface QuestionRendererProps {
   questionContent?: string;
   className?: string;
   imageClassName?: string;
+  forceLightMode?: boolean;
 }
 
-const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionContent, className = '', imageClassName = '' }) => {
+const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionContent, className = '', imageClassName = '', forceLightMode = false }) => {
   const content = questionContent || question.question;
   const hasPlaceholder = content.includes('[IMAGE]');
   const hasDiagram = !!question.questionDiagram;
@@ -20,7 +21,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
       <div className={className}>
         {parts.map((part, index) => (
           <React.Fragment key={index}>
-            <MarkdownRenderer content={part} />
+            <MarkdownRenderer content={part} forceLightMode={forceLightMode} />
             {index < parts.length - 1 && (
               <div className="my-4 flex justify-center">
                 <img src={question.questionDiagram} alt="Question diagram" className={`max-w-full h-auto rounded-lg border bg-white shadow-sm dark:border-slate-600 ${imageClassName}`} />
@@ -35,7 +36,7 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
   // Fallback to original behavior
   return (
     <div className={className}>
-      <MarkdownRenderer content={content} />
+      <MarkdownRenderer content={content} forceLightMode={forceLightMode} />
       {hasDiagram && (
          <div className="my-4 flex justify-center">
             <img src={question.questionDiagram} alt="Question diagram" className={`max-w-full h-auto rounded-lg border bg-white shadow-sm dark:border-slate-600 ${imageClassName}`} />
