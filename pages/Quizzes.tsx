@@ -106,6 +106,7 @@ const Quizzes: React.FC = () => {
                 subjects: selectedSubjects,
                 year: standardSelectedYear,
                 examTitle: `UTME Practice (${standardSelectedYear})`,
+                timestamp: Date.now(),
             },
         });
     };
@@ -124,6 +125,7 @@ const Quizzes: React.FC = () => {
                 selections: selectionsArray,
                 questionsPerSubject: customQuestionCount,
                 examTitle: `Custom Practice`,
+                timestamp: Date.now(),
             },
         });
     };

@@ -68,6 +68,35 @@ const TakeExamination: React.FC = () => {
 
     const examTitle = location.state?.examTitle;
 
+    // Validate that the route was accessed properly with required state
+    const validatePracticeState = (state: any) => {
+        if (!state) return false;
+
+        // Check if state is too old (more than 5 minutes)
+        const now = Date.now();
+        const stateTimestamp = state.timestamp || 0;
+        if (now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
+
+        // Check for standard mode state
+        if (state.subjects && Array.isArray(state.subjects) && state.subjects.length > 0) {
+            return typeof state.year !== 'undefined' && typeof state.examTitle === 'string';
+        }
+
+        // Check for custom mode state
+        if (state.selections && Array.isArray(state.selections) && state.selections.length > 0) {
+            return typeof state.questionsPerSubject === 'number' && typeof state.examTitle === 'string';
+        }
+
+        return false;
+    };
+
+    // Redirect if accessed without proper state
+    useEffect(() => {
+        if (!validatePracticeState(location.state)) {
+            navigate('/practice', { replace: true });
+        }
+    }, [location.state, navigate]);
+
     // Check if practice was already completed
     useEffect(() => {
         if (sessionStorage.getItem('practiceCompleted') === 'true' && !isFinished) {
@@ -345,20 +374,6 @@ const TakeExamination: React.FC = () => {
         setShowLoginPrompt(false); // Prevent re-triggering
     }
 
-    if (!location.state) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center bg-white p-12 rounded-lg shadow-md">
-                    <h1 className="text-2xl font-bold text-slate-700">No Practice Session Found</h1>
-                    <p className="text-slate-500 mt-2">Please start a new session from the practice page.</p>
-                    <Link to="/practice" className="mt-6 inline-block bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
-                        Go to Practice
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-    
     if (isLoading) {
          return <div className="flex items-center justify-center h-full">Preparing your questions...</div>;
     }
