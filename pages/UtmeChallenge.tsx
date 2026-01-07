@@ -4,7 +4,7 @@ import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import apiService from '../services/apiService.ts';
+import { pastPapersData } from '../data/pastQuestions.ts';
 
 
 // --- ICONS ---
@@ -64,7 +64,7 @@ const UtmeChallenge: React.FC = () => {
             try {
                 const [leaderboardData, papersData] = await Promise.all([
                     apiService<LeaderboardScore[]>('/data/leaderboard'),
-                    apiService<PastPaper[]>('/data/papers')
+                    Promise.resolve(pastPapersData)
                 ]);
                 setLeaderboard(leaderboardData);
                 setAllPapers(papersData);

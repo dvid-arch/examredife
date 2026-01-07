@@ -5,7 +5,7 @@ import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
-import apiService from '../services/apiService.ts';
+import { pastPapersData } from '../data/pastQuestions.ts';
 
 
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
@@ -76,21 +76,31 @@ const TakeExamination: React.FC = () => {
         return false;
     };
     
-    // IMMEDIATE REDIRECT: Block any access not from proper practice start
+    // BLOCK ACCESS: Check immediately and redirect if invalid
+    const isValidAccess = 
+        sessionStorage.getItem('practiceStarted') === 'true' &&
+        validatePracticeState(location.state) &&
+        sessionStorage.getItem('practiceExited') !== 'true' &&
+        sessionStorage.getItem('practiceCompleted') !== 'true';
+    
+    // If invalid access, redirect immediately without rendering anything
+    if (!isValidAccess) {
+        navigate('/practice', { replace: true });
+        return null; // Don't render anything
+    }
+    
+    // Monitor for invalid access during navigation (back/forward)
     useEffect(() => {
-        const isValidAccess = 
+        const currentIsValid = 
             sessionStorage.getItem('practiceStarted') === 'true' &&
             validatePracticeState(location.state) &&
             sessionStorage.getItem('practiceExited') !== 'true' &&
             sessionStorage.getItem('practiceCompleted') !== 'true';
-
-        if (!isValidAccess) {
+        
+        if (!currentIsValid) {
             navigate('/practice', { replace: true });
-            return;
         }
-    }, [location.state, navigate]); // Depend on location.state
-    
-    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
+    }, [location.state, navigate]);
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [activeSubject, setActiveSubject] = useState<string>('');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -171,7 +181,7 @@ const TakeExamination: React.FC = () => {
                  preparedQuestions = customQuestions;
             } else {
                 try {
-                    const papers: PastPaper[] = await apiService('/data/papers');
+                    const papers: PastPaper[] = pastPapersData;
                     setAllPapers(papers);
 
                     const numQuestions = questionsPerSubject || 10;
@@ -190,7 +200,7 @@ const TakeExamination: React.FC = () => {
                         preparedQuestions = preparePracticeQuestions(papers, practiceSelections, numQuestions);
                     }
                 } catch (error) {
-                    console.error("Failed to fetch papers for exam:", error);
+                    console.error("Failed to prepare questions:", error);
                 }
             }
 

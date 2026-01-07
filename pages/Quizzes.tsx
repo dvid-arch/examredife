@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
-import apiService from '../services/apiService.ts';
+import { pastPapersData } from '../data/pastQuestions.ts';
 
 
 const Quizzes: React.FC = () => {
@@ -14,8 +14,8 @@ const Quizzes: React.FC = () => {
     useEffect(() => {
         const fetchPapers = async () => {
             try {
-                const data: PastPaper[] = await apiService('/data/papers');
-                setAllPapers(data);
+                // Use imported data instead of API call
+                setAllPapers(pastPapersData);
             } catch (error) {
                 console.error(error);
             } finally {

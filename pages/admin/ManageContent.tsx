@@ -3,7 +3,8 @@ import Card from '../../components/Card.tsx';
 import QuestionRenderer from '../../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import { PastPaper, StudyGuide, PastQuestion } from '../../types.ts';
-import apiService from '../../services/apiService.ts';
+import { pastPapersData } from '../../data/pastQuestions.ts';
+import { allStudyGuides } from '../../data/studyGuides.ts';
 
 
 type ContentType = 'papers' | 'guides';
@@ -396,12 +397,9 @@ const ManageContent: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [papersData, guidesData] = await Promise.all([
-                    apiService<PastPaper[]>('/data/papers'),
-                    apiService<StudyGuide[]>('/data/guides'),
-                ]);
-                setPapers(papersData);
-                setGuides(guidesData);
+                // Use imported data instead of API calls
+                setPapers(pastPapersData);
+                setGuides(allStudyGuides);
             } catch (error) {
                 console.error("Failed to fetch content", error);
             } finally {

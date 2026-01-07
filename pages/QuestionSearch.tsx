@@ -5,7 +5,7 @@ import { PastQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import apiService from '../services/apiService.ts';
+import { pastPapersData } from '../data/pastQuestions.ts';
 
 
 interface SearchResult extends PastQuestion {
@@ -42,8 +42,8 @@ const QuestionSearch: React.FC = () => {
     useEffect(() => {
         const fetchPapers = async () => {
             try {
-                const data: PastPaper[] = await apiService('/data/papers');
-                setAllPapers(data);
+                // Use imported data instead of API call
+                setAllPapers(pastPapersData);
             } catch (error) {
                 console.error("Failed to fetch past papers:", error);
             } finally {
