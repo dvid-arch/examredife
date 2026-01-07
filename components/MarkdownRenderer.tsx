@@ -22,10 +22,11 @@ const MarkdownRenderer: React.FC<{ content: string; forceLightMode?: boolean }> 
         th: ({node, ...props}) => <th className={`border-b border-slate-200 ${forceLightMode ? '' : 'dark:border-slate-700'} p-3 text-left font-semibold`} {...props} />,
         tr: ({node, ...props}) => <tr className={`border-b border-slate-200 ${forceLightMode ? '' : 'dark:border-slate-700'} last:border-b-0 even:bg-slate-50 ${forceLightMode ? '' : 'dark:even:bg-slate-800/20'}`} {...props} />,
         td: ({node, ...props}) => <td className="p-3 align-top break-words" {...props} />,
-        code({node, inline, className, children, ...props}) {
-            return !inline ? (
-                <pre className="block bg-gray-800 text-white p-4 rounded-lg my-4 overflow-x-auto text-sm" {...props}>
-                    <code>{children}</code>
+        code({node, className, children, ...props}: any) {
+            const isInline = !props.parent || props.parent.tagName !== 'pre';
+            return !isInline ? (
+                <pre className="block bg-gray-800 text-white p-4 rounded-lg my-4 overflow-x-auto text-sm">
+                    <code className={className} {...props}>{children}</code>
                 </pre>
             ) : (
                 <code className={`bg-gray-200 ${forceLightMode ? '' : 'dark:bg-slate-700'} text-emerald-700 ${forceLightMode ? '' : 'dark:text-emerald-300'} font-mono px-1.5 py-1 rounded text-sm`} {...props}>

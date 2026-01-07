@@ -62,6 +62,8 @@ const TakeExamination: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
     const [finalScore, setFinalScore] = useState(0);
+    const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     const examTitle = location.state?.examTitle;
