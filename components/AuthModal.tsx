@@ -119,7 +119,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                             <input
                                 {...registerField("password", { 
                                     required: "Password is required", 
-                                    minLength: { value: 6, message: "Password must be at least 6 characters" } 
+                                    minLength: isLoginView ? undefined : { value: 6, message: "Password must be at least 6 characters" } 
                                 })}
                                 id="password-modal" type="password"
                                 placeholder="••••••••"
