@@ -49,30 +49,30 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, request })
                         <div className="inline-block p-3 bg-primary-light rounded-full mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
                         </div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-slate-800">{currentRequest.title}</h1>
-                        <p className="text-slate-600 mt-2">{currentRequest.message}</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-200">{currentRequest.title}</h1>
+                        <p className="text-slate-600 dark:text-slate-300 mt-2">{currentRequest.message}</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
                         <ul className="space-y-3">
                             {currentRequest.featureList.slice(0, Math.ceil(currentRequest.featureList.length / 2)).map((feature, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <CheckIcon /> <span className="text-slate-700">{feature}</span>
+                                    <CheckIcon /> <span className="text-slate-700 dark:text-slate-300">{feature}</span>
                                 </li>
                             ))}
                         </ul>
                          <ul className="space-y-3">
                             {currentRequest.featureList.slice(Math.ceil(currentRequest.featureList.length / 2)).map((feature, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <CheckIcon /> <span className="text-slate-700">{feature}</span>
+                                    <CheckIcon /> <span className="text-slate-700 dark:text-slate-300">{feature}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
                     
-                    <div className="bg-slate-50 p-2 rounded-lg flex max-w-sm mx-auto border">
-                        <button onClick={() => setBillingCycle('monthly')} className={`flex-1 p-2 rounded text-sm font-semibold ${billingCycle === 'monthly' ? 'bg-white shadow' : 'text-slate-600'}`}>Monthly</button>
-                        <button onClick={() => setBillingCycle('yearly')} className={`flex-1 p-2 rounded text-sm font-semibold relative ${billingCycle === 'yearly' ? 'bg-white shadow' : 'text-slate-600'}`}>
+                    <div className="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg flex max-w-sm mx-auto border">
+                        <button onClick={() => setBillingCycle('monthly')} className={`flex-1 p-2 rounded text-sm font-semibold ${billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 shadow' : 'text-slate-600 dark:text-slate-400'}`}>Monthly</button>
+                        <button onClick={() => setBillingCycle('yearly')} className={`flex-1 p-2 rounded text-sm font-semibold relative ${billingCycle === 'yearly' ? 'bg-white dark:bg-slate-700 shadow' : 'text-slate-600 dark:text-slate-400'}`}>
                             Yearly
                             <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full">Save 20%</span>
                         </button>
@@ -82,7 +82,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, request })
                         <button onClick={upgradeToPro} className="w-full bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-accent transition-colors text-lg">
                             {billingCycle === 'yearly' ? 'Upgrade Now (₦10,000/year)' : 'Upgrade Now (₦1,000/month)'}
                         </button>
-                        <p className="text-center text-xs text-slate-500 mt-2">This is a simulation. No payment will be processed.</p>
+                        <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-2">This is a simulation. No payment will be processed.</p>
                     </div>
 
                 </Card>

@@ -28,15 +28,15 @@ const GuideModal: React.FC<{ guide: StudyGuide, onClose: () => void }> = ({ guid
             onClick={onClose}
         >
             <div 
-                className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col"
+                className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
-                <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white rounded-t-2xl">
+                <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 rounded-t-2xl">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800">{guide.title}</h2>
-                        <p className="text-sm text-slate-500">{guide.subject}</p>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">{guide.title}</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{guide.subject}</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-500 hover:text-slate-800">
+                    <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
