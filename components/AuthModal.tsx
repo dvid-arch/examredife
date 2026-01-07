@@ -60,12 +60,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={isSubmitting ? undefined : onClose}>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={(e) => { if (!isSubmitting) onClose(); }}>
             <div className="max-w-md w-full" onClick={e => e.stopPropagation()}>
                 <Card className="p-8">
                     <div className="flex justify-end mb-4">
                         <button 
-                            onClick={onClose} 
+                            onClick={() => { if (!isSubmitting) onClose(); }}
                             disabled={isSubmitting}
                             className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
                             aria-label="Close modal"

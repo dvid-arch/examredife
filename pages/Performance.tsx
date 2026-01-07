@@ -91,8 +91,28 @@ const Performance: React.FC = () => {
     }
 
     if (!isAuthenticated) {
-        requestLogin();
-        return <div className="flex justify-center items-center h-full"><Card><p className="p-8">Please log in to view your performance.</p></Card></div>;
+        return (
+            <Card className="text-center p-8 flex flex-col items-center justify-center h-full max-w-md mx-auto">
+                <div className="mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-primary mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">Track Your Progress</h2>
+                    <p className="text-slate-600 dark:text-slate-300 mb-4">
+                        Sign in to view your performance analytics, track your scores, and identify areas for improvement.
+                    </p>
+                </div>
+                <button 
+                    onClick={requestLogin}
+                    className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors mb-4"
+                >
+                    Sign In to View Performance
+                </button>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Don't have an account? <button onClick={requestLogin} className="text-primary hover:underline">Create one</button>
+                </p>
+            </Card>
+        );
     }
 
     if (user?.subscription === 'free') {
