@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import Card from './Card.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 
@@ -29,21 +30,19 @@ const Logo = () => (
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const { login, register } = useAuth();
     const [isLoginView, setIsLoginView] = useState(true);
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const { register: registerField, handleSubmit, formState: { errors }, reset } = useForm<AuthDetails>();
+
+    const onSubmit = async (data: AuthDetails) => {
         setError(null);
         setIsSubmitting(true);
         try {
             if (isLoginView) {
-                await login({ email, password });
+                await login(data);
             } else {
-                await register({ name, email, password });
+                await register(data);
             }
         } catch (err) {
             setError((err as Error).message);
@@ -55,7 +54,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const switchView = () => {
         setIsLoginView(!isLoginView);
         setError(null);
-        setPassword('');
+        reset();
     }
 
     if (!isOpen) return null;
@@ -76,14 +75,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                             </svg>
                         </button>
                     </div>
-                    <Logo />
+                    {/* <Logo /> */}
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-1">
                         {isLoginView ? 'Welcome Back!' : 'Create Your Account'}
                     </h1>
                     <p className="text-slate-600 dark:text-slate-300 text-center mb-6">
                         {isLoginView ? 'Login to save your progress and track performance.' : 'Join to start your journey to exam success!'}
                     </p>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                          {error && (
                             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
                                 <p className="text-red-600 dark:text-red-400 text-sm text-center font-medium">{error}</p>
@@ -93,28 +92,40 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                             <div>
                                 <label htmlFor="name-modal" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                                 <input
-                                    id="name-modal" type="text" value={name} onChange={(e) => setName(e.target.value)}
+                                    {...registerField("name", { required: "Full name is required" })}
+                                    id="name-modal" type="text"
                                     placeholder="John Doe"
-                                    className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required
+                                    className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
+                                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
                             </div>
                         )}
                         <div>
                             <label htmlFor="email-modal" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                             <input
-                                id="email-modal" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                                {...registerField("email", { 
+                                    required: "Email is required", 
+                                    pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } 
+                                })}
+                                id="email-modal" type="email"
                                 placeholder="you@example.com"
-                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                             />
+                            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                              {isLoginView && <p className="text-xs text-slate-500 mt-1 text-center">Hint: Use 'pro@examredi.com' and any password for the Pro account.</p>}
                         </div>
                         <div>
                             <label htmlFor="password-modal" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
                             <input
-                                id="password-modal" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                                {...registerField("password", { 
+                                    required: "Password is required", 
+                                    minLength: { value: 6, message: "Password must be at least 6 characters" } 
+                                })}
+                                id="password-modal" type="password"
                                 placeholder="••••••••"
-                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary" required
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                             />
+                            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                         </div>
                         <button type="submit" className="w-full bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-accent transition-colors disabled:bg-gray-400" disabled={isSubmitting}>
                             {isSubmitting ? 'Processing...' : (isLoginView ? 'Login' : 'Create Account')}
