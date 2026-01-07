@@ -183,19 +183,32 @@ const TakeExamination: React.FC = () => {
 
     useEffect(() => {
         if (isFinished) {
-            // Replace current history entry to prevent back navigation to the practice
-            window.history.replaceState(null, '', window.location.pathname);
+            // Replace current history entry and navigate away to prevent back/forward navigation
+            navigate('/practice', { replace: true });
         }
-    }, [isFinished]);
+    }, [isFinished, navigate]);
+
+    useEffect(() => {
+        if (!isFinished && questions.length > 0) {
+            const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+                event.preventDefault();
+                event.returnValue = 'Are you sure you want to leave this practice session? Your progress will be lost.';
+                return event.returnValue;
+            };
+
+            window.addEventListener('beforeunload', handleBeforeUnload);
+            return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
+    }, [isFinished, questions.length]);
 
     useEffect(() => {
         if (!isFinished && questions.length > 0) {
             const handlePopState = (event: PopStateEvent) => {
-                const confirmLeave = window.confirm(
-                    'Are you sure you want to leave this practice session? Your progress will be lost.'
-                );
-                if (!confirmLeave) {
-                    // Push the current state back to prevent navigation
+                if (window.confirm('Are you sure you want to leave this practice session? Your progress will be lost.')) {
+                    // User confirmed leaving, navigate away
+                    navigate('/practice', { replace: true });
+                } else {
+                    // User cancelled, push state back to stay on practice
                     window.history.pushState(null, '', window.location.pathname);
                 }
             };
@@ -203,7 +216,7 @@ const TakeExamination: React.FC = () => {
             window.addEventListener('popstate', handlePopState);
             return () => window.removeEventListener('popstate', handlePopState);
         }
-    }, [isFinished, questions.length]);
+    }, [isFinished, questions.length, navigate]);
     
     const subjectBoundaries = useMemo(() => {
         const boundaries: Record<string, { start: number, end: number }> = {};
