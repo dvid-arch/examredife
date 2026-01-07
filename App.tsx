@@ -100,11 +100,7 @@ const App: React.FC = () => {
             {/* Fullscreen route */}
             <Route
               path="/take-examination"
-              element={
-                <ProtectedRoute>
-                  <TakeExamination />
-                </ProtectedRoute>
-              }
+              element={<TakeExamination />}
             />
 
             {/* Fallback */}
