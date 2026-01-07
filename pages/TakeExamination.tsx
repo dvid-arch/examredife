@@ -88,7 +88,7 @@ const TakeExamination: React.FC = () => {
             navigate('/practice', { replace: true });
             return;
         }
-    }, []); // Run only once on mount
+    }, [location.state, navigate]); // Depend on location.state
     
     const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
@@ -100,7 +100,6 @@ const TakeExamination: React.FC = () => {
     const [finalScore, setFinalScore] = useState(0);
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
 
     const examTitle = location.state?.examTitle;
 
@@ -238,77 +237,36 @@ const TakeExamination: React.FC = () => {
 
     useEffect(() => {
         if (!isFinished && questions.length > 0) {
-            // Prevent browser back/forward navigation during exam
-            const handlePopState = (event: PopStateEvent) => {
-                // Always prevent navigation and show confirmation
-                event.preventDefault();
-                setShowExitConfirm(true);
-                // Force stay on current page
-                window.history.pushState(null, '', window.location.pathname);
-            };
-
-            // Block all navigation attempts
+            // Prevent browser navigation during exam
             const handleBeforeUnload = (event: BeforeUnloadEvent) => {
                 event.preventDefault();
                 event.returnValue = 'Are you sure you want to leave this practice session? Your progress will be lost.';
                 return event.returnValue;
             };
 
-            // Add listeners
-            window.addEventListener('popstate', handlePopState);
+            const handlePopState = (event: PopStateEvent) => {
+                event.preventDefault();
+                const shouldLeave = window.confirm('Are you sure you want to leave this practice session? Your progress will be lost.');
+                if (shouldLeave) {
+                    // User confirmed leaving
+                    sessionStorage.setItem('practiceExited', 'true');
+                    sessionStorage.removeItem('practiceStarted');
+                    navigate('/practice', { replace: true });
+                } else {
+                    // User cancelled, stay on page
+                    window.history.pushState(null, '', window.location.pathname);
+                }
+            };
+
             window.addEventListener('beforeunload', handleBeforeUnload);
-
-            // Override history methods to prevent programmatic navigation
-            const originalPushState = history.pushState;
-            const originalReplaceState = history.replaceState;
-            const originalBack = history.back;
-            const originalForward = history.forward;
-            const originalGo = history.go;
-
-            history.pushState = function(state, title, url) {
-                // Allow internal navigation but show warning
-                if (url && url !== window.location.pathname) {
-                    setShowExitConfirm(true);
-                    return;
-                }
-                return originalPushState.apply(this, arguments as any);
-            };
-
-            history.replaceState = function(state, title, url) {
-                // Allow internal navigation but show warning for external
-                if (url && url !== window.location.pathname) {
-                    setShowExitConfirm(true);
-                    return;
-                }
-                return originalReplaceState.apply(this, arguments as any);
-            };
-
-            history.back = function() {
-                setShowExitConfirm(true);
-            };
-
-            history.forward = function() {
-                setShowExitConfirm(true);
-            };
-
-            history.go = function(delta) {
-                if (delta !== 0) {
-                    setShowExitConfirm(true);
-                }
-            };
+            window.addEventListener('popstate', handlePopState);
 
             return () => {
-                window.removeEventListener('popstate', handlePopState);
                 window.removeEventListener('beforeunload', handleBeforeUnload);
-                // Restore original methods
-                history.pushState = originalPushState;
-                history.replaceState = originalReplaceState;
-                history.back = originalBack;
-                history.forward = originalForward;
-                history.go = originalGo;
+                window.removeEventListener('popstate', handlePopState);
             };
         }
-    }, [isFinished, questions.length]);
+    }, [isFinished, questions.length, navigate]);
     
     const subjectBoundaries = useMemo(() => {
         const boundaries: Record<string, { start: number, end: number }> = {};
@@ -635,34 +593,6 @@ const TakeExamination: React.FC = () => {
                     </div>
                 </footer>
             </div>
-
-            {showExitConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-                        <h2 className="text-xl font-bold text-slate-800 mb-4">Exit Practice Session?</h2>
-                        <p className="text-slate-600 mb-6">Are you sure you want to leave this practice session? Your progress will be lost.</p>
-                        <div className="flex justify-end gap-4">
-                            <button
-                                onClick={() => setShowExitConfirm(false)}
-                                className="px-4 py-2 text-slate-600 hover:text-slate-800 font-semibold"
-                            >
-                                Stay
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowExitConfirm(false);
-                                    sessionStorage.setItem('practiceExited', 'true');
-                                    sessionStorage.removeItem('practiceStarted');
-                                    navigate('/practice', { replace: true });
-                                }}
-                                className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
-                            >
-                                Leave
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
