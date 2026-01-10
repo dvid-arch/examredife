@@ -6,6 +6,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import { pastPapersData } from '../data/pastQuestions.ts';
+import apiService from '../services/apiService.ts';
 
 
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
@@ -20,12 +21,12 @@ const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject:
         if (b.subject === 'English') return 1;
         return a.subject.localeCompare(b.subject);
     });
-    
+
     let allQuestions: ChallengeQuestion[] = [];
 
     sortedSelections.forEach(({ subject, year }) => {
         let papersForSubject = allPapers.filter(paper => paper.subject === subject);
-        
+
         if (year !== 'random') {
             papersForSubject = papersForSubject.filter(paper => paper.year === year);
         }
@@ -53,7 +54,7 @@ const TakeExamination: React.FC = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user, requestLogin } = useAuth();
     const { showInstallBanner } = usePwaInstall();
-    
+
     // Validate that the route was accessed properly with required state
     const validatePracticeState = (state: any) => {
         if (!state) return false;
@@ -75,28 +76,28 @@ const TakeExamination: React.FC = () => {
 
         return false;
     };
-    
+
     // BLOCK ACCESS: Check immediately and redirect if invalid
-    const isValidAccess = 
+    const isValidAccess =
         sessionStorage.getItem('practiceStarted') === 'true' &&
         validatePracticeState(location.state) &&
         sessionStorage.getItem('practiceExited') !== 'true' &&
         sessionStorage.getItem('practiceCompleted') !== 'true';
-    
+
     // If invalid access, redirect immediately without rendering anything
     if (!isValidAccess) {
         navigate('/practice', { replace: true });
         return null; // Don't render anything
     }
-    
+
     // Monitor for invalid access during navigation (back/forward)
     useEffect(() => {
-        const currentIsValid = 
+        const currentIsValid =
             sessionStorage.getItem('practiceStarted') === 'true' &&
             validatePracticeState(location.state) &&
             sessionStorage.getItem('practiceExited') !== 'true' &&
             sessionStorage.getItem('practiceCompleted') !== 'true';
-        
+
         if (!currentIsValid) {
             navigate('/practice', { replace: true });
         }
@@ -104,7 +105,7 @@ const TakeExamination: React.FC = () => {
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [activeSubject, setActiveSubject] = useState<string>('');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [userAnswers, setUserAnswers] = useState<{[key: string]: string}>({});
+    const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
     const [timeLeft, setTimeLeft] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
     const [finalScore, setFinalScore] = useState(0);
@@ -125,10 +126,10 @@ const TakeExamination: React.FC = () => {
         const orderedSubjects = questions.map(q => q.subject);
         return [...new Set(orderedSubjects)];
     }, [questions]);
-    
+
     const handleSubmit = useCallback(async () => {
         if (isFinished) return;
-        
+
         const questionsForScoring = isAuthenticated ? questions : questions.slice(0, GUEST_QUESTION_LIMIT);
 
         let score = 0;
@@ -167,10 +168,10 @@ const TakeExamination: React.FC = () => {
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
-             const { 
-                subjects: practiceSubjectsFromState, 
-                year: practiceYear, 
-                questions: customQuestions, 
+            const {
+                subjects: practiceSubjectsFromState,
+                year: practiceYear,
+                questions: customQuestions,
                 questionsPerSubject,
                 selections
             } = location.state || {};
@@ -178,11 +179,11 @@ const TakeExamination: React.FC = () => {
             let preparedQuestions: ChallengeQuestion[] = [];
 
             if (customQuestions && customQuestions.length > 0) {
-                 preparedQuestions = customQuestions;
+                preparedQuestions = customQuestions;
             } else {
                 try {
                     const papers: PastPaper[] = pastPapersData;
-                    setAllPapers(papers);
+
 
                     const numQuestions = questionsPerSubject || 10;
                     let practiceSelections: { subject: string, year: 'random' | number }[] = [];
@@ -195,7 +196,7 @@ const TakeExamination: React.FC = () => {
                             year: practiceYear || 'random',
                         }));
                     }
-                    
+
                     if (practiceSelections.length > 0) {
                         preparedQuestions = preparePracticeQuestions(papers, practiceSelections, numQuestions);
                     }
@@ -277,11 +278,11 @@ const TakeExamination: React.FC = () => {
             };
         }
     }, [isFinished, questions.length, navigate]);
-    
+
     const subjectBoundaries = useMemo(() => {
         const boundaries: Record<string, { start: number, end: number }> = {};
         if (!questions.length || !subjects.length) return boundaries;
-    
+
         subjects.forEach(subject => {
             const start = questions.findIndex(q => q.subject === subject);
             let end = start;
@@ -301,7 +302,7 @@ const TakeExamination: React.FC = () => {
 
     const { localQuestionIndex, totalQuestionsInSubject } = useMemo(() => {
         if (!activeSubject || !subjectBoundaries[activeSubject]) {
-             if (subjects.length === 1) { // Custom practice with one subject
+            if (subjects.length === 1) { // Custom practice with one subject
                 return { localQuestionIndex: currentQuestionIndex, totalQuestionsInSubject: questions.length };
             }
             return { localQuestionIndex: 0, totalQuestionsInSubject: 0 };
@@ -310,7 +311,7 @@ const TakeExamination: React.FC = () => {
         const bounds = subjectBoundaries[activeSubject];
         const localIndex = currentQuestionIndex - bounds.start;
         const totalInSubject = bounds.end - bounds.start + 1;
-        
+
         return { localQuestionIndex: localIndex, totalQuestionsInSubject: totalInSubject };
     }, [currentQuestionIndex, activeSubject, subjectBoundaries, questions.length, subjects]);
 
@@ -324,7 +325,7 @@ const TakeExamination: React.FC = () => {
 
         const bounds = subjectBoundaries[activeSubject];
         const questionsForSubject = questions.slice(bounds.start, bounds.end + 1);
-        
+
         let count = 0;
         for (const q of questionsForSubject) {
             if (userAnswers[q.id] !== undefined) {
@@ -346,28 +347,28 @@ const TakeExamination: React.FC = () => {
             setCurrentQuestionIndex(firstQuestionIndex);
         }
     };
-    
+
     const handleNextQuestion = () => {
         if (!isAuthenticated && currentQuestionIndex >= GUEST_QUESTION_LIMIT - 1) {
             setShowLoginPrompt(true);
             return;
         }
         if (currentQuestionIndex < questions.length - 1) {
-             const nextQuestion = questions[currentQuestionIndex + 1];
-             if (nextQuestion.subject !== activeSubject) {
-                 setActiveSubject(nextQuestion.subject);
-             }
-             setCurrentQuestionIndex(prev => prev + 1);
+            const nextQuestion = questions[currentQuestionIndex + 1];
+            if (nextQuestion.subject !== activeSubject) {
+                setActiveSubject(nextQuestion.subject);
+            }
+            setCurrentQuestionIndex(prev => prev + 1);
         }
     };
 
     const handlePrevQuestion = () => {
         if (currentQuestionIndex > 0) {
             const prevQuestion = questions[currentQuestionIndex - 1];
-             if (prevQuestion.subject !== activeSubject) {
-                 setActiveSubject(prevQuestion.subject);
-             }
-             setCurrentQuestionIndex(prev => prev - 1);
+            if (prevQuestion.subject !== activeSubject) {
+                setActiveSubject(prevQuestion.subject);
+            }
+            setCurrentQuestionIndex(prev => prev - 1);
         }
     };
 
@@ -375,7 +376,7 @@ const TakeExamination: React.FC = () => {
         if (isFinished) return;
         setUserAnswers(prev => ({ ...prev, [questionId]: optionKey }));
     };
-    
+
     const handleJumpToQuestion = (index: number) => {
         if (!isAuthenticated && index >= GUEST_QUESTION_LIMIT) {
             setShowLoginPrompt(true);
@@ -398,11 +399,11 @@ const TakeExamination: React.FC = () => {
     }
 
     if (isLoading) {
-         return <div className="flex items-center justify-center h-full">Preparing your questions...</div>;
+        return <div className="flex items-center justify-center h-full">Preparing your questions...</div>;
     }
 
     if (questions.length === 0 && !isLoading) {
-         return (
+        return (
             <div className="flex items-center justify-center h-full">
                 <div className="text-center bg-white p-12 rounded-lg shadow-md">
                     <h1 className="text-2xl font-bold text-slate-700">Could Not Prepare Exam</h1>
@@ -423,14 +424,14 @@ const TakeExamination: React.FC = () => {
                     <p className="text-slate-600 mt-2">Here is your score:</p>
                     <p className="text-7xl font-extrabold text-primary my-6">{finalScore} <span className="text-5xl text-slate-500">/ {totalQuestionsForSession}</span></p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                         <Link to="/practice" replace className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light transition-colors">
+                        <Link to="/practice" replace className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light transition-colors">
                             New Practice
                         </Link>
-                         <Link to="/performance" replace className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
+                        <Link to="/performance" replace className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
                             View Performance
                         </Link>
                     </div>
-                     {!isAuthenticated && (
+                    {!isAuthenticated && (
                         <div className="mt-8 border-t pt-6">
                             <p className="text-slate-600 mb-3">Want to save this result and track your progress?</p>
                             <button onClick={requestLogin} className="bg-secondary text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">
@@ -450,8 +451,8 @@ const TakeExamination: React.FC = () => {
                 <div className="bg-orange-500 text-white font-bold text-lg tracking-wider px-4 py-1 rounded-full w-32 text-center">
                     {formatTime(timeLeft)}
                 </div>
-                 <div className="relative group">
-                    <button 
+                <div className="relative group">
+                    <button
                         onClick={() => { if (window.confirm('Are you sure you want to submit?')) handleSubmit(); }}
                         disabled={!canSubmit}
                         className="bg-red-600 hover:bg-red-700 font-bold py-2 px-6 rounded-lg transition-colors text-sm disabled:bg-red-400 disabled:cursor-not-allowed"
@@ -484,9 +485,9 @@ const TakeExamination: React.FC = () => {
                             </div>
                         </div>
                     )}
-                     <div className="flex-1 p-4">
+                    <div className="flex-1 p-4">
                         <div className="max-w-4xl mx-auto">
-                             {currentQuestion ? (
+                            {currentQuestion ? (
                                 <>
                                     <div className="flex items-center gap-4">
                                         <p className="font-semibold text-slate-700 mb-2">
@@ -494,7 +495,7 @@ const TakeExamination: React.FC = () => {
                                             <span className="text-sm text-slate-500"> of {totalQuestionsInSubject}</span>
                                         </p>
                                     </div>
-                                    <QuestionRenderer 
+                                    <QuestionRenderer
                                         question={currentQuestion}
                                         className="text-lg text-slate-800 mb-4 min-h-[40px]"
                                         forceLightMode={true}
@@ -503,34 +504,35 @@ const TakeExamination: React.FC = () => {
                                         {Object.keys(currentQuestion.options).map((key) => {
                                             const value = currentQuestion.options[key];
                                             return (
-                                            <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all cursor-pointer ${userAnswers[currentQuestion.id] === key ? 'border-primary bg-primary-light' : 'border-gray-200 bg-white hover:border-primary-light'}`}>
-                                                <input
-                                                    type="radio"
-                                                    name={currentQuestion.id}
-                                                    value={key}
-                                                    checked={userAnswers[currentQuestion.id] === key}
-                                                    onChange={() => handleSelectOption(currentQuestion.id, key)}
-                                                    className="mt-1 h-5 w-5 text-primary focus:ring-primary border-gray-300 flex-shrink-0"
-                                                />
-                                                <div className="flex-1">
-                                                    <div className="flex items-start gap-2">
-                                                        <span className="font-bold text-slate-800">{key}.</span>
-                                                        <div className="text-slate-700"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
-                                                    </div>
-                                                    {value.diagram && (
-                                                        <div className="mt-3">
-                                                            <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                                <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all cursor-pointer ${userAnswers[currentQuestion.id] === key ? 'border-primary bg-primary-light' : 'border-gray-200 bg-white hover:border-primary-light'}`}>
+                                                    <input
+                                                        type="radio"
+                                                        name={currentQuestion.id}
+                                                        value={key}
+                                                        checked={userAnswers[currentQuestion.id] === key}
+                                                        onChange={() => handleSelectOption(currentQuestion.id, key)}
+                                                        className="mt-1 h-5 w-5 text-primary focus:ring-primary border-gray-300 flex-shrink-0"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="font-bold text-slate-800">{key}.</span>
+                                                            <div className="text-slate-700"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </label>
-                                        )})}
+                                                        {value.diagram && (
+                                                            <div className="mt-3">
+                                                                <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            )
+                                        })}
                                     </div>
                                 </>
-                             ) : <p>Loading question...</p>}
+                            ) : <p>Loading question...</p>}
 
 
-                             <div className="mt-8 flex justify-between items-center">
+                            <div className="mt-8 flex justify-between items-center">
                                 <button
                                     onClick={handlePrevQuestion}
                                     disabled={currentQuestionIndex === 0}
@@ -572,10 +574,10 @@ const TakeExamination: React.FC = () => {
                                                 const globalIndex = bounds.start + localIndex;
                                                 const q = questions[globalIndex];
                                                 if (!q) return null;
-                                                
+
                                                 const isCurrent = globalIndex === currentQuestionIndex;
                                                 const isAnswered = userAnswers[q.id] !== undefined;
-                                                
+
                                                 let buttonClass = 'border border-gray-300 text-slate-700 hover:bg-gray-100';
                                                 if (isAnswered) buttonClass = 'bg-green-100 border-green-300 text-green-800';
                                                 if (isCurrent) buttonClass = 'bg-primary text-white border-green-700 ring-2 ring-offset-1 ring-primary';

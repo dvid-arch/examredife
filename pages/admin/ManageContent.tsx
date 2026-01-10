@@ -5,6 +5,7 @@ import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import { PastPaper, StudyGuide, PastQuestion } from '../../types.ts';
 import { pastPapersData } from '../../data/pastQuestions.ts';
 import { allStudyGuides } from '../../data/studyGuides.ts';
+import apiService from '../../services/apiService.ts';
 
 
 type ContentType = 'papers' | 'guides';
@@ -23,7 +24,7 @@ interface BulkUploadWizardProps {
 }
 const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, onCancel }) => {
     type WizardStep = 'upload' | 'answers' | 'images' | 'confirm';
-    
+
     const [step, setStep] = useState<WizardStep>('upload');
     const [parsedQuestions, setParsedQuestions] = useState<any[]>([]);
     const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -57,7 +58,7 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
             setError(err instanceof Error ? err.message : 'Failed to parse JSON file.');
         }
     };
-    
+
     const handleAnswerChange = (qNum: number, answer: string) => {
         setAnswers(prev => ({ ...prev, [qNum]: answer }));
     };
@@ -72,7 +73,7 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
             reader.readAsDataURL(file);
         }
     };
-    
+
     const goToNextStep = () => {
         if (step === 'answers') {
             if (requiredImages.length > 0) {
@@ -90,7 +91,7 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
             const finalOptions: { [key: string]: { text: string } } = {};
             for (const key in q.options) {
                 if (typeof q.options[key] === 'string') {
-                     finalOptions[key] = { text: q.options[key] };
+                    finalOptions[key] = { text: q.options[key] };
                 }
             }
 
@@ -112,23 +113,23 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
     return (
         <div className="mt-4 border-t dark:border-slate-700 pt-4">
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Bulk Upload Questions Wizard</h3>
-            
+
             {/* Step 1: Upload */}
             {step === 'upload' && (
                 <div className="mt-4 p-6 border-2 border-dashed dark:border-slate-600 rounded-lg text-center bg-slate-50 dark:bg-slate-800/50">
                     <JsonIcon />
                     <h4 className="font-semibold mt-2 text-slate-800 dark:text-slate-200">Upload a JSON file</h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">File must be an array of question objects following the required format.</p>
-                    <input 
-                        type="file" 
-                        accept=".json" 
-                        onChange={handleFileChange} 
+                    <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileChange}
                         className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-primary/20 dark:text-slate-300 dark:file:bg-slate-700 dark:file:text-slate-200 dark:file:border-slate-600 dark:file:hover:bg-slate-600"
                     />
                     {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                 </div>
             )}
-            
+
             {/* Step 2: Set Answers */}
             {step === 'answers' && (
                 <div className="mt-4">
@@ -152,39 +153,39 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
                     <button onClick={goToNextStep} disabled={!allAnswersSet} className="mt-4 bg-primary text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Next</button>
                 </div>
             )}
-            
+
             {/* Step 3: Upload Images */}
             {step === 'images' && (
                 <div className="mt-4">
-                     <h4 className="font-semibold text-slate-800 dark:text-slate-200">Step 3: Upload Required Images</h4>
-                     <div className="space-y-3 mt-2">
+                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Step 3: Upload Required Images</h4>
+                    <div className="space-y-3 mt-2">
                         {requiredImages.map(filename => (
                             <div key={filename} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 border rounded-md bg-white dark:bg-slate-700/50 dark:border-slate-600">
                                 <span className="font-mono text-sm text-slate-700 dark:text-slate-300">{filename}</span>
-                                {imageData[filename] ? <CheckCircleIcon /> : 
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={(e) => handleImageChange(filename, e)} 
-                                        className="text-sm text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-primary/20 dark:text-slate-300 dark:file:bg-slate-700 dark:file:text-slate-200 dark:file:border-slate-600 dark:file:hover:bg-slate-600" 
+                                {imageData[filename] ? <CheckCircleIcon /> :
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleImageChange(filename, e)}
+                                        className="text-sm text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-light file:text-primary hover:file:bg-primary/20 dark:text-slate-300 dark:file:bg-slate-700 dark:file:text-slate-200 dark:file:border-slate-600 dark:file:hover:bg-slate-600"
                                     />}
                             </div>
                         ))}
-                     </div>
-                     <button onClick={goToNextStep} disabled={!allImagesSet} className="mt-4 bg-primary text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Next</button>
+                    </div>
+                    <button onClick={goToNextStep} disabled={!allImagesSet} className="mt-4 bg-primary text-white font-bold py-2 px-4 rounded-lg disabled:bg-gray-400">Next</button>
                 </div>
             )}
 
             {/* Step 4: Confirm */}
             {step === 'confirm' && (
-                 <div className="mt-4">
-                     <h4 className="font-semibold text-slate-800 dark:text-slate-200">Step 4: Confirm Upload</h4>
-                     <p className="text-slate-600 dark:text-slate-300">You are about to add <span className="font-bold text-slate-800 dark:text-slate-100">{parsedQuestions.length}</span> questions and <span className="font-bold text-slate-800 dark:text-slate-100">{requiredImages.length}</span> images to <span className="font-bold text-slate-800 dark:text-slate-100">{paper.subject} {paper.year}</span>.</p>
-                     <div className="flex gap-4 mt-4">
+                <div className="mt-4">
+                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">Step 4: Confirm Upload</h4>
+                    <p className="text-slate-600 dark:text-slate-300">You are about to add <span className="font-bold text-slate-800 dark:text-slate-100">{parsedQuestions.length}</span> questions and <span className="font-bold text-slate-800 dark:text-slate-100">{requiredImages.length}</span> images to <span className="font-bold text-slate-800 dark:text-slate-100">{paper.subject} {paper.year}</span>.</p>
+                    <div className="flex gap-4 mt-4">
                         <button onClick={onCancel} className="font-semibold px-4 py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">Cancel</button>
                         <button onClick={handleConfirm} className="bg-primary text-white font-bold py-2 px-5 rounded-lg">Confirm & Save</button>
-                     </div>
-                 </div>
+                    </div>
+                </div>
             )}
         </div>
     );
@@ -220,10 +221,10 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
     };
 
     return (
-         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
             <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center mb-4">
-                     <div>
+                    <div>
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Manage Questions</h2>
                         <p className="text-slate-500 dark:text-slate-400">{paper.subject} - {paper.exam} {paper.year}</p>
                     </div>
@@ -233,18 +234,18 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                 <div className="flex-1 overflow-y-auto pr-2">
                     <div className="flex flex-col sm:flex-row gap-4 mb-4">
                         <button onClick={() => setShowBulkUpload(prev => !prev)} className="flex items-center gap-2 bg-green-100 text-green-800 font-bold py-2 px-4 rounded-lg hover:bg-green-200 dark:bg-green-500/20 dark:text-green-200 dark:hover:bg-green-500/30">
-                           <UploadIcon/> Bulk Upload
+                            <UploadIcon /> Bulk Upload
                         </button>
-                         <button className="bg-slate-100 text-slate-800 font-bold py-2 px-4 rounded-lg hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600" disabled>Add Single Question</button>
+                        <button className="bg-slate-100 text-slate-800 font-bold py-2 px-4 rounded-lg hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600" disabled>Add Single Question</button>
                     </div>
-                    
+
                     {showBulkUpload && <BulkUploadWizard paper={paper} onComplete={handleBulkUploadComplete} onCancel={() => setShowBulkUpload(false)} />}
-                    
+
                     <div className="mt-4 border-t dark:border-slate-700 pt-4 space-y-3">
                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">Existing Questions ({paper.questions.length})</h3>
                         {paper.questions.length > 0 ? paper.questions.map((q, i) => (
                             <div key={q.id} className="p-3 bg-slate-50 dark:bg-slate-800/50 border dark:border-slate-700 rounded-md">
-                               <div className="flex items-start gap-2">
+                                <div className="flex items-start gap-2">
                                     <span className="font-semibold text-slate-700 dark:text-slate-300">{i + 1}.</span>
                                     <div className="flex-1">
                                         <QuestionRenderer
@@ -310,11 +311,11 @@ const PaperModal: React.FC<PaperModalProps> = ({ paper, onSave, onClose }) => {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Subject</label>
                         <input type="text" name="subject" value={formData.subject} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
-                     <div>
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Exam</label>
                         <input type="text" name="exam" value={formData.exam} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
-                     <div>
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Year</label>
                         <input type="number" name="year" value={formData.year} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
@@ -350,7 +351,7 @@ const GuideModal: React.FC<GuideModalProps> = ({ guide, onSave, onClose }) => {
         const guideToSave = { createdAt: new Date().toISOString().split('T')[0], ...formData } as StudyGuide;
         onSave(guideToSave);
     };
-    
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
             <Card className="w-full max-w-lg">
@@ -360,11 +361,11 @@ const GuideModal: React.FC<GuideModalProps> = ({ guide, onSave, onClose }) => {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Title</label>
                         <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
-                     <div>
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Subject</label>
                         <input type="text" name="subject" value={formData.subject} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
-                     <div>
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Content (Markdown)</label>
                         <textarea name="content" value={formData.content} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md h-40 bg-slate-100 dark:bg-slate-700" required />
                     </div>
@@ -387,10 +388,10 @@ const ManageContent: React.FC = () => {
 
     const [isPaperModalOpen, setIsPaperModalOpen] = useState(false);
     const [editingPaper, setEditingPaper] = useState<PastPaper | null>(null);
-    
+
     const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
     const [editingGuide, setEditingGuide] = useState<StudyGuide | null>(null);
-    
+
     const [managingPaper, setManagingPaper] = useState<PastPaper | null>(null);
 
     useEffect(() => {
@@ -449,7 +450,7 @@ const ManageContent: React.FC = () => {
             del();
         }
     };
-     const handleUpdatePaper = (updatedPaper: PastPaper) => {
+    const handleUpdatePaper = (updatedPaper: PastPaper) => {
         const update = async () => {
             try {
                 const savedPaper = await apiService<PastPaper>(`/admin/papers/${updatedPaper.id}`, {
@@ -505,28 +506,28 @@ const ManageContent: React.FC = () => {
             del();
         }
     };
-    
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Manage Content</h1>
 
             <div className="flex border-b dark:border-slate-700">
-                <button 
-                    onClick={() => setActiveTab('papers')} 
+                <button
+                    onClick={() => setActiveTab('papers')}
                     className={`py-2 px-6 font-semibold ${activeTab === 'papers' ? 'border-b-2 border-primary text-primary' : 'text-slate-500 dark:text-slate-400'}`}
                 >
                     Past Papers
                 </button>
-                 <button 
-                    onClick={() => setActiveTab('guides')} 
+                <button
+                    onClick={() => setActiveTab('guides')}
                     className={`py-2 px-6 font-semibold ${activeTab === 'guides' ? 'border-b-2 border-primary text-primary' : 'text-slate-500 dark:text-slate-400'}`}
                 >
                     Study Guides
                 </button>
             </div>
-            
+
             {activeTab === 'papers' ? (
-                <ManagePapers 
+                <ManagePapers
                     papers={papers}
                     isLoading={isLoading}
                     onAdd={() => openPaperModal(null)}
@@ -535,7 +536,7 @@ const ManageContent: React.FC = () => {
                     onManageQuestions={setManagingPaper}
                 />
             ) : (
-                <ManageGuides 
+                <ManageGuides
                     guides={guides}
                     isLoading={isLoading}
                     onAdd={() => openGuideModal(null)}
@@ -543,7 +544,7 @@ const ManageContent: React.FC = () => {
                     onDelete={handleDeleteGuide}
                 />
             )}
-            
+
             {isPaperModalOpen && <PaperModal paper={editingPaper} onSave={handleSavePaper} onClose={closePaperModal} />}
             {isGuideModalOpen && <GuideModal guide={editingGuide} onSave={handleSaveGuide} onClose={closeGuideModal} />}
             {managingPaper && <ManageQuestionsModal paper={managingPaper} onClose={() => setManagingPaper(null)} onUpdate={handleUpdatePaper} />}
@@ -562,12 +563,12 @@ interface ManagePapersProps {
 }
 const ManagePapers: React.FC<ManagePapersProps> = ({ papers, isLoading, onAdd, onEdit, onDelete, onManageQuestions }) => {
     return (
-         <Card>
+        <Card>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white">Past Papers ({papers.length})</h2>
                 <button onClick={onAdd} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">Add New Paper</button>
             </div>
-             <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+            <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
                 <table className="min-w-full text-left text-sm">
                     <thead className="bg-slate-50 dark:bg-slate-800">
                         <tr>
@@ -617,7 +618,7 @@ const ManageGuides: React.FC<ManageGuidesProps> = ({ guides, isLoading, onAdd, o
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white">Study Guides ({guides.length})</h2>
                 <button onClick={onAdd} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">Add New Guide</button>
             </div>
-             <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+            <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
                 <table className="min-w-full text-left text-sm">
                     <thead className="bg-slate-50 dark:bg-slate-800">
                         <tr>
@@ -628,7 +629,7 @@ const ManageGuides: React.FC<ManageGuidesProps> = ({ guides, isLoading, onAdd, o
                         </tr>
                     </thead>
                     <tbody>
-                         {isLoading ? (
+                        {isLoading ? (
                             <tr><td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-400">Loading guides...</td></tr>
                         ) : (
                             guides.map(guide => (

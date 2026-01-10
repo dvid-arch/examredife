@@ -5,6 +5,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { pastPapersData } from '../data/pastQuestions.ts';
+import apiService from '../services/apiService.ts';
 
 
 // --- ICONS ---
@@ -26,7 +27,7 @@ const prepareChallengeQuestions = (allPapers: PastPaper[], subjects: string[]): 
     subjects.forEach(subject => {
         const questionsForSubject = allPapers
             .filter(paper => paper.subject === subject)
-            .flatMap(paper => paper.questions.map(q => ({...q, subject}))); 
+            .flatMap(paper => paper.questions.map(q => ({ ...q, subject })));
 
         const shuffled = shuffleArray(questionsForSubject);
         challengeQuestions.push(...shuffled.slice(0, QUESTIONS_PER_SUBJECT));
@@ -52,7 +53,7 @@ const UtmeChallenge: React.FC = () => {
     const [isLoadingData, setIsLoadingData] = useState(true);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
-    const [userAnswers, setUserAnswers] = useState<{[key: string]: string}>({});
+    const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
     const [finalScore, setFinalScore] = useState(0);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(CHALLENGE_DURATION_MINUTES * 60);
@@ -106,7 +107,7 @@ const UtmeChallenge: React.FC = () => {
         }, 1000);
         return () => clearInterval(timer);
     }, [gameState, timeLeft, handleSubmit]);
-    
+
     const handleStartSelection = () => setGameState('selecting');
 
     const handleSubjectToggle = (subject: string) => {
@@ -139,7 +140,7 @@ const UtmeChallenge: React.FC = () => {
         setUserAnswers(prev => ({ ...prev, [questionId]: optionKey }));
     };
 
-    
+
     const handleSaveScore = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!isAuthenticated || !user) {
@@ -223,22 +224,22 @@ const UtmeChallenge: React.FC = () => {
             </Card>
         </div>
     );
-    
+
     const renderSubjectSelection = () => (
         <Card className="text-center">
-             <h1 className="text-3xl font-bold text-slate-800">Select {TOTAL_SUBJECTS} Subjects</h1>
-             <p className="text-slate-600 mt-2 mb-6">Choose the subjects you want to be tested on.</p>
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                 {availableSubjects.map(subject => (
-                     <label key={subject} className={`p-3 border-2 rounded-lg cursor-pointer font-semibold transition-colors ${selectedSubjects.includes(subject) ? 'bg-primary-light border-primary text-primary' : 'bg-white border-gray-200 hover:border-primary-light'}`}>
-                         <input type="checkbox" className="sr-only" onChange={() => handleSubjectToggle(subject)} checked={selectedSubjects.includes(subject)} />
-                         {subject}
-                     </label>
-                 ))}
-             </div>
-             <button onClick={handleStartChallenge} disabled={selectedSubjects.length !== TOTAL_SUBJECTS} className="w-full md:w-1/2 bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+            <h1 className="text-3xl font-bold text-slate-800">Select {TOTAL_SUBJECTS} Subjects</h1>
+            <p className="text-slate-600 mt-2 mb-6">Choose the subjects you want to be tested on.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {availableSubjects.map(subject => (
+                    <label key={subject} className={`p-3 border-2 rounded-lg cursor-pointer font-semibold transition-colors ${selectedSubjects.includes(subject) ? 'bg-primary-light border-primary text-primary' : 'bg-white border-gray-200 hover:border-primary-light'}`}>
+                        <input type="checkbox" className="sr-only" onChange={() => handleSubjectToggle(subject)} checked={selectedSubjects.includes(subject)} />
+                        {subject}
+                    </label>
+                ))}
+            </div>
+            <button onClick={handleStartChallenge} disabled={selectedSubjects.length !== TOTAL_SUBJECTS} className="w-full md:w-1/2 bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed">
                 {`Begin Challenge (${selectedSubjects.length}/${TOTAL_SUBJECTS})`}
-             </button>
+            </button>
         </Card>
     );
 
@@ -250,33 +251,34 @@ const UtmeChallenge: React.FC = () => {
             <div className="flex flex-col h-full max-h-[calc(100vh-120px)]">
                 <div className="bg-white p-3 border-b shadow-sm rounded-t-lg flex justify-between items-center">
                     <h2 className="font-bold text-lg text-primary">UTME Challenge</h2>
-                    <div className="flex items-center bg-red-100 text-red-600 font-bold px-3 py-1 rounded-full"><ClockIcon/> {formatTime(timeLeft)}</div>
+                    <div className="flex items-center bg-red-100 text-red-600 font-bold px-3 py-1 rounded-full"><ClockIcon /> {formatTime(timeLeft)}</div>
                 </div>
 
                 <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                     <p className="font-semibold text-slate-700 mb-2">Question {currentQuestionIndex + 1}/{TOTAL_QUESTIONS} <span className="text-sm text-slate-500">({currentQuestion.subject})</span></p>
-                    <QuestionRenderer 
+                    <QuestionRenderer
                         question={currentQuestion}
                         className="text-lg text-slate-800 mb-4"
                     />
                     <div className="space-y-3">
-                         {Object.keys(currentQuestion.options).map((key) => {
+                        {Object.keys(currentQuestion.options).map((key) => {
                             const value = currentQuestion.options[key];
                             return (
-                            <div key={key} onClick={() => handleSelectOption(currentQuestion.id, key)} className={`p-3 rounded-lg border-2 flex items-start gap-3 transition-all cursor-pointer ${userAnswers[currentQuestion.id] === key ? 'border-primary bg-primary-light' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
-                                <div className="flex-1">
-                                    <div className="flex items-start gap-2">
-                                        <span className="font-bold">{key}.</span>
-                                        <div><MarkdownRenderer content={value.text} /></div>
-                                    </div>
-                                    {value.diagram && (
-                                        <div className="mt-3 pl-6">
-                                            <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                <div key={key} onClick={() => handleSelectOption(currentQuestion.id, key)} className={`p-3 rounded-lg border-2 flex items-start gap-3 transition-all cursor-pointer ${userAnswers[currentQuestion.id] === key ? 'border-primary bg-primary-light' : 'border-gray-200 bg-white hover:bg-gray-50'}`}>
+                                    <div className="flex-1">
+                                        <div className="flex items-start gap-2">
+                                            <span className="font-bold">{key}.</span>
+                                            <div><MarkdownRenderer content={value.text} /></div>
                                         </div>
-                                    )}
+                                        {value.diagram && (
+                                            <div className="mt-3 pl-6">
+                                                <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )})}
+                            )
+                        })}
                     </div>
                 </div>
 
@@ -290,7 +292,7 @@ const UtmeChallenge: React.FC = () => {
             </div>
         )
     };
-    
+
     const renderResults = () => {
         return (
             <div className="space-y-6">
@@ -298,9 +300,9 @@ const UtmeChallenge: React.FC = () => {
                     <h1 className="text-2xl font-bold text-slate-800">Challenge Complete!</h1>
                     <p className="text-slate-600">Your Score:</p>
                     <p className="text-6xl font-extrabold text-primary my-4">{finalScore} <span className="text-4xl text-slate-500">/ {TOTAL_QUESTIONS}</span></p>
-                    
+
                     {isAuthenticated && !scoreSaved && (
-                         <button onClick={handleSaveScore} className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">
+                        <button onClick={handleSaveScore} className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">
                             {user?.subscription === 'pro' ? `Save Score as ${user.name}` : 'Save Score (Pro Only)'}
                         </button>
                     )}
@@ -320,38 +322,38 @@ const UtmeChallenge: React.FC = () => {
                         ))}
                     </div>
                 </Card>
-                 <div className="flex justify-center gap-4">
-                     <button onClick={() => setGameState('reviewing')} className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light">Review Answers</button>
-                     <button onClick={resetGame} className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700">Play Again</button>
+                <div className="flex justify-center gap-4">
+                    <button onClick={() => setGameState('reviewing')} className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light">Review Answers</button>
+                    <button onClick={resetGame} className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700">Play Again</button>
                 </div>
             </div>
         );
     };
-    
+
     const renderReview = () => {
         const currentQuestion = questions[currentQuestionIndex];
         return (
-             <div className="flex flex-col h-full max-h-[calc(100vh-120px)]">
+            <div className="flex flex-col h-full max-h-[calc(100vh-120px)]">
                 <div className="bg-white p-3 border-b shadow-sm rounded-t-lg flex justify-between items-center">
                     <h2 className="font-bold text-lg text-primary">Reviewing Answers</h2>
-                    <button onClick={() => setGameState('results')} className="flex items-center gap-2 font-semibold text-slate-600 hover:text-primary"><BackArrowIcon/> Back to Results</button>
+                    <button onClick={() => setGameState('results')} className="flex items-center gap-2 font-semibold text-slate-600 hover:text-primary"><BackArrowIcon /> Back to Results</button>
                 </div>
                 <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                     <p className="font-semibold text-slate-700 mb-2">Question {currentQuestionIndex + 1}/{TOTAL_QUESTIONS}</p>
-                    <QuestionRenderer 
+                    <QuestionRenderer
                         question={currentQuestion}
                         className="text-lg text-slate-800 mb-4"
                     />
                     <div className="space-y-3">
-                         {Object.keys(currentQuestion.options).map((key) => {
-                             const value = currentQuestion.options[key];
-                             const isSelected = userAnswers[currentQuestion.id] === key;
-                             const isCorrect = key === currentQuestion.answer;
-                             let optionClass = 'border-gray-300 bg-white';
-                             if (isCorrect) optionClass = 'border-green-500 bg-green-100';
-                             else if (isSelected) optionClass = 'border-red-500 bg-red-100';
-                             
-                             return (
+                        {Object.keys(currentQuestion.options).map((key) => {
+                            const value = currentQuestion.options[key];
+                            const isSelected = userAnswers[currentQuestion.id] === key;
+                            const isCorrect = key === currentQuestion.answer;
+                            let optionClass = 'border-gray-300 bg-white';
+                            if (isCorrect) optionClass = 'border-green-500 bg-green-100';
+                            else if (isSelected) optionClass = 'border-red-500 bg-red-100';
+
+                            return (
                                 <div key={key} className={`p-3 rounded-lg border-2 flex items-start gap-3 transition-all cursor-default ${optionClass}`}>
                                     <div className="flex-1">
                                         <div className="flex items-start gap-2">
@@ -366,13 +368,13 @@ const UtmeChallenge: React.FC = () => {
                                     </div>
                                 </div>
                             );
-                         })}
+                        })}
                     </div>
                 </div>
-                 <div className="bg-white p-4 border-t shadow-inner rounded-b-lg flex justify-between items-center">
+                <div className="bg-white p-4 border-t shadow-inner rounded-b-lg flex justify-between items-center">
                     <button onClick={() => setCurrentQuestionIndex(p => Math.max(0, p - 1))} disabled={currentQuestionIndex === 0} className="font-semibold py-2 px-6 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50">Previous</button>
                     <button onClick={() => setCurrentQuestionIndex(p => Math.min(questions.length - 1, p + 1))} disabled={currentQuestionIndex === questions.length - 1} className="font-semibold py-2 px-8 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50">Next</button>
-                 </div>
+                </div>
             </div>
         );
     };
