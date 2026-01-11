@@ -85,6 +85,16 @@ const Dashboard: React.FC = () => {
     const { isAuthenticated } = useAuth();
     const [showTour, setShowTour] = useState(false);
 
+    // Close tour when navigating away
+    useEffect(() => {
+        const handleHashChange = () => {
+            setShowTour(false);
+        };
+
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
     useEffect(() => {
         const tourCompleted = localStorage.getItem('examRediOnboardingCompleted');
         if (isAuthenticated && tourCompleted !== 'true') {

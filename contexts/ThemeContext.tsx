@@ -10,26 +10,30 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [theme, setTheme] = useState<Theme>(() => {
+    const [theme, setTheme] = useState<Theme>('light');
+    const [mounted, setMounted] = useState(false);
+
+    // Initialize theme on mount
+    useEffect(() => {
         const storedTheme = localStorage.getItem('theme') as Theme | null;
-        if (storedTheme) return storedTheme;
-        if (typeof window !== 'undefined') {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        return 'dark'; // Fallback
-    });
+        const initialTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        setTheme(initialTheme);
+        setMounted(true);
+    }, []);
 
     // Sync theme changes to DOM
     useEffect(() => {
-        const root = window.document.documentElement;
-        root.classList.remove('light', 'dark');
-        root.classList.add(theme);
-        // We do NOT save to localStorage here automatically anymore.
-        // This allows the app to stay in 'sync with system' mode until the user explicitly toggles.
-    }, [theme]);
+        if (mounted) {
+            const root = window.document.documentElement;
+            root.classList.remove('light', 'dark');
+            root.classList.add(theme);
+        }
+    }, [theme, mounted]);
 
     // Listen for system theme changes
     useEffect(() => {
+        if (!mounted) return;
+
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
         const handleChange = (e: MediaQueryListEvent) => {
@@ -41,7 +45,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         mediaQuery.addEventListener('change', handleChange);
         return () => mediaQuery.removeEventListener('change', handleChange);
-    }, []);
+    }, [mounted]);
 
     const toggleTheme = () => {
         setTheme(prevTheme => {

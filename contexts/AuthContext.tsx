@@ -101,6 +101,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
+    // Close modals when navigating to a new page
+    useEffect(() => {
+        const handleHashChange = () => {
+            setIsAuthModalOpen(false);
+            setIsUpgradeModalOpen(false);
+        };
+
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
     // When the user returns to the tab or the window gains focus, try to refresh profile
     // This helps avoid being unexpectedly logged out after the access token expires while the tab was inactive.
     useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Route, Navigate, Outlet, createHashRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom';
 
 // Components
@@ -52,6 +52,16 @@ const RootLayout: React.FC = () => {
 // --- Main Layout for the entire app ---
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Close sidebar when navigating to a new page
+  useEffect(() => {
+    const handleHashChange = () => {
+      setIsSidebarOpen(false);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-950 font-sans">

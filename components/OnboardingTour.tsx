@@ -1,5 +1,5 @@
 
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
 
 interface TourStep {
   selector: string;
@@ -19,6 +19,16 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplete }) =>
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const currentStep = steps[stepIndex];
+
+  // Close tour when navigating away
+  useEffect(() => {
+    const handleHashChange = () => {
+      onComplete();
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [onComplete]);
 
   useLayoutEffect(() => {
     if (!currentStep) return;
@@ -64,7 +74,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplete }) =>
   };
 
   const getTooltipPosition = () => {
-    if (!targetRect || !tooltipRef.current) return { visibility: 'hidden' as const };
+    if (!targetRect || !tooltipRef.current) return { top: '-9999px', left: '-9999px' };
 
     const tooltipHeight = tooltipRef.current.offsetHeight;
     const tooltipWidth = tooltipRef.current.offsetWidth;
@@ -100,20 +110,23 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplete }) =>
     if (left + tooltipWidth > window.innerWidth) left = window.innerWidth - tooltipWidth - space;
     if (top + tooltipHeight > window.innerHeight) top = window.innerHeight - tooltipHeight - space;
 
-    return { top: `${top}px`, left: `${left}px`, visibility: 'visible' as const };
+    return { top: `${top}px`, left: `${left}px` };
   };
 
   if (!currentStep) return null;
 
   return (
-    <div className="fixed inset-0 z-[1005] pointer-events-none">
-      {/* Invisible layer to catch clicks and close the tour */}
+    <>
+      {/* Invisible overlay layer to catch clicks and close the tour */}
       <div className="fixed inset-0 z-[1000] pointer-events-auto" onClick={handleComplete}></div>
 
       <div
         ref={tooltipRef}
-        className={`tour-tooltip bg-white dark:bg-slate-800 pointer-events-auto ${!targetRect ? 'tour-modal' : ''}`}
-        style={getTooltipPosition()}
+        className={`tour-tooltip fixed bg-white dark:bg-slate-800 pointer-events-auto rounded-lg shadow-2xl ${!targetRect ? 'tour-modal' : ''}`}
+        style={{
+          ...getTooltipPosition(),
+          zIndex: 1001,
+        }}
       >
         <div className="p-4">
           <h3 className="font-bold text-lg text-slate-800 dark:text-slate-50">{currentStep.title}</h3>
@@ -136,7 +149,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({ steps, onComplete }) =>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
