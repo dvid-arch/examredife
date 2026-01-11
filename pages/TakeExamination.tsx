@@ -168,6 +168,14 @@ const TakeExamination: React.FC = () => {
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
+            // CRITICAL: Prevent re-initialization if practice was already exited or completed
+            // This prevents timer reset when navigating forward after exit
+            if (sessionStorage.getItem('practiceExited') === 'true' ||
+                sessionStorage.getItem('practiceCompleted') === 'true') {
+                setIsLoading(false);
+                return;
+            }
+
             const {
                 subjects: practiceSubjectsFromState,
                 year: practiceYear,
