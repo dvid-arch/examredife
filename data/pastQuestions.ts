@@ -10,116 +10,116 @@ export const pastPapersData: PastPaper[] = [
       {
         id: 'eng1-14',
         question: 'Choose the option that is nearest in meaning to the word "ephemeral".',
-        options: { 
-          A: { text: 'Everlasting' }, 
-          B: { text: 'Short-lived' }, 
-          C: { text: 'Beautiful' }, 
-          D: { text: 'Powerful' } 
+        options: {
+          A: { text: 'Everlasting' },
+          B: { text: 'Short-lived' },
+          C: { text: 'Beautiful' },
+          D: { text: 'Powerful' }
         },
         answer: 'B',
       },
       {
         id: 'eng2-14',
         question: 'From the words lettered A to D, choose the word that best completes the sentence: The suspect was ____ of all charges.',
-        options: { 
-          A: { text: 'acquitted' }, 
-          B: { text: 'convicted' }, 
-          C: { text: 'accused' }, 
-          D: { text: 'sentenced' } 
+        options: {
+          A: { text: 'acquitted' },
+          B: { text: 'convicted' },
+          C: { text: 'accused' },
+          D: { text: 'sentenced' }
         },
         answer: 'A',
       },
       {
         id: 'eng3-14',
         question: 'Which of the following sentences is grammatically correct?',
-        options: { 
-          A: { text: 'He have gone to the market.' }, 
-          B: { text: 'They is playing football now.' }, 
-          C: { text: 'The book is laying on the table.' }, 
-          D: { text: 'She has eaten her food.' } 
+        options: {
+          A: { text: 'He have gone to the market.' },
+          B: { text: 'They is playing football now.' },
+          C: { text: 'The book is laying on the table.' },
+          D: { text: 'She has eaten her food.' }
         },
         answer: 'D',
       },
       {
         id: 'eng4-14',
         question: 'Identify the figure of speech in the sentence: "The wind whispered through the trees."',
-        options: { 
-          A: { text: 'Metaphor' }, 
-          B: { text: 'Simile' }, 
-          C: { text: 'Personification' }, 
-          D: { text: 'Hyperbole' } 
+        options: {
+          A: { text: 'Metaphor' },
+          B: { text: 'Simile' },
+          C: { text: 'Personification' },
+          D: { text: 'Hyperbole' }
         },
         answer: 'C',
       },
       {
         id: 'eng5-14',
         question: 'Choose the word opposite in meaning to "candid".',
-        options: { 
-          A: { text: 'Frank' }, 
-          B: { text: 'Honest' }, 
-          C: { text: 'Secretive' }, 
-          D: { text: 'Open' } 
+        options: {
+          A: { text: 'Frank' },
+          B: { text: 'Honest' },
+          C: { text: 'Secretive' },
+          D: { text: 'Open' }
         },
         answer: 'C',
       },
       {
         id: 'eng6-14',
         question: 'The story was so captivating. The word "captivating" means...',
-        options: { 
-          A: { text: 'Boring' }, 
-          B: { text: 'Long' }, 
-          C: { text: 'Interesting' }, 
-          D: { text: 'Scary' } 
+        options: {
+          A: { text: 'Boring' },
+          B: { text: 'Long' },
+          C: { text: 'Interesting' },
+          D: { text: 'Scary' }
         },
         answer: 'C',
       },
       {
         id: 'eng7-14',
         question: 'Select the correctly spelt word.',
-        options: { 
-          A: { text: 'Embarass' }, 
-          B: { text: 'Embarrass' }, 
-          C: { text: 'Embarasss' }, 
-          D: { text: 'Embaras' } 
+        options: {
+          A: { text: 'Embarass' },
+          B: { text: 'Embarrass' },
+          C: { text: 'Embarasss' },
+          D: { text: 'Embaras' }
         },
         answer: 'B',
       },
       {
         id: 'eng8-14',
         question: 'He is _________ to his studies.',
-        options: { 
-          A: { text: 'devoted' }, 
-          B: { text: 'downcast' }, 
-          C: { text: 'deported' }, 
-          D: { text: 'declined' } 
+        options: {
+          A: { text: 'devoted' },
+          B: { text: 'downcast' },
+          C: { text: 'deported' },
+          D: { text: 'declined' }
         },
         answer: 'A',
       },
       {
         id: 'eng9-14',
         question: 'The chairman’s speech was greeted with a _________ applause.',
-        options: { 
-          A: { text: 'tumultuous' }, 
-          B: { text: 'quiet' }, 
-          C: { text: 'sad' }, 
-          D: { text: 'hostile' } 
+        options: {
+          A: { text: 'tumultuous' },
+          B: { text: 'quiet' },
+          C: { text: 'sad' },
+          D: { text: 'hostile' }
         },
         answer: 'A',
       },
       {
         id: 'eng10-14',
         question: 'Which of these is not a synonym for "happy"?',
-        options: { 
-          A: { text: 'Joyful' }, 
-          B: { text: 'Cheerful' }, 
-          C: { text: 'Sorrowful' }, 
-          D: { text: 'Elated' } 
+        options: {
+          A: { text: 'Joyful' },
+          B: { text: 'Cheerful' },
+          C: { text: 'Sorrowful' },
+          D: { text: 'Elated' }
         },
         answer: 'C',
       },
     ],
   },
-   {
+  {
     id: 'jamb-english-2015',
     exam: 'JAMB',
     subject: 'English',
@@ -175,7 +175,7 @@ export const pastPapersData: PastPaper[] = [
       },
     ]
   },
-    {
+  {
     id: 'jamb-mathematics-2015',
     exam: 'JAMB',
     subject: 'Mathematics',
@@ -188,7 +188,7 @@ export const pastPapersData: PastPaper[] = [
       { id: 'math5-15', question: 'If $\\log_2 x = 3$, find x.', options: { A: { text: '6' }, B: { text: '8' }, C: { text: '9' }, D: { text: '5' } }, answer: 'B' },
     ]
   },
-   {
+  {
     id: 'jamb-biology-2014',
     exam: 'JAMB',
     subject: 'Biology',
@@ -237,45 +237,45 @@ export const pastPapersData: PastPaper[] = [
     subject: 'Biology',
     year: 2015,
     questions: [
-        {
-            id: 'bio1',
-            question: 'Which of these is NOT a characteristic of living things?',
-            options: { A: { text: 'Respiration' }, B: { text: 'Movement' }, C: { text: 'Crystallization' }, D: { text: 'Reproduction' } },
-            answer: 'C'
-        },
-        {
-            id: 'bio2',
-            question: 'The part of the cell that controls all its activities is the?',
-            options: { A: { text: 'Mitochondrion' }, B: { text: 'Nucleus' }, C: { text: 'Cell wall' }, D: { text: 'Cytoplasm' } },
-            answer: 'B'
-        },
-        {
-            id: 'bio3',
-            question: 'Which of the following is a producer in an ecosystem?',
-            options: { A: { text: 'Lion' }, B: { text: 'Goat' }, C: { text: 'Grass' }, D: { text: 'Mushroom' } },
-            answer: 'C'
-        },
-        {
-            id: 'bio4',
-            question: 'The process by which plants lose water through their leaves is called?',
-            options: { A: { text: 'Photosynthesis' }, B: { text: 'Respiration' }, C: { text: 'Transpiration' }, D: { text: 'Osmosis' } },
-            answer: 'C'
-        },
-        {
-            id: 'bio5',
-            question: 'Which of these blood components is responsible for clotting?',
-            options: { A: { text: 'Red blood cells' }, B: { text: 'White blood cells' }, C: { text: 'Plasma' }, D: { text: 'Platelets' } },
-            answer: 'D'
-        },
-        {
-            id: 'bio6-15',
-            question: 'The process of photosynthesis in plants primarily produces what?',
-            options: { A: { text: 'Water' }, B: { text: 'Glucose and Oxygen' }, C: { text: 'Carbon Dioxide' }, D: { text: 'Nitrogen' } },
-            answer: 'B'
-        }
+      {
+        id: 'bio1',
+        question: 'Which of these is NOT a characteristic of living things?',
+        options: { A: { text: 'Respiration' }, B: { text: 'Movement' }, C: { text: 'Crystallization' }, D: { text: 'Reproduction' } },
+        answer: 'C'
+      },
+      {
+        id: 'bio2',
+        question: 'The part of the cell that controls all its activities is the?',
+        options: { A: { text: 'Mitochondrion' }, B: { text: 'Nucleus' }, C: { text: 'Cell wall' }, D: { text: 'Cytoplasm' } },
+        answer: 'B'
+      },
+      {
+        id: 'bio3',
+        question: 'Which of the following is a producer in an ecosystem?',
+        options: { A: { text: 'Lion' }, B: { text: 'Goat' }, C: { text: 'Grass' }, D: { text: 'Mushroom' } },
+        answer: 'C'
+      },
+      {
+        id: 'bio4',
+        question: 'The process by which plants lose water through their leaves is called?',
+        options: { A: { text: 'Photosynthesis' }, B: { text: 'Respiration' }, C: { text: 'Transpiration' }, D: { text: 'Osmosis' } },
+        answer: 'C'
+      },
+      {
+        id: 'bio5',
+        question: 'Which of these blood components is responsible for clotting?',
+        options: { A: { text: 'Red blood cells' }, B: { text: 'White blood cells' }, C: { text: 'Plasma' }, D: { text: 'Platelets' } },
+        answer: 'D'
+      },
+      {
+        id: 'bio6-15',
+        question: 'The process of photosynthesis in plants primarily produces what?',
+        options: { A: { text: 'Water' }, B: { text: 'Glucose and Oxygen' }, C: { text: 'Carbon Dioxide' }, D: { text: 'Nitrogen' } },
+        answer: 'B'
+      }
     ]
   },
-   {
+  {
     id: 'jamb-physics-2014',
     exam: 'JAMB',
     subject: 'Physics',
@@ -357,7 +357,20 @@ export const pastPapersData: PastPaper[] = [
       },
     ]
   },
-   {
+  {
+    id: 'jamb-chemistry-2015',
+    exam: 'JAMB',
+    subject: 'Chemistry',
+    year: 2015,
+    questions: [
+      { id: 'chem1-15', question: 'Which of the following is an example of a chemical change?', options: { A: { text: 'Melting of ice' }, B: { text: 'Dissolving salt in water' }, C: { text: 'Rusting of iron' }, D: { text: 'Evaporation of ethanol' } }, answer: 'C' },
+      { id: 'chem2-15', question: 'The pH of a neutral solution at 25°C is:', options: { A: { text: '1' }, B: { text: '7' }, C: { text: '14' }, D: { text: '0' } }, answer: 'B' },
+      { id: 'chem3-15', question: 'Ethanol is an isomer of:', options: { A: { text: 'Dimethyl ether' }, B: { text: 'Methanol' }, C: { text: 'Propanol' }, D: { text: 'Ethanoic acid' } }, answer: 'A' },
+      { id: 'chem4-15', question: 'Which element is liquid at room temperature?', options: { A: { text: 'Iron' }, B: { text: 'Gold' }, C: { text: 'Mercury' }, D: { text: 'Silver' } }, answer: 'C' },
+      { id: 'chem5-15', question: 'The shape of a water molecule is:', options: { A: { text: 'Linear' }, B: { text: 'Tetrahedral' }, C: { text: 'Bent (V-shaped)' }, D: { text: 'Trigonal planar' } }, answer: 'C' },
+    ]
+  },
+  {
     id: 'jamb-government-2014',
     exam: 'JAMB',
     subject: 'Government',
