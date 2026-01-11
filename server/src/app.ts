@@ -1,5 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -8,13 +9,22 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000').split(',');
 
-// Middleware
+// Security Middleware
+app.use(helmet());
+
+// CORS Configuration from environment
 app.use(cors({
-    origin: ['http://localhost:5000', 'http://127.0.0.1:5000'], // Allow Configured Frontend
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+
+// Body Parser Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());
 
 // Basic Route for testing

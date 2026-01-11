@@ -1,40 +1,60 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { TokenPayload } from '../types';
 
-const SECRET_KEY = process.env.JWT_SECRET || 'secret';
+const SECRET_KEY = process.env.JWT_SECRET;
+
+if (!SECRET_KEY) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 export interface AuthRequest extends Request {
-    user?: {
-        id: string;
-        email: string;
-        role: 'user' | 'admin';
-    };
+    user?: TokenPayload;
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-        return res.status(401).json({ message: 'Authorization header missing' });
+        return res.status(401).json({ 
+            success: false,
+            message: 'Unauthorized',
+            error: 'Authorization header is missing',
+            statusCode: 401
+        });
     }
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ message: 'Token missing' });
+        return res.status(401).json({ 
+            success: false,
+            message: 'Unauthorized',
+            error: 'Bearer token is missing',
+            statusCode: 401
+        });
     }
 
-    jwt.verify(token, SECRET_KEY, (err: any, decoded: any) => {
+    jwt.verify(token, SECRET_KEY!, (err: any, decoded: any) => {
         if (err) {
-            // CRITICAL: Return 401 (not 403) so the client knows to refresh the token
-            return res.status(401).json({ message: 'Invalid or expired token', error: err.message });
+            return res.status(401).json({ 
+                success: false,
+                message: 'Token verification failed',
+                error: err.message === 'jwt expired' ? 'Token has expired' : 'Invalid token',
+                statusCode: 401
+            });
         }
-        req.user = decoded;
+        req.user = decoded as TokenPayload;
         next();
     });
 };
 
 export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ message: 'Admin access required' });
+        return res.status(403).json({ 
+            success: false,
+            message: 'Forbidden',
+            error: 'Admin access is required',
+            statusCode: 403
+        });
     }
     next();
 };
