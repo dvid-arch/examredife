@@ -8,6 +8,25 @@ interface RequestOptions extends RequestInit {
     useAuth?: boolean;
 }
 
+// Singleton state for token refresh
+let isRefreshing = false;
+let failedQueue: Array<{
+    resolve: (token: string) => void;
+    reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token as string);
+        }
+    });
+
+    failedQueue = [];
+};
+
 const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isRetry = false): Promise<T> => {
     const { method = 'GET', body, headers = {}, useAuth = true } = options;
 
@@ -39,8 +58,29 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
         clearTimeout(id);
 
         if (!response.ok) {
-            // Handle token refresh on 401 Unauthorized
+            // Handle token refresh on 401 Unauthorized (Expired or Invalid Token)
             if (response.status === 401 && !isRetry && endpoint !== '/auth/refresh' && useAuth) {
+                if (isRefreshing) {
+                    // Queue the request if a refresh is already in progress
+                    return new Promise<T>((resolve, reject) => {
+                        failedQueue.push({
+                            resolve: (token: string) => {
+                                // Update header with new token
+                                if (options.headers) {
+                                    (options.headers as any)['Authorization'] = `Bearer ${token}`;
+                                } else {
+                                    options.headers = { 'Authorization': `Bearer ${token}` };
+                                }
+                                // Retry request
+                                resolve(apiService<T>(endpoint, options, true));
+                            },
+                            reject
+                        });
+                    });
+                }
+
+                isRefreshing = true;
+
                 try {
                     const refreshToken = getRefreshToken();
                     if (!refreshToken) {
@@ -58,6 +98,7 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                     if (!refreshResponse.ok) {
                         // If refresh fails, logout
                         console.error("Session expired. Please log in again. Refresh response:", refreshResponse.status, refreshResponse.statusText);
+                        processQueue(new Error("Session expired."));
                         localStorage.removeItem('authToken');
                         localStorage.removeItem('refreshToken');
                         localStorage.removeItem('examRediUser');
@@ -69,17 +110,23 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                     localStorage.setItem('authToken', newTokens.accessToken);
                     localStorage.setItem('refreshToken', newTokens.refreshToken);
 
+                    // Process queued requests with new token
+                    processQueue(null, newTokens.accessToken);
+
                     // Retry the original request with the new token
                     return apiService<T>(endpoint, options, true);
 
                 } catch (error) {
                     console.error("Session refresh failed:", error);
+                    processQueue(error);
                     // Force logout by clearing all auth data
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('refreshToken');
                     localStorage.removeItem('examRediUser');
                     window.location.href = '/';
                     throw error;
+                } finally {
+                    isRefreshing = false;
                 }
             }
 

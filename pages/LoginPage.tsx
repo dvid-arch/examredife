@@ -43,7 +43,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 <Card className="p-8">
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-1">Welcome Back!</h1>
                     <p className="text-slate-600 dark:text-slate-300 text-center mb-6">Login to continue your exam preparation.</p>
-                    <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
+                    <form onSubmit={handleLogin} className="space-y-6">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
                             <input
@@ -54,7 +54,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                 placeholder="you@example.com"
                                 className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
-                                autoComplete="off"
+                                autoComplete="username"
                             />
                         </div>
                         <div>
@@ -67,7 +67,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                 placeholder="••••••••"
                                 className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
-                                autoComplete="new-password"
+                                autoComplete="current-password"
                             />
                         </div>
                         <button

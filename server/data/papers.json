@@ -1,0 +1,48 @@
+[
+  {
+    "id": "jamb-english-2014",
+    "exam": "JAMB",
+    "subject": "English",
+    "year": 2014,
+    "questions": [
+      {
+        "id": "eng1-14",
+        "question": "Choose the option that is nearest in meaning to the word \"ephemeral\".",
+        "options": {
+          "A": {
+            "text": "Everlasting"
+          },
+          "B": {
+            "text": "Short-lived"
+          },
+          "C": {
+            "text": "Beautiful"
+          },
+          "D": {
+            "text": "Powerful"
+          }
+        },
+        "answer": "B"
+      },
+      {
+        "id": "eng2-14",
+        "question": "From the words lettered A to D, choose the word that best completes the sentence: The suspect was ____ of all charges.",
+        "options": {
+          "A": {
+            "text": "acquitted"
+          },
+          "B": {
+            "text": "convicted"
+          },
+          "C": {
+            "text": "accused"
+          },
+          "D": {
+            "text": "sentenced"
+          }
+        },
+        "answer": "A"
+      }
+    ]
+  }
+]

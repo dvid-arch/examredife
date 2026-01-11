@@ -40,7 +40,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister }) => {
                 <Card className="p-8">
                     <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center mb-1">Create Your Account</h1>
                     <p className="text-slate-600 dark:text-slate-300 text-center mb-6">Start your journey to exam success today!</p>
-                    <form onSubmit={handleRegister} className="space-y-6" autoComplete="off">
+                    <form onSubmit={handleRegister} className="space-y-6">
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                             <input
