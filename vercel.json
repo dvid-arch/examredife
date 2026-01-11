@@ -1,9 +1,7 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist",
-  "env": {
-    "VITE_API_URL": "@api_url"
-  },
+  "installCommand": "npm install",
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -20,15 +18,6 @@
         {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
         }
       ]
     }

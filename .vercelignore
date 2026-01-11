@@ -1,15 +1,13 @@
 # Dependencies
 node_modules
 
-# Build outputs
-dist
-dist-ssr
-*.local
+# Build outputs (don't ignore these - Vercel needs to build them)
+# dist
+# dist-ssr
 
 # Development
 .vscode
 .idea
-.env
 .env.local
 .env.*.local
 
@@ -21,10 +19,6 @@ Thumbs.db
 .git
 .gitignore
 
-# Documentation
-*.md
-!README.md
-
 # Server folder (local only)
 server
 
@@ -32,3 +26,4 @@ server
 *.test.ts
 *.spec.ts
 __tests__
+
