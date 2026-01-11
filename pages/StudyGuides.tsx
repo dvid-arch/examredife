@@ -24,11 +24,11 @@ const GuideIcon = () => (
 const GuideModal: React.FC<{ guide: StudyGuide, onClose: () => void }> = ({ guide, onClose }) => {
     return (
         <div 
-            className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4"
+            className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-3 sm:p-4 overflow-y-auto"
             onClick={onClose}
         >
             <div 
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col"
+                className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col my-4 sm:my-0"
                 onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
                 <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800 rounded-t-2xl">

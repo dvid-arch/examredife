@@ -42,9 +42,9 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, request })
     const currentRequest = request || defaultRequest;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
-            <div className="max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-                <Card className="p-6 md:p-8">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-3 sm:p-4 overflow-y-auto" onClick={onClose}>
+            <div className="max-w-2xl w-full my-4 sm:my-0" onClick={e => e.stopPropagation()}>
+                <Card className="p-5 sm:p-6 md:p-8">
                     <div className="text-center">
                         <div className="inline-block p-3 bg-primary-light rounded-full mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>

@@ -101,28 +101,28 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
     return (
         <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm sticky top-0 z-20 flex-shrink-0">
-            <div className="container mx-auto px-4">
-                <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
+            <div className="w-full px-2 sm:px-4">
+                <div className="flex items-center justify-between gap-2 sm:gap-4 min-h-16">
+                    <div className="flex items-center gap-2 min-w-0">
                         <button 
                             onClick={onMenuClick} 
-                            className="md:hidden mr-4 text-gray-600 dark:text-slate-300 hover:text-primary transition-colors"
+                            className="md:hidden flex-shrink-0 text-gray-600 dark:text-slate-300 hover:text-primary transition-colors p-1"
                             aria-label="Open navigation menu"
                         >
                             <MenuIcon />
                         </button>
-                        <div className="md:hidden">
+                        <div className="md:hidden flex-shrink-0">
                             <Logo />
                         </div>
                         {/* Display Page Title on Desktop */}
-                        <h1 className="hidden md:block text-xl font-bold text-slate-800 dark:text-white">
+                        <h1 className="hidden md:block text-lg lg:text-xl font-bold text-slate-800 dark:text-white whitespace-nowrap">
                            {pageTitle}
                         </h1>
                     </div>
                     
                     {/* Search Bar - fills the gap */}
-                    <div className="hidden md:flex flex-1 justify-center px-8 lg:px-16">
-                        <form onSubmit={handleSearch} className="w-full max-w-md relative" data-tour-id="search-bar">
+                    <div className="hidden md:flex flex-1 justify-center px-6 lg:px-12">
+                        <form onSubmit={handleSearch} className="w-full max-w-sm relative" data-tour-id="search-bar">
                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <SearchIcon />
                             </span>
@@ -130,14 +130,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                                 type="search"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search past questions..."
+                                placeholder="Search questions..."
                                 className="w-full bg-slate-100 dark:bg-slate-700 border-transparent rounded-lg pl-10 pr-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-600"
                                 aria-label="Search past questions"
                             />
                         </form>
                     </div>
 
-                    <div className="flex items-center space-x-2 sm:space-x-4">
+                    <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
                         {isLoading ? (
                             <div className="flex items-center space-x-2 animate-pulse">
                                 <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700"></div>

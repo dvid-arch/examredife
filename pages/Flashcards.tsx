@@ -220,7 +220,7 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ decks, onSave, onCancel }
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-3 sm:p-4 overflow-y-auto">
             <Card className="max-w-md w-full">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">Set Study Reminder</h2>

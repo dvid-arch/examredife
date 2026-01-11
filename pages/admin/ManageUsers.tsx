@@ -26,8 +26,8 @@ const UserModal: React.FC<UserModalProps> = ({ user, onSave, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-            <Card className="w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-3 sm:p-4 overflow-y-auto">
+            <Card className="w-full max-w-md my-4 sm:my-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{user ? 'Edit User' : 'Add New User'}</h2>
                     <div>

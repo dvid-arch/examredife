@@ -126,7 +126,7 @@ const MemoryMatchGame: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ perspective: '1000px' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4" style={{ perspective: '1000px' }}>
                 {cards.map((card, index) => (
                     <div
                         key={card.id}
