@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Route, Navigate, Outlet, createHashRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom';
 
 // Components
@@ -6,34 +6,44 @@ import Header from './components/Header.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import PwaInstallBanner from './components/PwaInstallBanner.tsx';
 
-// Pages
-import Dashboard from './pages/Dashboard.tsx';
-import Flashcards from './pages/Flashcards.tsx';
-import Quizzes from './pages/Quizzes.tsx';
-import ExamWithAI from './pages/ExamWithAI.tsx';
-import StudyGuides from './pages/StudyGuides.tsx';
-import TakeExamination from './pages/TakeExamination.tsx';
-import EducationalGames from './pages/EducationalGames.tsx';
-import Performance from './pages/Performance.tsx';
-import MemoryMatchGame from './pages/MemoryMatchGame.tsx';
-import SubjectSprintGame from './pages/SubjectSprintGame.tsx';
-import CareerInstitutions from './pages/CareerInstitutions.tsx';
-import UtmeChallenge from './pages/UtmeChallenge.tsx';
-import ComingSoon from './pages/ComingSoon.tsx';
-import QuestionSearch from './pages/QuestionSearch.tsx';
-import Profile from './pages/Profile.tsx';
-
 // Contexts
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { PwaInstallProvider } from './contexts/PwaContext.tsx';
 import { ThemeProvider } from './contexts/ThemeContext.tsx';
 
-// Admin
-import AdminLayout from './pages/admin/AdminLayout.tsx';
-import AdminDashboard from './pages/admin/AdminDashboard.tsx';
-import ManageUsers from './pages/admin/ManageUsers.tsx';
-import ManageContent from './pages/admin/ManageContent.tsx';
-import ProtectedRoute from './components/ProtectedRoute.tsx';
+// Pages - Lazy load all pages for faster initial load
+const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
+const Flashcards = lazy(() => import('./pages/Flashcards.tsx'));
+const Quizzes = lazy(() => import('./pages/Quizzes.tsx'));
+const ExamWithAI = lazy(() => import('./pages/ExamWithAI.tsx'));
+const StudyGuides = lazy(() => import('./pages/StudyGuides.tsx'));
+const TakeExamination = lazy(() => import('./pages/TakeExamination.tsx'));
+const EducationalGames = lazy(() => import('./pages/EducationalGames.tsx'));
+const Performance = lazy(() => import('./pages/Performance.tsx'));
+const MemoryMatchGame = lazy(() => import('./pages/MemoryMatchGame.tsx'));
+const SubjectSprintGame = lazy(() => import('./pages/SubjectSprintGame.tsx'));
+const CareerInstitutions = lazy(() => import('./pages/CareerInstitutions.tsx'));
+const UtmeChallenge = lazy(() => import('./pages/UtmeChallenge.tsx'));
+const ComingSoon = lazy(() => import('./pages/ComingSoon.tsx'));
+const QuestionSearch = lazy(() => import('./pages/QuestionSearch.tsx'));
+const Profile = lazy(() => import('./pages/Profile.tsx'));
+
+// Admin - Lazy load admin pages
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout.tsx'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.tsx'));
+const ManageUsers = lazy(() => import('./pages/admin/ManageUsers.tsx'));
+const ManageContent = lazy(() => import('./pages/admin/ManageContent.tsx'));
+const ProtectedRoute = lazy(() => import('./components/ProtectedRoute.tsx'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p className="mt-4 text-slate-600 dark:text-slate-400">Loading...</p>
+    </div>
+  </div>
+);
 
 // --- Root Layout with Providers ---
 const RootLayout: React.FC = () => {
@@ -70,7 +80,9 @@ const MainLayout: React.FC = () => {
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
-            <Outlet />
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>
@@ -85,42 +97,44 @@ const router = createHashRouter(
       {/* Main App Routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/flashcards" element={<Flashcards />} />
-        <Route path="/practice" element={<Quizzes />} />
-        <Route path="/ai-buddy" element={<ExamWithAI />} />
-        <Route path="/question-search" element={<QuestionSearch />} />
-        <Route path="/study-guides" element={<StudyGuides />} />
-        <Route path="/games" element={<EducationalGames />} />
-        <Route path="/games/memory-match" element={<MemoryMatchGame />} />
-        <Route path="/games/subject-sprint" element={<SubjectSprintGame />} />
-        <Route path="/performance" element={<Performance />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/career-institutions" element={<CareerInstitutions />} />
-        <Route path="/challenge" element={<UtmeChallenge />} />
-        <Route path="/literature" element={<ComingSoon title="UTME Literature Books" />} />
-        <Route path="/dictionary" element={<ComingSoon title="Dictionary" />} />
+        <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+        <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
+        <Route path="/practice" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
+        <Route path="/ai-buddy" element={<Suspense fallback={<PageLoader />}><ExamWithAI /></Suspense>} />
+        <Route path="/question-search" element={<Suspense fallback={<PageLoader />}><QuestionSearch /></Suspense>} />
+        <Route path="/study-guides" element={<Suspense fallback={<PageLoader />}><StudyGuides /></Suspense>} />
+        <Route path="/games" element={<Suspense fallback={<PageLoader />}><EducationalGames /></Suspense>} />
+        <Route path="/games/memory-match" element={<Suspense fallback={<PageLoader />}><MemoryMatchGame /></Suspense>} />
+        <Route path="/games/subject-sprint" element={<Suspense fallback={<PageLoader />}><SubjectSprintGame /></Suspense>} />
+        <Route path="/performance" element={<Suspense fallback={<PageLoader />}><Performance /></Suspense>} />
+        <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
+        <Route path="/career-institutions" element={<Suspense fallback={<PageLoader />}><CareerInstitutions /></Suspense>} />
+        <Route path="/challenge" element={<Suspense fallback={<PageLoader />}><UtmeChallenge /></Suspense>} />
+        <Route path="/literature" element={<Suspense fallback={<PageLoader />}><ComingSoon title="UTME Literature Books" /></Suspense>} />
+        <Route path="/dictionary" element={<Suspense fallback={<PageLoader />}><ComingSoon title="Dictionary" /></Suspense>} />
       </Route>
 
       {/* Admin Routes */}
       <Route
         path="/admin"
         element={
-          <ProtectedRoute adminOnly>
-            <AdminLayout />
-          </ProtectedRoute>
+          <Suspense fallback={<PageLoader />}>
+            <ProtectedRoute adminOnly>
+              <AdminLayout />
+            </ProtectedRoute>
+          </Suspense>
         }
       >
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<AdminDashboard />} />
-        <Route path="users" element={<ManageUsers />} />
-        <Route path="content" element={<ManageContent />} />
+        <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
+        <Route path="users" element={<Suspense fallback={<PageLoader />}><ManageUsers /></Suspense>} />
+        <Route path="content" element={<Suspense fallback={<PageLoader />}><ManageContent /></Suspense>} />
       </Route>
 
       {/* Fullscreen route */}
       <Route
         path="/take-examination"
-        element={<TakeExamination />}
+        element={<Suspense fallback={<PageLoader />}><TakeExamination /></Suspense>}
       />
 
       {/* Fallback */}
