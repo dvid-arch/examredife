@@ -82,31 +82,6 @@ const TakeExamination: React.FC = () => {
         return false;
     };
 
-    // BLOCK ACCESS: Check immediately and redirect if invalid
-    const isValidAccess =
-        sessionStorage.getItem('practiceStarted') === 'true' &&
-        validatePracticeState(location.state) &&
-        sessionStorage.getItem('practiceExited') !== 'true' &&
-        sessionStorage.getItem('practiceCompleted') !== 'true';
-
-    // If invalid access, redirect immediately without rendering anything
-    if (!isValidAccess) {
-        navigate('/practice', { replace: true });
-        return null; // Don't render anything
-    }
-
-    // Monitor for invalid access during navigation (back/forward)
-    useEffect(() => {
-        const currentIsValid =
-            sessionStorage.getItem('practiceStarted') === 'true' &&
-            validatePracticeState(location.state) &&
-            sessionStorage.getItem('practiceExited') !== 'true' &&
-            sessionStorage.getItem('practiceCompleted') !== 'true';
-
-        if (!currentIsValid) {
-            navigate('/practice', { replace: true });
-        }
-    }, [location.state, navigate]);
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [activeSubject, setActiveSubject] = useState<string>('');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -118,6 +93,40 @@ const TakeExamination: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     const examTitle = location.state?.examTitle;
+
+    // Monitor for invalid access during navigation (back/forward) or initial load
+    useEffect(() => {
+        // If we are finished, we are allowed to stay (to view results)
+        if (isFinished) return;
+
+        const currentIsValid =
+            sessionStorage.getItem('practiceStarted') === 'true' &&
+            validatePracticeState(location.state) &&
+            sessionStorage.getItem('practiceExited') !== 'true' &&
+            sessionStorage.getItem('practiceCompleted') !== 'true';
+
+        if (!currentIsValid) {
+            navigate('/practice', { replace: true });
+        }
+    }, [location.state, navigate, isFinished]);
+
+    // Check if access is valid for rendering content
+    // We re-calculate this here to gate the UI, but we allow 'isFinished' to override 'practiceCompleted' check
+    const isAccessIllegal = useMemo(() => {
+        if (isFinished) return false; // Authorized if finished (viewing results)
+
+        const validState =
+            sessionStorage.getItem('practiceStarted') === 'true' &&
+            validatePracticeState(location.state) &&
+            sessionStorage.getItem('practiceExited') !== 'true' &&
+            sessionStorage.getItem('practiceCompleted') !== 'true';
+
+        return !validState;
+    }, [isFinished, location.state]);
+
+    if (isAccessIllegal) {
+        return null; // Redirect handled by effect
+    }
 
     // Check if practice was already completed
     useEffect(() => {
@@ -135,7 +144,12 @@ const TakeExamination: React.FC = () => {
     const handleSubmit = useCallback(async () => {
         if (isFinished) return;
 
-        const questionsForScoring = isAuthenticated ? questions : questions.slice(0, GUEST_QUESTION_LIMIT);
+        // Guest scoring: limited to GUEST_QUESTION_LIMIT?
+        // Actually, if we allow them to answer ANY 5 questions, we should score them on the whole exam?
+        // Or just the ones they answered?
+        // The previous logic sliced questions. Now strictly speaking, any question COULD be answered.
+        // Let's just score normally based on userAnswers.
+        const questionsForScoring = questions;
 
         let score = 0;
         questionsForScoring.forEach(q => {
@@ -369,11 +383,14 @@ const TakeExamination: React.FC = () => {
         }
     };
 
+    // New Guest Logic: "All questions are opened... once user has answered 5... the rest are locked"
+    const guestAnswerLimitReached = useMemo(() => {
+        if (isAuthenticated) return false;
+        return Object.keys(userAnswers).length >= GUEST_QUESTION_LIMIT;
+    }, [isAuthenticated, userAnswers]);
+
     const handleNextQuestion = () => {
-        if (!isAuthenticated && currentQuestionIndex >= GUEST_QUESTION_LIMIT - 1) {
-            setShowLoginPrompt(true);
-            return;
-        }
+        // Allow navigation always
         if (currentQuestionIndex < questions.length - 1) {
             const nextQuestion = questions[currentQuestionIndex + 1];
             if (nextQuestion.subject !== activeSubject) {
@@ -395,16 +412,26 @@ const TakeExamination: React.FC = () => {
 
     const handleSelectOption = (questionId: string, optionKey: string) => {
         if (isFinished) return;
+
+        // Guest Limit Check:
+        if (!isAuthenticated) {
+            const isAlreadyAnswered = userAnswers[questionId] !== undefined;
+            // If trying to answer a NEW question and limit is reached
+            if (!isAlreadyAnswered && guestAnswerLimitReached) {
+                setShowLoginPrompt(true);
+                return;
+            }
+        }
+
         setUserAnswers(prev => ({ ...prev, [questionId]: optionKey }));
     };
 
     const handleJumpToQuestion = (index: number) => {
-        if (!isAuthenticated && index >= GUEST_QUESTION_LIMIT) {
-            setShowLoginPrompt(true);
-            return;
-        }
         const question = questions[index];
-        if (question && question.subject !== activeSubject) {
+        if (!question) return;
+
+        // Navigation is allowed for all, no checks here anymore
+        if (question.subject !== activeSubject) {
             setActiveSubject(question.subject);
         }
         setCurrentQuestionIndex(index);
@@ -412,6 +439,10 @@ const TakeExamination: React.FC = () => {
 
     const currentQuestion = questions[currentQuestionIndex];
     const canSubmit = Object.keys(userAnswers).length > 0;
+
+    // For Guests: Total is the Limit (5) for score denominator display? 
+    // Or should it be total questions in exam?
+    // "You got 3/5" implies you answered 3 out of 5 allowed.
     const totalQuestionsForSession = isAuthenticated ? questions.length : GUEST_QUESTION_LIMIT;
 
     // Handle login prompt in useEffect to avoid state updates during render
@@ -421,6 +452,7 @@ const TakeExamination: React.FC = () => {
             setShowLoginPrompt(false);
         }
     }, [showLoginPrompt, requestLogin]);
+
 
     if (isLoading) {
         return <div className="flex items-center justify-center h-full">Preparing your questions...</div>;
@@ -442,13 +474,13 @@ const TakeExamination: React.FC = () => {
 
     if (isFinished) {
         return (
-            <div className="flex items-center justify-center h-full bg-slate-100 p-4">
-                <div className="text-center bg-white p-8 sm:p-12 rounded-lg shadow-xl max-w-lg w-full">
-                    <h1 className="text-3xl font-bold text-slate-800">Session Complete!</h1>
-                    <p className="text-slate-600 mt-2">Here is your score:</p>
-                    <p className="text-7xl font-extrabold text-primary my-6">{finalScore} <span className="text-5xl text-slate-500">/ {totalQuestionsForSession}</span></p>
+            <div className="flex items-center justify-center h-full bg-slate-100 dark:bg-gray-900 p-4">
+                <div className="text-center bg-white dark:bg-gray-800 p-8 sm:p-12 rounded-lg shadow-xl max-w-lg w-full transition-colors duration-200">
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Session Complete!</h1>
+                    <p className="text-slate-600 dark:text-gray-300 mt-2">Here is your score:</p>
+                    <p className="text-7xl font-extrabold text-primary my-6 dark:text-green-400">{finalScore} <span className="text-5xl text-slate-500 dark:text-gray-500">/ {totalQuestionsForSession}</span></p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link to="/practice" replace className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light transition-colors">
+                        <Link to="/practice" replace className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light dark:hover:bg-gray-700 transition-colors">
                             New Practice
                         </Link>
                         <Link to="/performance" replace className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
@@ -456,8 +488,8 @@ const TakeExamination: React.FC = () => {
                         </Link>
                     </div>
                     {!isAuthenticated && (
-                        <div className="mt-8 border-t pt-6">
-                            <p className="text-slate-600 mb-3">Want to save this result and track your progress?</p>
+                        <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                            <p className="text-slate-600 dark:text-gray-300 mb-3">Want to save this result and track your progress?</p>
                             <button onClick={requestLogin} className="bg-secondary text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">
                                 Login to Save Score
                             </button>
@@ -562,12 +594,12 @@ const TakeExamination: React.FC = () => {
                                     disabled={currentQuestionIndex === 0}
                                     className="font-semibold text-white bg-blue-600 py-2 px-5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:bg-gray-400 transition-colors flex items-center gap-2"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                                     Previous
                                 </button>
                                 <button
                                     onClick={handleNextQuestion}
-                                    disabled={currentQuestionIndex === totalQuestionsForSession - 1}
+                                    disabled={currentQuestionIndex === questions.length - 1}
                                     className="font-semibold text-white bg-green-500 py-2 px-5 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:bg-gray-400 transition-colors flex items-center gap-2"
                                 >
                                     Next
@@ -602,12 +634,26 @@ const TakeExamination: React.FC = () => {
                                                 const isCurrent = globalIndex === currentQuestionIndex;
                                                 const isAnswered = userAnswers[q.id] !== undefined;
 
-                                                let buttonClass = 'border border-gray-300 text-slate-700 hover:bg-gray-100';
-                                                if (isAnswered) buttonClass = 'bg-green-100 border-green-300 text-green-800';
-                                                if (isCurrent) buttonClass = 'bg-primary text-white border-green-700 ring-2 ring-offset-1 ring-primary';
+                                                // Guest logic: visual lock?
+                                                // If we have answered 5 questions, UNANSWERED questions should perhaps look locked?
+                                                // But the user said "all questions are opened... once... answered 5... rest are locked"
+                                                // So if !isAnswered and limitReached, show lock.
 
-                                                if (!isAuthenticated && globalIndex >= GUEST_QUESTION_LIMIT) {
-                                                    buttonClass = 'border border-gray-300 bg-gray-200 text-gray-400 cursor-pointer';
+                                                let isLocked = false;
+                                                if (!isAuthenticated && guestAnswerLimitReached && !isAnswered) {
+                                                    isLocked = true;
+                                                }
+
+                                                let buttonClass = 'border border-gray-300 text-slate-700 hover:bg-gray-100';
+
+                                                if (isLocked) {
+                                                    buttonClass = 'border border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed opacity-60';
+                                                } else if (isAnswered) {
+                                                    buttonClass = 'bg-green-100 border-green-300 text-green-800';
+                                                }
+
+                                                if (isCurrent) {
+                                                    buttonClass = 'bg-primary text-white border-green-700 ring-2 ring-offset-1 ring-primary';
                                                 }
 
                                                 return (
@@ -617,7 +663,13 @@ const TakeExamination: React.FC = () => {
                                                         className={`w-full aspect-square rounded-sm text-xs font-medium transition-all duration-150 ${buttonClass}`}
                                                         aria-label={`Go to ${subject} question ${localIndex + 1}`}
                                                     >
-                                                        {localIndex + 1}
+                                                        {isLocked ? (
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                                            </svg>
+                                                        ) : (
+                                                            localIndex + 1
+                                                        )}
                                                     </button>
                                                 );
                                             })}
