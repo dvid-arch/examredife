@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "mobile:sync": "npm run build && cd mobile && npx cap sync"
   },
   "dependencies": {
     "@google/genai": "^1.28.0",
