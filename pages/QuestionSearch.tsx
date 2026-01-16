@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Card from '../components/Card.tsx';
-import { PastQuestion, PastPaper } from '../types.ts';
+import { PastQuestion, PastPaper, StudyGuide } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { pastPapersData } from '../data/pastQuestions.ts';
+import apiService from '../services/apiService.ts';
+import { Link } from 'react-router-dom';
 
 
 interface SearchResult extends PastQuestion {
@@ -26,11 +28,13 @@ const QuestionSearch: React.FC = () => {
     const { isAuthenticated, requestLogin } = useAuth();
     const [activeTab, setActiveTab] = useState<'browse' | 'search'>('browse');
     const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
+    const [allGuides, setAllGuides] = useState<StudyGuide[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     // Search state
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<SearchResult[]>([]);
+    const [questionResults, setQuestionResults] = useState<SearchResult[]>([]);
+    const [guideResults, setGuideResults] = useState<StudyGuide[]>([]);
     const [totalResultsCount, setTotalResultsCount] = useState(0);
     const [hasSearched, setHasSearched] = useState(false);
 
@@ -40,23 +44,26 @@ const QuestionSearch: React.FC = () => {
     const [expandedPaperId, setExpandedPaperId] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchPapers = async () => {
+        const fetchData = async () => {
             try {
-                // Use imported data instead of API call
                 setAllPapers(pastPapersData);
+                const guides = await apiService<StudyGuide[]>('/data/guides');
+                setAllGuides(guides);
             } catch (error) {
-                console.error("Failed to fetch past papers:", error);
+                console.error("Failed to fetch search data:", error);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchPapers();
+        fetchData();
     }, []);
 
     const performSearch = useCallback((searchQuery: string) => {
         if (!searchQuery.trim()) return;
 
         const lowerCaseQuery = searchQuery.toLowerCase();
+
+        // Search Questions
         const allQuestions: SearchResult[] = allPapers.flatMap(paper =>
             paper.questions.map(q => ({
                 ...q,
@@ -66,23 +73,32 @@ const QuestionSearch: React.FC = () => {
             }))
         );
 
-        const filteredResults = allQuestions.filter(q => {
+        const filteredQuestions = allQuestions.filter(q => {
             const questionText = q.question.toLowerCase();
             const optionsText = Object.values(q.options).map(o => o.text).join(' ').toLowerCase();
             return questionText.includes(lowerCaseQuery) || optionsText.includes(lowerCaseQuery);
         });
-        
-        setTotalResultsCount(filteredResults.length);
+
+        // Search Guides
+        const filteredGuides = allGuides.filter(g =>
+            g.title.toLowerCase().includes(lowerCaseQuery) ||
+            g.subject.toLowerCase().includes(lowerCaseQuery) ||
+            g.content.toLowerCase().includes(lowerCaseQuery)
+        );
+
+        setTotalResultsCount(filteredQuestions.length + filteredGuides.length);
 
         if (isAuthenticated) {
-            setResults(filteredResults);
+            setQuestionResults(filteredQuestions);
+            setGuideResults(filteredGuides);
         } else {
-            setResults(filteredResults.slice(0, GUEST_RESULT_LIMIT));
+            setQuestionResults(filteredQuestions.slice(0, GUEST_RESULT_LIMIT));
+            setGuideResults(filteredGuides.slice(0, 1)); // Guest limit for guides
         }
 
         setHasSearched(true);
-    }, [isAuthenticated, allPapers]);
-    
+    }, [isAuthenticated, allPapers, allGuides]);
+
     useEffect(() => {
         const initialQuery = location.state?.query;
         if (typeof initialQuery === 'string' && allPapers.length > 0) {
@@ -119,7 +135,7 @@ const QuestionSearch: React.FC = () => {
     const handleTogglePaper = (paperId: string) => {
         setExpandedPaperId(prevId => (prevId === paperId ? null : paperId));
     };
-    
+
     const highlightQuery = (text: string, highlight: string): string => {
         if (!highlight.trim()) {
             return text;
@@ -144,7 +160,7 @@ const QuestionSearch: React.FC = () => {
                             {subjects.map(s => <option key={s} value={s}>{s === 'all' ? 'All Subjects' : s}</option>)}
                         </select>
                     </div>
-                     <div className="flex-1">
+                    <div className="flex-1">
                         <label htmlFor="year-filter" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Filter by Year</label>
                         <select
                             id="year-filter"
@@ -152,13 +168,13 @@ const QuestionSearch: React.FC = () => {
                             onChange={(e) => setSelectedYear(e.target.value)}
                             className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                           {years.map(y => <option key={y} value={y}>{y === 'all' ? 'All Years' : y}</option>)}
+                            {years.map(y => <option key={y} value={y}>{y === 'all' ? 'All Years' : y}</option>)}
                         </select>
                     </div>
                 </div>
                 <div className="border-t border-gray-200 dark:border-slate-700 pt-4">
                     {isLoading ? (
-                         <p className="text-center text-slate-500 py-10">Loading papers...</p>
+                        <p className="text-center text-slate-500 py-10">Loading papers...</p>
                     ) : filteredPapers.length > 0 ? (
                         <div className="space-y-2">
                             {filteredPapers.map(paper => (
@@ -224,7 +240,7 @@ const QuestionSearch: React.FC = () => {
             <div>
                 <form onSubmit={handleSearchFormSubmit} className="flex gap-2">
                     <div className="relative flex-grow">
-                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <SearchIcon />
                         </span>
                         <input
@@ -249,67 +265,86 @@ const QuestionSearch: React.FC = () => {
                             <div className="bg-primary-light text-primary rounded-full p-4 inline-block mb-6">
                                 <BookOpenIcon />
                             </div>
-                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Find Questions Instantly</h2>
+                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Global Search</h2>
                             <p className="text-slate-600 dark:text-slate-300 max-w-md">
-                                Enter a topic, keyword, or phrase in the search bar above to find relevant past questions from our database.
+                                Enter a topic, keyword, or phrase to find matching Past Questions and Study Guides.
                             </p>
                         </div>
-                    ) : results.length > 0 ? (
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
-                                Found {totalResultsCount} question{totalResultsCount > 1 ? 's' : ''} for "{query}"
-                            </h2>
-                            <div className="space-y-6">
-                                {results.map((q, index) => (
-                                    <div key={q.id} className="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-200 dark:border-slate-700">
-                                        <div className="flex justify-between items-start text-sm text-slate-500 dark:text-slate-400 mb-2">
-                                            <span>Question {index + 1}</span>
-                                            <span className="font-semibold">{q.subject} - {q.exam} {q.year}</span>
-                                        </div>
-                                        <QuestionRenderer
-                                            question={q}
-                                            questionContent={highlightQuery(q.question, query)}
-                                            className="text-lg text-slate-800 dark:text-slate-200 mb-2"
-                                            imageClassName="max-w-md"
-                                        />
-                                        <div className="space-y-2">
-                                            {Object.keys(q.options).map(key => {
-                                                const value = q.options[key];
-                                                const isCorrect = key === q.answer;
-                                                return (
-                                                    <div key={key} className={`p-3 rounded-md flex items-start gap-3 text-sm ${isCorrect ? 'bg-green-100 dark:bg-green-500/20 text-green-900 dark:text-green-200 font-semibold' : 'bg-white dark:bg-slate-700'}`}>
-                                                         <div className="flex-1">
-                                                            <div className="flex items-start gap-2">
-                                                                <span className={`font-bold ${isCorrect ? 'text-green-900 dark:text-green-200' : 'text-slate-800 dark:text-slate-200'}`}>{key}.</span>
-                                                                <div className={isCorrect ? 'text-green-900 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}><MarkdownRenderer content={highlightQuery(value.text, query)} /></div>
-                                                            </div>
-                                                            {value.diagram && (
-                                                                <div className="mt-2 pl-6">
-                                                                    <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-[200px] h-auto rounded-md border bg-white" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
+                    ) : (questionResults.length > 0 || guideResults.length > 0) ? (
+                        <div className="space-y-10">
+                            {guideResults.length > 0 && (
+                                <section>
+                                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">📖</div>
+                                        Study Guides ({guideResults.length})
+                                    </h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {guideResults.map(guide => (
+                                            <Link key={guide.id} to="/guides" state={{ viewGuide: guide }} className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                                                <h3 className="font-bold text-slate-800 dark:text-white">{guide.title}</h3>
+                                                <p className="text-xs text-slate-500 mt-1 uppercase font-semibold">{guide.subject}</p>
+                                            </Link>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                            {!isAuthenticated && totalResultsCount > results.length && (
-                                <div className="text-center mt-8 p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border dark:border-slate-700">
-                                    <p className="font-semibold text-slate-700 dark:text-slate-200">You're viewing {results.length} of {totalResultsCount} results.</p>
-                                    <p className="text-slate-600 dark:text-slate-300 mt-1 mb-4">Create a free account to see all results.</p>
-                                    <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-accent transition-colors">
-                                        Sign Up to View All
+                                </section>
+                            )}
+
+                            {questionResults.length > 0 && (
+                                <section>
+                                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">📝</div>
+                                        Past Questions ({questionResults.length})
+                                    </h2>
+                                    <div className="space-y-6">
+                                        {questionResults.map((q, index) => (
+                                            <div key={q.id} className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <div className="flex justify-between items-start text-sm text-slate-500 dark:text-slate-400 mb-2">
+                                                    <span>Question {index + 1}</span>
+                                                    <span className="font-semibold">{q.subject} - {q.exam} {q.year}</span>
+                                                </div>
+                                                <QuestionRenderer
+                                                    question={q}
+                                                    questionContent={highlightQuery(q.question, query)}
+                                                    className="text-lg text-slate-800 dark:text-slate-200 mb-4"
+                                                    imageClassName="max-w-md"
+                                                />
+                                                <div className="space-y-2">
+                                                    {Object.keys(q.options).map(key => {
+                                                        const value = q.options[key];
+                                                        const isCorrect = key === q.answer;
+                                                        return (
+                                                            <div key={key} className={`p-3 rounded-md flex items-start gap-3 text-sm ${isCorrect ? 'bg-green-100 dark:bg-green-500/20 text-green-900 dark:text-green-200 font-semibold' : 'bg-gray-50 dark:bg-slate-700'}`}>
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-start gap-2">
+                                                                        <span className={`font-bold ${isCorrect ? 'text-green-900 dark:text-green-200' : 'text-slate-800 dark:text-slate-200'}`}>{key}.</span>
+                                                                        <div className={isCorrect ? 'text-green-900 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}><MarkdownRenderer content={highlightQuery(value.text, query)} /></div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {!isAuthenticated && totalResultsCount > (questionResults.length + guideResults.length) && (
+                                <div className="text-center p-6 bg-primary-light dark:bg-primary/10 rounded-xl border border-primary/20">
+                                    <p className="font-bold text-slate-800 dark:text-white">Sign up to unlock all {totalResultsCount} results!</p>
+                                    <p className="text-slate-600 dark:text-slate-300 mt-1 mb-4">You're currently seeing a limited preview.</p>
+                                    <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-8 rounded-lg hover:bg-accent transition-colors shadow-lg">
+                                        Create Free Account
                                     </button>
                                 </div>
                             )}
                         </div>
                     ) : (
-                        <div className="text-center py-10">
-                             <h2 className="text-2xl font-bold text-slate-700 dark:text-white">No Results Found</h2>
-                            <p className="text-slate-500 dark:text-slate-400 mt-2">We couldn't find any questions matching "{query}". Try a different search term.</p>
+                        <div className="text-center py-20">
+                            <div className="text-5xl mb-4">🔍</div>
+                            <h2 className="text-2xl font-bold text-slate-700 dark:text-white">No Results Found</h2>
+                            <p className="text-slate-500 dark:text-slate-400 mt-2">We couldn't find anything matching "{query}". Try a broader search term.</p>
                         </div>
                     )}
                 </div>
@@ -322,7 +357,7 @@ const QuestionSearch: React.FC = () => {
             <Card>
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Past Questions</h1>
                 <p className="text-slate-600 dark:text-slate-300 mt-2">Browse the library of past papers or search for specific questions by keyword.</p>
-                 <div className="mt-6 flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800 max-w-md">
+                <div className="mt-6 flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800 max-w-md">
                     <button
                         onClick={() => setActiveTab('browse')}
                         className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${activeTab === 'browse' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}

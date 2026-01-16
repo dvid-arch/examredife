@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { generateStudyGuide } from '../services/aiService.ts';
 import { StudyGuide } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import apiService from '../services/apiService.ts';
 
 
@@ -23,11 +25,11 @@ const GuideIcon = () => (
 
 const GuideModal: React.FC<{ guide: StudyGuide, onClose: () => void }> = ({ guide, onClose }) => {
     return (
-        <div 
+        <div
             className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-3 sm:p-4 overflow-y-auto"
             onClick={onClose}
         >
-            <div 
+            <div
                 className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col my-4 sm:my-0"
                 onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
             >
@@ -38,7 +40,7 @@ const GuideModal: React.FC<{ guide: StudyGuide, onClose: () => void }> = ({ guid
                     </div>
                     <button onClick={onClose} className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
@@ -100,7 +102,9 @@ const AccordionItem: React.FC<{
 };
 
 const StudyGuides: React.FC = () => {
+    const location = useLocation();
     const { isAuthenticated, user, requestLogin, requestUpgrade, useAiCredit } = useAuth();
+    const { addActivity } = useUserProgress();
     const [allStudyGuides, setAllStudyGuides] = useState<StudyGuide[]>([]);
     const [isGuidesLoading, setIsGuidesLoading] = useState(true);
     const [subject, setSubject] = useState('');
@@ -110,6 +114,22 @@ const StudyGuides: React.FC = () => {
     const [error, setError] = useState('');
     const [hasGenerated, setHasGenerated] = useState(false);
     const [viewingGuide, setViewingGuide] = useState<StudyGuide | null>(null);
+
+    useEffect(() => {
+        if (location.state?.viewGuide) {
+            setViewingGuide(location.state.viewGuide);
+        }
+    }, [location.state]);
+
+    const handleViewGuide = (guide: StudyGuide) => {
+        setViewingGuide(guide);
+        addActivity({
+            id: guide.id,
+            title: guide.title,
+            path: '/guides',
+            type: 'guide'
+        });
+    };
 
     useEffect(() => {
         const fetchGuides = async () => {
@@ -127,7 +147,7 @@ const StudyGuides: React.FC = () => {
 
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!isAuthenticated || !user) {
             requestLogin();
             return;
@@ -146,9 +166,9 @@ const StudyGuides: React.FC = () => {
             });
             return;
         }
-        
+
         if (user.aiCredits <= 0) {
-             requestUpgrade({
+            requestUpgrade({
                 title: "You're out of AI Credits",
                 message: "You've used all your AI Credits for this month. Your credits will reset on your next billing cycle.",
                 featureList: [
@@ -164,7 +184,7 @@ const StudyGuides: React.FC = () => {
             setError('Please provide both a subject and a topic.');
             return;
         }
-        
+
         setIsLoading(true);
         setError('');
         setGeneratedGuide('');
@@ -174,6 +194,13 @@ const StudyGuides: React.FC = () => {
             const guideContent = await generateStudyGuide(subject, topic);
             setGeneratedGuide(guideContent);
             await useAiCredit(); // Deduct one credit and refetch user
+
+            addActivity({
+                id: `guide-gen-${Date.now()}`,
+                title: topic,
+                path: '/guides',
+                type: 'guide'
+            });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
             setError(errorMessage);
@@ -204,7 +231,7 @@ const StudyGuides: React.FC = () => {
                                     key={subject}
                                     subject={subject}
                                     guides={guides}
-                                    onGuideClick={setViewingGuide}
+                                    onGuideClick={handleViewGuide}
                                 />
                             ))}
                         </div>
@@ -215,18 +242,18 @@ const StudyGuides: React.FC = () => {
             <Card>
                 <form onSubmit={handleGenerate} className="space-y-6 p-2">
                     <div className="text-center">
-                         <div className="inline-block p-3 bg-primary-light dark:bg-primary/20 rounded-full mb-3">
+                        <div className="inline-block p-3 bg-primary-light dark:bg-primary/20 rounded-full mb-3">
                             <GuideIcon />
                         </div>
                         <h1 className="text-3xl font-bold text-slate-800 dark:text-white">AI Guide Generator</h1>
                         <p className="text-slate-600 dark:text-slate-400 mt-2">Can't find what you need? Create a custom study guide on any topic.</p>
-                         {user?.subscription === 'pro' && (
+                        {user?.subscription === 'pro' && (
                             <p className="text-sm font-semibold text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-500/20 px-3 py-1 rounded-full inline-block mt-2">Costs 1 AI Credit</p>
                         )}
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div>
+                        <div>
                             <label htmlFor="subject" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
                             <input
                                 id="subject"
@@ -253,8 +280,8 @@ const StudyGuides: React.FC = () => {
                     </div>
 
                     <div className="flex justify-center pt-2">
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={isLoading}
                             className="w-full md:w-1/2 bg-primary text-white font-bold py-3 px-6 rounded-lg hover:bg-accent transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                         >

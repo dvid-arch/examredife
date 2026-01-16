@@ -7,6 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+examredi-server-standalone
 mobile
 server
 node_modules

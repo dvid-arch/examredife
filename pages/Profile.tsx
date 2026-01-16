@@ -49,7 +49,7 @@ const Profile: React.FC = () => {
 
     const handleSave = async () => {
         if (name.trim() === '') return;
-        if(updateUser) {
+        if (updateUser) {
             await updateUser({ name });
         }
         setIsEditing(false);
@@ -67,17 +67,17 @@ const Profile: React.FC = () => {
     if (!user) {
         return <Card><p className="p-8">Please log in to view your profile.</p></Card>;
     }
-    
+
     const today = new Date().toISOString().split('T')[0];
     const messagesUsedToday = user.lastMessageDate === today ? user.dailyMessageCount : 0;
     const freeMessagesRemaining = Math.max(0, 5 - messagesUsedToday);
 
     return (
         <div className="max-w-4xl mx-auto">
-             <Card className="p-0 overflow-hidden">
+            <Card className="p-0 overflow-hidden">
                 {/* Profile Header */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
-                     <img
+                    <img
                         src="https://picsum.photos/128"
                         alt="profile"
                         className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-slate-600 shadow-lg"
@@ -114,7 +114,7 @@ const Profile: React.FC = () => {
                     {/* Left Column */}
                     <div className="space-y-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2">Account</h2>
-                        
+
                         <div className="flex items-center gap-4">
                             <div className={`p-3 rounded-full ${user.subscription === 'pro' ? 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-600 dark:text-yellow-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'}`}>
                                 {user.subscription === 'pro' ? <ProIcon /> : <FreeIcon />}
@@ -128,7 +128,7 @@ const Profile: React.FC = () => {
                         </div>
 
                         {user.subscription === 'free' && (
-                             <button
+                            <button
                                 onClick={() => requestUpgrade({
                                     title: "Upgrade to ExamRedi Pro",
                                     message: "Unlock your full potential and get the best results with our premium features.",
@@ -142,10 +142,10 @@ const Profile: React.FC = () => {
                                 Upgrade to Pro
                             </button>
                         )}
-                        
+
                         <div className="pt-6 border-t dark:border-slate-700">
-                             <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-red-500 text-red-500 font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white transition-colors">
-                                <LogoutIcon/>
+                            <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-red-500 text-red-500 font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white transition-colors">
+                                <LogoutIcon />
                                 <span>Logout</span>
                             </button>
                         </div>
@@ -153,36 +153,50 @@ const Profile: React.FC = () => {
                     </div>
                     {/* Right Column */}
                     <div className="space-y-6">
-                         <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2">Usage</h2>
-                         
-                         {user.subscription === 'pro' ? (
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2">Usage</h2>
+
+                        {user.subscription === 'pro' ? (
                             <>
-                                <StatItem 
-                                    icon={<CreditsIcon/>} 
-                                    title="AI Credits Remaining" 
-                                    value={user.aiCredits} 
+                                <StatItem
+                                    icon={<CreditsIcon />}
+                                    title="AI Credits Remaining"
+                                    value={user.aiCredits}
                                     detail="Used for generating guides & research."
-                                    progressBar={{value: user.aiCredits, max: 10}}
+                                    progressBar={{ value: user.aiCredits, max: 10 }}
                                 />
-                                <StatItem 
-                                    icon={<MessagesIcon/>} 
-                                    title="AI Tutor Messages" 
-                                    value="Unlimited" 
+                                <StatItem
+                                    icon={<MessagesIcon />}
+                                    title="AI Tutor Messages"
+                                    value="Unlimited"
                                     detail="You have unlimited access to the AI Tutor."
                                 />
                             </>
-                         ) : (
-                             <StatItem 
-                                icon={<MessagesIcon/>} 
-                                title="Free AI Tutor Messages" 
-                                value={`${freeMessagesRemaining} left`} 
+                        ) : (
+                            <StatItem
+                                icon={<MessagesIcon />}
+                                title="Free AI Tutor Messages"
+                                value={`${freeMessagesRemaining} left`}
                                 detail={`${messagesUsedToday} used today. Resets daily.`}
-                                progressBar={{value: freeMessagesRemaining, max: 5}}
+                                progressBar={{ value: freeMessagesRemaining, max: 5 }}
                             />
-                         )}
+                        )}
+
+                        <div className="pt-6">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2 mb-4">Mobile App Settings</h2>
+                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p className="font-semibold text-slate-800 dark:text-white">Biometric Login</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Use FaceID or Fingerprint to log in</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-             </Card>
+            </Card>
         </div>
     );
 };

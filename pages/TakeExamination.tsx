@@ -5,6 +5,7 @@ import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import { pastPapersData } from '../data/pastQuestions.ts';
 import apiService from '../services/apiService.ts';
 
@@ -59,6 +60,7 @@ const TakeExamination: React.FC = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user, requestLogin } = useAuth();
     const { showInstallBanner } = usePwaInstall();
+    const { addActivity } = useUserProgress();
 
     // Validate that the route was accessed properly with required state
     const validatePracticeState = (state: any) => {
@@ -183,7 +185,15 @@ const TakeExamination: React.FC = () => {
             }
         }
 
-    }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner]);
+        // Add to recent activity
+        addActivity({
+            id: `practice-${Date.now()}`,
+            title: examTitle || 'Practice Session',
+            path: '/practice',
+            type: 'quiz'
+        });
+
+    }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity]);
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
@@ -556,16 +566,36 @@ const TakeExamination: React.FC = () => {
                                         className="text-lg text-slate-800 mb-4 min-h-[40px]"
                                         forceLightMode={true}
                                     />
+
+                                    {isFinished && currentQuestion.explanation && (
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                            <p className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-1">Explanation</p>
+                                            <p className="text-blue-900"><MarkdownRenderer content={currentQuestion.explanation} forceLightMode={true} /></p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-4">
                                         {Object.keys(currentQuestion.options).map((key) => {
                                             const value = currentQuestion.options[key];
+                                            const isCorrect = key === currentQuestion.answer;
+                                            const isSelected = userAnswers[currentQuestion.id] === key;
+
+                                            let borderClass = 'border-gray-200 bg-white hover:border-primary-light';
+                                            if (isFinished) {
+                                                if (isCorrect) borderClass = 'border-green-500 bg-green-50';
+                                                else if (isSelected) borderClass = 'border-red-400 bg-red-50';
+                                            } else if (isSelected) {
+                                                borderClass = 'border-primary bg-primary-light';
+                                            }
+
                                             return (
-                                                <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all cursor-pointer ${userAnswers[currentQuestion.id] === key ? 'border-primary bg-primary-light' : 'border-gray-200 bg-white hover:border-primary-light'}`}>
+                                                <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all ${!isFinished ? 'cursor-pointer' : ''} ${borderClass}`}>
                                                     <input
                                                         type="radio"
                                                         name={currentQuestion.id}
                                                         value={key}
-                                                        checked={userAnswers[currentQuestion.id] === key}
+                                                        disabled={isFinished}
+                                                        checked={isSelected}
                                                         onChange={() => handleSelectOption(currentQuestion.id, key)}
                                                         className="mt-1 h-5 w-5 text-primary focus:ring-primary border-gray-300 flex-shrink-0"
                                                     />

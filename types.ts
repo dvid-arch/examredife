@@ -41,11 +41,12 @@ export interface PastQuestionOption {
 }
 
 export interface PastQuestion {
-  id:string;
+  id: string;
   question: string;
   questionDiagram?: string;
   options: { [key: string]: PastQuestionOption }; // e.g., { A: { text: 'Option A', diagram?: 'url' } }
   answer: string; // The key of the correct option, e.g., 'A'
+  explanation?: string; // Optional detailed explanation for the answer
 }
 
 export interface PastPaper {

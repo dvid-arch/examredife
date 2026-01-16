@@ -17,6 +17,7 @@ export const pastPapersData: PastPaper[] = [
           D: { text: 'Powerful' }
         },
         answer: 'B',
+        explanation: '"Ephemeral" means lasting for a very short time. Therefore, "short-lived" is the nearest in meaning.',
       },
       {
         id: 'eng2-14',
@@ -28,6 +29,7 @@ export const pastPapersData: PastPaper[] = [
           D: { text: 'sentenced' }
         },
         answer: 'A',
+        explanation: 'To be "acquitted" means to be found not guilty of a charge. It is the correct term for being cleared of charges.',
       },
       {
         id: 'eng3-14',
@@ -148,18 +150,21 @@ export const pastPapersData: PastPaper[] = [
         question: 'If 2x + 5 = 15, what is the value of x?',
         options: { A: { text: '5' }, B: { text: '10' }, C: { text: '7.5' }, D: { text: '2.5' } },
         answer: 'A',
+        explanation: 'To solve 2x + 5 = 15: Subtract 5 from both sides (2x = 10), then divide by 2 (x = 5).',
       },
       {
         id: 'math2-14',
         question: 'What is the area of a circle with a radius of 7cm? (Use $\\pi = 22/7$)',
         options: { A: { text: '$154 \\text{ cm}^2$' }, B: { text: '$44 \\text{ cm}^2$' }, C: { text: '$49 \\text{ cm}^2$' }, D: { text: '$144 \\text{ cm}^2$' } },
         answer: 'A',
+        explanation: 'Area = $\\pi r^2 = (22/7) \\times 7 \\times 7 = 154 \\text{ cm}^2$.',
       },
       {
         id: 'math3-14',
         question: 'Simplify the expression: 3a - 2b + 4a + 5b',
         options: { A: { text: '7a + 3b' }, B: { text: 'a + 3b' }, C: { text: '7a - 3b' }, D: { text: 'a - 3b' } },
         answer: 'A',
+        explanation: 'Combine like terms: (3a + 4a) + (-2b + 5b) = 7a + 3b.',
       },
       {
         id: 'math4-14',
@@ -205,6 +210,7 @@ export const pastPapersData: PastPaper[] = [
           D: { text: 'Transpiration' },
         },
         answer: 'B',
+        explanation: 'Mitosis is the process of cell division that results in two identical daughter cells.',
       },
       {
         id: 'bio2-14',

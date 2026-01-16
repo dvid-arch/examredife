@@ -8,14 +8,15 @@ import { MenuIcon, NAV_ITEMS, AiCreditsIcon, ProfileIcon, LogoutIcon } from '../
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import ThemeToggle from './ThemeToggle.tsx';
+import OfflineIndicator from './OfflineIndicator.tsx';
 
 const Logo = () => (
     <div className="flex items-center space-x-2">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7">
-            <rect x="4" y="4" width="12" height="3" rx="1.5" fill="#3B82F6"/>
-            <rect x="4" y="9" width="18" height="3" rx="1.5" fill="#EF4444"/>
-            <rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15"/>
-            <rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E"/>
+            <rect x="4" y="4" width="12" height="3" rx="1.5" fill="#3B82F6" />
+            <rect x="4" y="9" width="18" height="3" rx="1.5" fill="#EF4444" />
+            <rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15" />
+            <rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E" />
         </svg>
         <span className="font-bold text-xl text-slate-800 dark:text-white">ExamRedi</span>
     </div>
@@ -49,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         if (path === '/challenge') return 'UTME Challenge';
         if (path === '/literature') return 'UTME Literature Books';
         if (path === '/dictionary') return 'Dictionary';
-        
+
         // Find matching nav item, prioritizing more specific paths
         const matchingNavItems = NAV_ITEMS
             .filter(item => path.startsWith(item.path))
@@ -61,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         return 'Dashboard'; // Default fallback
     };
-    
+
     const pageTitle = getPageTitle();
 
     const handleSearch = (e: React.FormEvent) => {
@@ -71,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             setSearchQuery('');
         }
     };
-    
+
     const handleUpgradeClick = () => {
         requestUpgrade({
             title: "Upgrade to ExamRedi Pro",
@@ -104,8 +105,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <div className="w-full px-2 sm:px-4">
                 <div className="flex items-center justify-between gap-2 sm:gap-4 min-h-16">
                     <div className="flex items-center gap-2 min-w-0">
-                        <button 
-                            onClick={onMenuClick} 
+                        <button
+                            onClick={onMenuClick}
                             className="md:hidden flex-shrink-0 text-gray-600 dark:text-slate-300 hover:text-primary transition-colors p-1"
                             aria-label="Open navigation menu"
                         >
@@ -116,14 +117,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                         </div>
                         {/* Display Page Title on Desktop */}
                         <h1 className="hidden md:block text-lg lg:text-xl font-bold text-slate-800 dark:text-white whitespace-nowrap">
-                           {pageTitle}
+                            {pageTitle}
                         </h1>
                     </div>
-                    
+
                     {/* Search Bar - fills the gap */}
                     <div className="hidden md:flex flex-1 justify-center px-6 lg:px-12">
                         <form onSubmit={handleSearch} className="w-full max-w-sm relative" data-tour-id="search-bar">
-                             <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <SearchIcon />
                             </span>
                             <input
@@ -138,6 +139,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     </div>
 
                     <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
+                        <OfflineIndicator />
                         {isLoading ? (
                             <div className="flex items-center space-x-2 animate-pulse">
                                 <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700"></div>
@@ -147,7 +149,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                                 </div>
                             </div>
                         ) : isAuthenticated && user ? (
-                           <>
+                            <>
                                 {user.subscription === 'pro' ? (
                                     <div className="flex items-center gap-2 bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300 font-bold px-3 py-1.5 rounded-lg text-sm">
                                         <AiCreditsIcon />
@@ -169,9 +171,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                                             <span className="font-semibold text-sm text-gray-700 dark:text-slate-50">{user.name}</span>
                                             <p className="text-xs text-slate-600 dark:text-slate-400 capitalize">{user.subscription} User</p>
                                         </div>
-                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 dark:text-slate-400 transition-transform duration-200" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'}} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-500 dark:text-slate-400 transition-transform duration-200" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                                     </button>
-                                    
+
                                     {isDropdownOpen && (
                                         <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border dark:border-slate-600 py-1 z-30">
                                             <Link to="/profile" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
@@ -180,8 +182,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                                             </Link>
                                             <div className="flex items-center justify-between gap-3 px-4 py-2 text-sm text-slate-700 dark:text-slate-200">
                                                 <div className="flex items-center gap-3">
-                                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                                                   <span>Dark Mode</span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                                                    <span>Dark Mode</span>
                                                 </div>
                                                 <ThemeToggle />
                                             </div>
@@ -195,7 +197,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                                 </div>
                             </>
                         ) : (
-                             <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors text-sm">
+                            <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors text-sm">
                                 Login
                             </button>
                         )}

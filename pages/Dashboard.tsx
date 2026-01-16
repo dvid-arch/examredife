@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import OnboardingTour from '../components/OnboardingTour.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
 const PracticeIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
@@ -36,11 +37,11 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
         <div className="relative p-5 h-48 flex flex-col justify-between bg-slate-800 dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-primary/30 transition-all duration-300 overflow-hidden group-hover:-translate-y-1">
             {/* Watermark Icon */}
             <div className="absolute -right-5 -bottom-5 text-slate-700/50 dark:text-gray-700/50">
-                 {React.cloneElement(icon, { className: "h-24 w-24" })}
+                {React.cloneElement(icon, { className: "h-24 w-24" })}
             </div>
             <div className="relative z-10">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center ${colorClass}`}>
-                     {React.cloneElement(icon, { className: "h-6 w-6 text-white" })}
+                    {React.cloneElement(icon, { className: "h-6 w-6 text-white" })}
                 </div>
             </div>
             <div className="relative z-10 mt-auto">
@@ -53,26 +54,36 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
 
 const WelcomeBanner = () => {
     const { isAuthenticated, user } = useAuth();
-    const { canInstall, showInstallBanner } = usePwaInstall();
-    
+    const { streak } = useUserProgress();
+
     return (
         <div data-tour-id="welcome-banner" className="bg-primary text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
             <div className="absolute -right-8 -top-8 w-40 h-40 bg-green-600 rounded-full opacity-30"></div>
             <div className="absolute -left-12 bottom-4 w-40 h-40 bg-green-600 rounded-full opacity-20 transform rotate-45"></div>
             <div className="relative z-10">
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                    {isAuthenticated && user ? `Welcome back, ${user.name}!` : "Welcome to ExamRedi!"}
-                </h1>
-                <p className="mt-2 text-green-100 max-w-2xl">
-                     {isAuthenticated 
-                        ? "Ready to ace your exams? Let's dive into some practice questions or review your study guides."
-                        : "The best way to prepare for your exams. Dive into practice questions, AI-powered guides, and more."
-                     }
-                </p>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-bold">
+                            {isAuthenticated && user ? `Welcome back, ${user.name}!` : "Welcome to ExamRedi!"}
+                        </h1>
+                        <p className="mt-2 text-green-100 max-w-2xl">
+                            {isAuthenticated
+                                ? "Ready to ace your exams? Let's dive into some practice questions or review your study guides."
+                                : "The best way to prepare for your exams. Dive into practice questions, AI-powered guides, and more."
+                            }
+                        </p>
+                    </div>
+                    {isAuthenticated && (
+                        <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl text-center min-w-[80px]">
+                            <span className="block text-2xl font-bold">🔥 {streak}</span>
+                            <span className="text-xs uppercase font-semibold">Streak</span>
+                        </div>
+                    )}
+                </div>
                 <div className="mt-6 flex flex-col sm:flex-row gap-4">
                     <Link to="/practice" className="bg-white text-primary font-bold py-3 px-6 rounded-lg hover:bg-green-100 transition-colors duration-200 text-center">Start Practice Session</Link>
-                    <Link to={isAuthenticated ? "/performance" : "/practice"} className="bg-transparent border-2 border-white font-semibold py-3 px-6 rounded-lg hover:bg-white hover:text-primary transition-colors duration-200 text-center">
-                        {isAuthenticated ? "View Performance" : "Explore Features"}
+                    <Link to="/challenge" className="bg-transparent border-2 border-white font-semibold py-3 px-6 rounded-lg hover:bg-white hover:text-primary transition-colors duration-200 text-center">
+                        Take the Challenge
                     </Link>
                 </div>
             </div>
@@ -83,6 +94,7 @@ const WelcomeBanner = () => {
 
 const Dashboard: React.FC = () => {
     const { isAuthenticated } = useAuth();
+    const { recentActivity } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
 
     // Close tour when navigating away
@@ -99,9 +111,9 @@ const Dashboard: React.FC = () => {
         const tourCompleted = localStorage.getItem('examRediOnboardingCompleted');
         if (isAuthenticated && tourCompleted !== 'true') {
             const timer = setTimeout(() => {
-                 if (window.innerWidth >= 768) { // Only show on desktop
+                if (window.innerWidth >= 768) { // Only show on desktop
                     setShowTour(true);
-                 }
+                }
             }, 500);
             return () => clearTimeout(timer);
         }
@@ -111,60 +123,81 @@ const Dashboard: React.FC = () => {
         localStorage.setItem('examRediOnboardingCompleted', 'true');
         setShowTour(false);
     };
-    
+
     const tourSteps: {
         selector: string;
         title: string;
         content: string;
         position?: 'top' | 'bottom' | 'left' | 'right';
     }[] = [
-        {
-            selector: '[data-tour-id="welcome-banner"]',
-            title: 'Welcome to ExamRedi!',
-            content: "This is your dashboard, the starting point for all your study activities. Let's take a quick look around.",
-            position: 'bottom',
-        },
-        {
-            selector: '[data-tour-id="practice-tile"]',
-            title: 'Practice for Exams',
-            content: 'This is where you can take simulated UTME exams or create custom practice sessions on any subject.',
-            position: 'bottom',
-        },
-        {
-            selector: '[data-tour-id="ai-tutor-nav"]',
-            title: 'Your Personal AI Tutor',
-            content: "Stuck on a concept? Your AI-buddy is here to help you 24/7 with explanations, hints, and practice questions.",
-            position: 'right',
-        },
-        {
-            selector: '[data-tour-id="search-bar"]',
-            title: 'Search Past Questions',
-            content: 'Instantly find any past question by typing a keyword here. It\'s a powerful tool for focused study.',
-            position: 'bottom',
-        },
-        {
-            selector: '[data-tour-id="performance-nav"]',
-            title: 'Track Your Performance',
-            content: 'After completing quizzes, come here to see your scores, track your progress, and identify your strengths and weaknesses.',
-            position: 'right',
-        },
-    ];
+            {
+                selector: '[data-tour-id="welcome-banner"]',
+                title: 'Welcome to ExamRedi!',
+                content: "This is your dashboard, the starting point for all your study activities. Let's take a quick look around.",
+                position: 'bottom',
+            },
+            {
+                selector: '[data-tour-id="practice-tile"]',
+                title: 'Practice for Exams',
+                content: 'This is where you can take simulated UTME exams or create custom practice sessions on any subject.',
+                position: 'bottom',
+            },
+            {
+                selector: '[data-tour-id="ai-tutor-nav"]',
+                title: 'Your Personal AI Tutor',
+                content: "Stuck on a concept? Your AI-buddy is here to help you 24/7 with explanations, hints, and practice questions.",
+                position: 'right',
+            },
+            {
+                selector: '[data-tour-id="search-bar"]',
+                title: 'Search Past Questions',
+                content: 'Instantly find any past question by typing a keyword here. It\'s a powerful tool for focused study.',
+                position: 'bottom',
+            },
+            {
+                selector: '[data-tour-id="performance-nav"]',
+                title: 'Track Your Performance',
+                content: 'After completing quizzes, come here to see your scores, track your progress, and identify your strengths and weaknesses.',
+                position: 'right',
+            },
+        ];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {showTour && <OnboardingTour steps={tourSteps} onComplete={handleTourComplete} />}
             <WelcomeBanner />
 
-            <div>
-                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Explore Your Tools</h2>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {isAuthenticated && recentActivity.length > 0 && (
+                <section>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Continue Studying</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {recentActivity.map((activity) => (
+                            <Link key={activity.id} to={activity.path} className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
+                                    activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
+                                    }`}>
+                                    {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            <section>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Study Tools</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {tiles.map((tile) => (
                         <DashboardTile key={tile.title} {...tile} />
                     ))}
                 </div>
-            </div>
+            </section>
 
-             <div className="bg-white dark:bg-gray-900/80 p-3 rounded-lg shadow-sm text-center">
+            <div className="bg-white dark:bg-gray-900/80 p-3 rounded-lg shadow-sm text-center">
                 <p className="text-slate-700 dark:text-slate-300 text-sm">
                     <span className="font-bold text-primary mr-2">Tip:</span> Consistent practice is the key to mastering any subject. Try a new topic today!
                 </p>
