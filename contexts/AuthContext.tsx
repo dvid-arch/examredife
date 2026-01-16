@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (token && refreshToken) {
                 await fetchUserProfile();
             }
-            
+
             setIsLoading(false);
         };
         checkAuth();
@@ -122,9 +122,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 console.log('Tab became visible/focused. Tokens present:', !!token, !!refreshToken);
                 if (token && refreshToken) {
                     // attempt to refresh profile (apiService will rotate tokens if needed)
-                    fetchUserProfile().catch((error) => { 
+                    fetchUserProfile().catch((error) => {
                         console.error('Profile refresh failed on tab focus:', error);
-                        /* ignore errors here — fetchUserProfile will handle logout */ 
+                        /* ignore errors here — fetchUserProfile will handle logout */
                     });
                 }
             }
@@ -141,10 +141,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const handleAuthSuccess = async (data: any, navigatePath = '/dashboard') => {
         const { accessToken, refreshToken, ...userData } = data;
-        
+
         localStorage.setItem('authToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        
+
         // Verify the login by fetching the profile
         const profile = await fetchUserProfile();
         if (!profile) {
@@ -153,9 +153,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('refreshToken');
             throw new Error('Invalid credentials');
         }
-        
+
         setIsAuthModalOpen(false);
-        
+
         if (userData.role === 'admin') {
             navigate('/admin/dashboard');
         } else {
@@ -172,13 +172,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
             await handleAuthSuccess(data);
         } catch (error: any) {
+            // Log the raw error for debugging
+            console.error('Login error (raw):', error);
+            console.error('Login error details:', {
+                message: error?.message,
+                name: error?.name,
+                stack: error?.stack,
+                fullError: error
+            });
+
             // Clear any stale user data and tokens on failed login
             localStorage.removeItem('examRediUser');
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
             setUser(null);
             setIsAuthenticated(false);
-            
+
             // Provide user-friendly error messages
             const errorMessage = error?.message || 'Login failed';
             if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
@@ -202,13 +211,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
             await handleAuthSuccess(data);
         } catch (error: any) {
+            // Log the raw error for debugging
+            console.error('Registration error (raw):', error);
+            console.error('Registration error details:', {
+                message: error?.message,
+                name: error?.name,
+                stack: error?.stack,
+                fullError: error
+            });
+
             // Clear any stale user data and tokens on failed register
             localStorage.removeItem('examRediUser');
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
             setUser(null);
             setIsAuthenticated(false);
-            
+
             // Provide user-friendly error messages
             const errorMessage = error?.message || 'Registration failed';
             if (errorMessage.includes('409') || errorMessage.includes('already exists')) {
@@ -242,7 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             navigate('/dashboard');
         }
     };
-    
+
     const requestLogin = () => {
         setIsAuthModalOpen(true);
     };
@@ -251,7 +269,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUpgradeRequest(request);
         setIsUpgradeModalOpen(true);
     };
-    
+
     const upgradeToPro = async () => {
         if (user) {
             try {
@@ -265,8 +283,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
                 setIsUpgradeModalOpen(false);
             } catch (error) {
-                 console.error("Failed to upgrade user:", error);
-                 alert("Could not complete upgrade. Please try again.");
+                console.error("Failed to upgrade user:", error);
+                alert("Could not complete upgrade. Please try again.");
             }
         }
     };
@@ -285,17 +303,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // We refetch the profile to get the latest credit count.
         await fetchUserProfile();
     };
-    
+
     const incrementMessageCount = async (): Promise<{ success: boolean; remaining: number }> => {
         // Message count is handled on the backend. We refetch the profile.
         const updatedProfile = await fetchUserProfile();
-        if(!updatedProfile) return { success: false, remaining: 0 };
-        
+        if (!updatedProfile) return { success: false, remaining: 0 };
+
         if (updatedProfile.subscription === 'pro') return { success: true, remaining: Infinity };
-        
+
         const FREE_TIER_MESSAGES = 5;
         const remaining = FREE_TIER_MESSAGES - updatedProfile.dailyMessageCount;
-        
+
         return { success: remaining > 0, remaining };
     };
 

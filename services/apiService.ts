@@ -131,6 +131,13 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
             }
 
             const responseData = await response.json().catch(() => ({ message: response.statusText }));
+            console.error('API Error:', {
+                endpoint,
+                status: response.status,
+                statusText: response.statusText,
+                responseData,
+                fullError: responseData
+            });
             throw new Error(responseData.message || 'An API error occurred');
         }
 
