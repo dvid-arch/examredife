@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       middlewareMode: false,
       proxy: {
         '/api': {
-          target: 'https://examredi-server.onrender.com',
+          target: 'https://examredi-backend.onrender.com',
           changeOrigin: true,
           rewrite: (path) => path,
         }
