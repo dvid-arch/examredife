@@ -25,7 +25,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://examredi-server.onrender.com/api/$1"
+      "destination": "https://examredi-backend.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
