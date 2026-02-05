@@ -79,11 +79,11 @@ const MainLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-950 font-sans overflow-hidden">
+    <div className="flex h-screen h-[100dvh] bg-gray-100 dark:bg-gray-950 font-sans overflow-hidden">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 pb-24 sm:pb-4 sm:p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <Suspense fallback={<PageLoader />}>
               <Outlet />

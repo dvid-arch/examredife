@@ -6,8 +6,8 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+    isOpen: boolean;
+    onClose: () => void;
 }
 
 const AdminIcon = () => (
@@ -20,10 +20,10 @@ const AdminIcon = () => (
 const Logo = () => (
     <div className="flex items-center space-x-2 px-4 mb-6">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7">
-            <rect x="4" y="4" width="12" height="3" rx="1.5" fill="#3B82F6"/>
-            <rect x="4" y="9" width="18" height="3" rx="1.5" fill="#EF4444"/>
-            <rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15"/>
-            <rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E"/>
+            <rect x="4" y="4" width="12" height="3" rx="1.5" fill="#3B82F6" />
+            <rect x="4" y="9" width="18" height="3" rx="1.5" fill="#EF4444" />
+            <rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15" />
+            <rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E" />
         </svg>
         <span className="font-bold text-xl text-slate-800 dark:text-white">ExamRedi</span>
     </div>
@@ -39,8 +39,7 @@ const NavItem: React.FC<{ item: NavItemType }> = ({ item }) => {
             to={item.path}
             {...navLinkProps}
             className={({ isActive }) =>
-                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
-                isActive
+                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
                     ? 'bg-primary-light dark:bg-primary/20 text-primary font-semibold'
                     : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`
@@ -71,67 +70,67 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     };
 
     return (
-      <>
-        {/* Backdrop for mobile */}
-        <div
-            className={`fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden ${isOpen ? 'block' : 'hidden'}`}
-            onClick={onClose}
-            aria-hidden="true"
-        ></div>
+        <>
+            {/* Backdrop for mobile */}
+            <div
+                className={`fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden ${isOpen ? 'block' : 'hidden'}`}
+                onClick={onClose}
+                aria-hidden="true"
+            ></div>
 
-        <aside 
-            className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col p-4 transform transition-transform duration-300 ease-in-out z-40
+            <aside
+                className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col p-4 transform transition-transform duration-300 ease-in-out z-40 h-full max-h-screen max-h-[100dvh]
             ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             md:relative md:translate-x-0 md:z-auto`}
-        >
-            <Logo />
-            <nav className="flex-1 space-y-2 overflow-y-auto">
-                {NAV_ITEMS.map((item) => (
-                    <NavItem key={item.path} item={item} />
-                ))}
-            </nav>
+            >
+                <Logo />
+                <nav className="flex-1 space-y-2 overflow-y-auto">
+                    {NAV_ITEMS.map((item) => (
+                        <NavItem key={item.path} item={item} />
+                    ))}
+                </nav>
 
-            {user?.role === 'admin' && (
-                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
-                     <NavLink
-                        to="/admin"
-                        className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 font-semibold"
-                    >
-                        <AdminIcon />
-                        <span>Admin Panel</span>
-                    </NavLink>
-                </div>
-            )}
-
-            <div className="mt-auto space-y-2">
-                 {isLoading ? (
-                    <div className="animate-pulse space-y-2">
-                        <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-                        <div className="h-9 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                {user?.role === 'admin' && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
+                        <NavLink
+                            to="/admin"
+                            className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 font-semibold"
+                        >
+                            <AdminIcon />
+                            <span>Admin Panel</span>
+                        </NavLink>
                     </div>
-                ) : isAuthenticated && user ? (
-                    <>
-                        {user.subscription === 'free' ? (
-                            <button onClick={handleUpgradeClick} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-200">
-                                Upgrade to Pro
-                            </button>
-                        ) : (
-                           canInstall && (
-                                <button onClick={triggerInstallPrompt} className="w-full flex items-center justify-center gap-2 bg-secondary text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                                   <InstallAppIcon />
-                                   <span>Install App</span>
-                                </button>
-                            )
-                        )}
-                    </>
-                ) : (
-                    <button onClick={requestLogin} className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-accent transition-colors">
-                        Login / Sign Up
-                    </button>
                 )}
-            </div>
-        </aside>
-      </>
+
+                <div className="mt-auto space-y-2">
+                    {isLoading ? (
+                        <div className="animate-pulse space-y-2">
+                            <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                            <div className="h-9 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                        </div>
+                    ) : isAuthenticated && user ? (
+                        <>
+                            {user.subscription === 'free' ? (
+                                <button onClick={handleUpgradeClick} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-200">
+                                    Upgrade to Pro
+                                </button>
+                            ) : (
+                                canInstall && (
+                                    <button onClick={triggerInstallPrompt} className="w-full flex items-center justify-center gap-2 bg-secondary text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                        <InstallAppIcon />
+                                        <span>Install App</span>
+                                    </button>
+                                )
+                            )}
+                        </>
+                    ) : (
+                        <button onClick={requestLogin} className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-accent transition-colors">
+                            Login / Sign Up
+                        </button>
+                    )}
+                </div>
+            </aside>
+        </>
     );
 };
 
