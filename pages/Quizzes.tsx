@@ -38,13 +38,32 @@ const Quizzes: React.FC = () => {
     }, [allPapers]);
 
     // State for Standard Mode
-    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['English']);
+    // 1. First select the year
     const [standardSelectedYear, setStandardSelectedYear] = useState<'random' | number>('random');
+
+    // 2. Filter subjects available for that year
+    const displayedSubjects = useMemo(() => {
+        if (standardSelectedYear === 'random') return subjects;
+
+        return subjects.filter(subject => {
+            const hasPaperForYear = allPapers.some(p => p.subject === subject && p.year === standardSelectedYear);
+            return hasPaperForYear;
+        });
+    }, [subjects, allPapers, standardSelectedYear]);
+
+    // 3. Selection state (reset if subject disappears?)
+    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['English']);
+
     useEffect(() => {
         if (availableYears.length > 0) {
             setStandardSelectedYear(availableYears[0]);
         }
     }, [availableYears]);
+
+    // Reset selection if a selected subject is no longer available in the new year
+    useEffect(() => {
+        setSelectedSubjects(prev => prev.filter(s => displayedSubjects.includes(s)));
+    }, [standardSelectedYear, displayedSubjects]);
 
 
     // State for Custom Mode
@@ -172,10 +191,26 @@ const Quizzes: React.FC = () => {
                 <>
                     {practiceMode === 'standard' && (
                         <Card>
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">Choose Your Subjects ({selectedSubjects.length}/4)</h2>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects.</p>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">Configuration</h2>
+                            <div className="mt-4 mb-6">
+                                <label htmlFor="year-select" className="block text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">1. Select Year</label>
+                                <select
+                                    id="year-select"
+                                    value={String(standardSelectedYear)}
+                                    onChange={(e) => setStandardSelectedYear(e.target.value === 'random' ? 'random' : Number(e.target.value))}
+                                    className="w-full md:w-1/3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                                >
+                                    {availableYears.map(year => (
+                                        <option key={year} value={year}>{year}</option>
+                                    ))}
+                                    <option value="random">Random (All Years)</option>
+                                </select>
+                            </div>
+
+                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">2. Choose Your Subjects ({selectedSubjects.length}/4)</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects available for {standardSelectedYear === 'random' ? 'all time' : standardSelectedYear}.</p>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                {subjects.map(subject => (
+                                {displayedSubjects.map(subject => (
                                     <label
                                         key={subject}
                                         className={`flex items-center space-x-3 p-3 border rounded-lg transition-colors 
@@ -194,20 +229,7 @@ const Quizzes: React.FC = () => {
                                     </label>
                                 ))}
                             </div>
-                            <div className="mt-6">
-                                <label htmlFor="year-select" className="block text-xl font-bold text-slate-800 dark:text-slate-50 mb-2">Select Year</label>
-                                <select
-                                    id="year-select"
-                                    value={String(standardSelectedYear)}
-                                    onChange={(e) => setStandardSelectedYear(e.target.value === 'random' ? 'random' : Number(e.target.value))}
-                                    className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                                >
-                                    {availableYears.map(year => (
-                                        <option key={year} value={year}>{year}</option>
-                                    ))}
-                                    <option value="random">Random (All Years)</option>
-                                </select>
-                            </div>
+
                             <div className="flex justify-end mt-6">
                                 <button
                                     onClick={handleStartStandardExam}
