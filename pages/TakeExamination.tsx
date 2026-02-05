@@ -219,18 +219,17 @@ const TakeExamination: React.FC = () => {
                 preparedQuestions = customQuestions;
             } else {
                 try {
-                    // Try to fetch from API first, fallback to local
+                    // Try to fetch from API first
                     let papers: PastPaper[] = [];
                     try {
                         const apiData = await apiService<PastPaper[]>('/data/papers');
-                        papers = apiData.length > 0 ? apiData : pastPapersData;
+                        papers = apiData;
                     } catch (e) {
-                        console.warn("Failed to fetch papers in TakeExamination, using fallback", e);
-                        papers = pastPapersData;
+                        console.error("Failed to fetch papers in TakeExamination", e);
+                        papers = [];
                     }
 
-
-                    const numQuestions = questionsPerSubject || 10;
+                    const numQuestions = questionsPerSubject || 60;
                     let practiceSelections: { subject: string, year: 'random' | number }[] = [];
 
                     if (selections) {
