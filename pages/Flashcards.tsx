@@ -1,9 +1,10 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../components/Card.tsx';
 import { Flashcard as FlashcardType, FlashcardDeck } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import apiService from '../services/apiService.ts';
 
 // --- ICONS ---
 const PlusIcon = () => (
@@ -32,13 +33,13 @@ const CheckIcon = () => (
     </svg>
 );
 const XIcon = () => (
-     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
 );
 const CompletionIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
 );
 
@@ -56,7 +57,7 @@ const BellIcon = () => (
 
 // --- INITIAL DATA ---
 const initialDecks: FlashcardDeck[] = [
-    { id: '1', name: 'Organic Chemistry Reactions', subject: 'Chemistry', cards: [{id: '101', front: 'What is a Grignard Reaction?', back: 'An organometallic chemical reaction in which alkyl, vinyl, or aryl-magnesium halides (Grignard reagents) add to a carbonyl group in an aldehyde or ketone.'}, {id: '102', front: 'What is a Diels-Alder reaction?', back: 'A chemical reaction between a conjugated diene and a substituted alkene, commonly termed the dienophile, to form a substituted cyclohexene derivative.'}, {id: '103', front: 'What is an Aldol Condensation?', back: 'A condensation reaction in organic chemistry in which an enol or an enolate ion reacts with a carbonyl compound to form a β-hydroxyaldehyde or β-hydroxyketone.'}, {id: '104', front: 'What defines a Friedel-Crafts Alkylation?', back: 'A type of electrophilic aromatic substitution that involves the alkylation of an aromatic ring with an alkyl halide using a strong Lewis acid catalyst.'}] },
+    { id: '1', name: 'Organic Chemistry Reactions', subject: 'Chemistry', cards: [{ id: '101', front: 'What is a Grignard Reaction?', back: 'An organometallic chemical reaction in which alkyl, vinyl, or aryl-magnesium halides (Grignard reagents) add to a carbonyl group in an aldehyde or ketone.' }, { id: '102', front: 'What is a Diels-Alder reaction?', back: 'A chemical reaction between a conjugated diene and a substituted alkene, commonly termed the dienophile, to form a substituted cyclohexene derivative.' }, { id: '103', front: 'What is an Aldol Condensation?', back: 'A condensation reaction in organic chemistry in which an enol or an enolate ion reacts with a carbonyl compound to form a β-hydroxyaldehyde or β-hydroxyketone.' }, { id: '104', front: 'What defines a Friedel-Crafts Alkylation?', back: 'A type of electrophilic aromatic substitution that involves the alkylation of an aromatic ring with an alkyl halide using a strong Lewis acid catalyst.' }] },
     { id: '2', name: 'World War II Key Events', subject: 'History', cards: [] },
     { id: '3', name: 'JavaScript Fundamentals', subject: 'Computer Science', cards: [] },
     { id: '4', name: 'Human Anatomy: Bones', subject: 'Biology', cards: [] },
@@ -81,7 +82,7 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
     const currentCard = deck.cards[currentIndex];
 
     const handleFlip = () => setIsFlipped(!isFlipped);
-    
+
     const handleNextCard = (knewIt: boolean) => {
         if (!isAuthenticated && currentIndex >= GUEST_CARD_LIMIT - 1 && currentIndex < deck.cards.length - 1) {
             requestLogin();
@@ -138,7 +139,7 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
             </Card>
         );
     }
-    
+
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -152,8 +153,8 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
             </div>
 
             <div className="max-w-3xl mx-auto">
-                <div 
-                    onClick={handleFlip} 
+                <div
+                    onClick={handleFlip}
                     className={`w-full aspect-video rounded-2xl p-4 flex items-center justify-center text-center shadow-lg transition-transform duration-500 cursor-pointer select-none ${isFlipped ? 'bg-primary-light dark:bg-primary/20 [transform:rotateY(180deg)]' : 'bg-white dark:bg-slate-700 [transform:rotateY(0deg)]'}`}
                     // FIX: Corrected the typo in 'transformStyle' from 'preserve-d' to 'preserve-3d' for the card flip animation.
                     style={{ transformStyle: 'preserve-3d' }}
@@ -171,12 +172,12 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
                 {isFlipped ? (
                     <>
                         <button onClick={() => handleNextCard(false)} className="flex-1 flex items-center justify-center gap-2 bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300 font-bold py-4 rounded-lg hover:bg-yellow-200 dark:hover:bg-yellow-500/30 transition-colors duration-200">
-                           <XIcon />
-                           <span>Needs Review</span>
+                            <XIcon />
+                            <span>Needs Review</span>
                         </button>
                         <button onClick={() => handleNextCard(true)} className="flex-1 flex items-center justify-center gap-2 bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-300 font-bold py-4 rounded-lg hover:bg-green-200 dark:hover:bg-green-500/30 transition-colors duration-200">
-                           <CheckIcon />
-                           <span>I Knew This</span>
+                            <CheckIcon />
+                            <span>I Knew This</span>
                         </button>
                     </>
                 ) : (
@@ -209,7 +210,7 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ decks, onSave, onCancel }
             alert('Please select a valid deck.');
             return;
         }
-        
+
         const dateTime = new Date(`${date}T${time}`);
         if (dateTime <= new Date()) {
             alert('Please select a future date and time for the reminder.');
@@ -276,17 +277,39 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ decks, onSave, onCancel }
 
 // --- MAIN COMPONENT ---
 const Flashcards: React.FC = () => {
-    const [decks, setDecks] = useState<FlashcardDeck[]>(initialDecks);
+    const [decks, setDecks] = useState<FlashcardDeck[]>([]);
     const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
     const [isDeckFormVisible, setDeckFormVisible] = useState(false);
     const [isCardFormVisible, setCardFormVisible] = useState(false);
     const [isStudying, setIsStudying] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const [isReminderModalVisible, setReminderModalVisible] = useState(false);
     const { isAuthenticated, requestLogin } = useAuth();
 
+    // --- FETCH DECKS ---
+    useEffect(() => {
+        const fetchDecks = async () => {
+            if (!isAuthenticated) {
+                setDecks(initialDecks);
+                setIsLoading(false);
+                return;
+            }
+            try {
+                const data = await apiService<FlashcardDeck[]>('/flashcards');
+                setDecks(data.length > 0 ? data : initialDecks);
+            } catch (error) {
+                console.error("Failed to fetch decks:", error);
+                setDecks(initialDecks);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDecks();
+    }, [isAuthenticated]);
+
     // --- DECK HANDLERS ---
-    const handleSaveDeck = (deckData: { name: string, subject: string }) => {
+    const handleSaveDeck = async (deckData: { name: string, subject: string }) => {
         if (!isAuthenticated) {
             requestLogin();
             return;
@@ -297,12 +320,22 @@ const Flashcards: React.FC = () => {
             subject: deckData.subject,
             cards: [],
         };
-        setDecks([newDeck, ...decks]);
-        setDeckFormVisible(false);
+
+        try {
+            await apiService('/flashcards', {
+                method: 'POST',
+                body: newDeck
+            });
+            setDecks([newDeck, ...decks]);
+            setDeckFormVisible(false);
+        } catch (error) {
+            console.error("Failed to save deck:", error);
+            alert("Failed to save deck to server. Please try again.");
+        }
     };
 
     // --- CARD HANDLERS ---
-    const handleSaveCard = (cardData: { front: string, back: string }) => {
+    const handleSaveCard = async (cardData: { front: string, back: string }) => {
         if (!isAuthenticated) {
             requestLogin();
             return;
@@ -317,13 +350,23 @@ const Flashcards: React.FC = () => {
             ...selectedDeck,
             cards: [...selectedDeck.cards, newCard]
         };
-        const updatedDecks = decks.map(d => d.id === selectedDeck.id ? updatedDeck : d);
-        setDecks(updatedDecks);
-        setSelectedDeck(updatedDeck);
-        setCardFormVisible(false);
+
+        try {
+            await apiService('/flashcards', {
+                method: 'POST',
+                body: updatedDeck
+            });
+            const updatedDecks = decks.map(d => d.id === selectedDeck.id ? updatedDeck : d);
+            setDecks(updatedDecks);
+            setSelectedDeck(updatedDeck);
+            setCardFormVisible(false);
+        } catch (error) {
+            console.error("Failed to save card:", error);
+            alert("Failed to save card to server.");
+        }
     };
 
-    const handleDeleteCard = (cardId: string) => {
+    const handleDeleteCard = async (cardId: string) => {
         if (!isAuthenticated) {
             requestLogin();
             return;
@@ -334,9 +377,19 @@ const Flashcards: React.FC = () => {
                 ...selectedDeck,
                 cards: selectedDeck.cards.filter(c => c.id !== cardId)
             };
-            const updatedDecks = decks.map(d => d.id === selectedDeck.id ? updatedDeck : d);
-            setDecks(updatedDecks);
-            setSelectedDeck(updatedDeck);
+
+            try {
+                await apiService('/flashcards', {
+                    method: 'POST',
+                    body: updatedDeck
+                });
+                const updatedDecks = decks.map(d => d.id === selectedDeck.id ? updatedDeck : d);
+                setDecks(updatedDecks);
+                setSelectedDeck(updatedDeck);
+            } catch (error) {
+                console.error("Failed to delete card:", error);
+                alert("Failed to delete card from server.");
+            }
         }
     }
 
@@ -361,7 +414,7 @@ const Flashcards: React.FC = () => {
             setReminderModalVisible(false);
             return;
         }
-        
+
         setTimeout(() => {
             new Notification('ExamRedi Study Reminder', {
                 body: `It's time to study your flashcard deck: "${data.deckName}"!`,
@@ -396,19 +449,19 @@ const Flashcards: React.FC = () => {
                         <p className="text-slate-600 dark:text-slate-400">{selectedDeck.subject}</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <button 
+                        <button
                             onClick={() => {
                                 if (selectedDeck.cards.length === 0) {
                                     alert("This deck has no cards. Please add some before studying.");
                                     return;
                                 }
                                 setIsStudying(true);
-                            }} 
+                            }}
                             className="font-semibold text-primary py-2 px-5 rounded-lg border-2 border-primary hover:bg-primary-light dark:hover:bg-primary/20 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={selectedDeck.cards.length === 0}
                             aria-disabled={selectedDeck.cards.length === 0}
                         >
-                           Study Deck
+                            Study Deck
                         </button>
                         <button onClick={() => setCardFormVisible(true)} className="flex items-center justify-center gap-2 bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors duration-200">
                             <PlusIcon />
@@ -418,7 +471,7 @@ const Flashcards: React.FC = () => {
                 </div>
 
                 {isCardFormVisible && <CardForm onSave={handleSaveCard} onCancel={() => setCardFormVisible(false)} />}
-                
+
                 <Card>
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Cards in this Deck ({filteredCards.length})</h2>
@@ -476,7 +529,7 @@ const Flashcards: React.FC = () => {
 
     return (
         <div className="space-y-6">
-             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Flashcard Decks</h1>
                     <p className="text-slate-600 dark:text-slate-400">Select a deck to start studying or create a new one.</p>
@@ -495,7 +548,7 @@ const Flashcards: React.FC = () => {
 
             {isDeckFormVisible && <DeckForm onSave={handleSaveDeck} onCancel={() => setDeckFormVisible(false)} />}
             {isReminderModalVisible && <ReminderModal decks={decks} onSave={handleSetReminder} onCancel={() => setReminderModalVisible(false)} />}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {decks.map((deck) => (
                     <div key={deck.id} onClick={() => setSelectedDeck(deck)} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
@@ -528,7 +581,7 @@ const DeckForm: React.FC<DeckFormProps> = ({ onSave, onCancel }) => {
         if (!name.trim()) { alert('Deck name is required.'); return; }
         onSave({ name, subject });
     };
-    
+
     return (
         <Card>
             <form onSubmit={handleSubmit} className="space-y-4">

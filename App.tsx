@@ -28,6 +28,8 @@ const UtmeChallenge = lazy(() => import('./pages/UtmeChallenge.tsx'));
 const ComingSoon = lazy(() => import('./pages/ComingSoon.tsx'));
 const QuestionSearch = lazy(() => import('./pages/QuestionSearch.tsx'));
 const Profile = lazy(() => import('./pages/Profile.tsx'));
+const Literature = lazy(() => import('./pages/Literature.tsx'));
+const Dictionary = lazy(() => import('./pages/Dictionary.tsx'));
 
 // Admin - Lazy load admin pages
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout.tsx'));
@@ -113,8 +115,8 @@ const router = createHashRouter(
         <Route path="/profile" element={<Suspense fallback={<PageLoader />}><Profile /></Suspense>} />
         <Route path="/career-institutions" element={<Suspense fallback={<PageLoader />}><CareerInstitutions /></Suspense>} />
         <Route path="/challenge" element={<Suspense fallback={<PageLoader />}><UtmeChallenge /></Suspense>} />
-        <Route path="/literature" element={<Suspense fallback={<PageLoader />}><ComingSoon title="UTME Literature Books" /></Suspense>} />
-        <Route path="/dictionary" element={<Suspense fallback={<PageLoader />}><ComingSoon title="Dictionary" /></Suspense>} />
+        <Route path="/literature" element={<Suspense fallback={<PageLoader />}><Literature /></Suspense>} />
+        <Route path="/dictionary" element={<Suspense fallback={<PageLoader />}><Dictionary /></Suspense>} />
       </Route>
 
       {/* Admin Routes */}

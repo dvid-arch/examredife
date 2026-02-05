@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext.tsx';
+import apiService from '../services/apiService.ts';
 
 interface RecentActivity {
     id: string;
@@ -18,20 +20,52 @@ interface UserProgressContextType {
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
 
 export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { isAuthenticated } = useAuth();
     const [streak, setStreak] = useState(0);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 
     useEffect(() => {
-        // Load from localStorage
-        const savedStreak = localStorage.getItem('examRediStreak');
-        const savedActivity = localStorage.getItem('examRediRecentActivity');
-        const lastPractice = localStorage.getItem('examRediLastPractice');
+        const syncProgress = async () => {
+            if (isAuthenticated) {
+                try {
+                    const data = await apiService<{ streak: number, recentActivity: RecentActivity[] }>('/user/progress');
+                    setStreak(data.streak);
+                    setRecentActivity(data.recentActivity);
+                    localStorage.setItem('examRediStreak', data.streak.toString());
+                    localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity));
+                } catch (error) {
+                    console.error("Failed to sync progress with backend:", error);
+                    loadFromLocal();
+                }
+            } else {
+                loadFromLocal();
+            }
+        };
 
-        if (savedStreak) setStreak(parseInt(savedStreak));
-        if (savedActivity) setRecentActivity(JSON.parse(savedActivity));
+        const loadFromLocal = () => {
+            const savedStreak = localStorage.getItem('examRediStreak');
+            const savedActivity = localStorage.getItem('examRediRecentActivity');
+            if (savedStreak) setStreak(parseInt(savedStreak));
+            if (savedActivity) setRecentActivity(JSON.parse(savedActivity));
+        };
 
-        checkStreak();
-    }, []);
+        syncProgress();
+    }, [isAuthenticated]);
+
+    const saveProgress = async (newStreak: number, newActivity: RecentActivity[]) => {
+        if (isAuthenticated) {
+            try {
+                await apiService('/user/progress', {
+                    method: 'PUT',
+                    body: { streak: newStreak, recentActivity: newActivity }
+                });
+            } catch (error) {
+                console.error("Failed to save progress to backend:", error);
+            }
+        }
+        localStorage.setItem('examRediStreak', newStreak.toString());
+        localStorage.setItem('examRediRecentActivity', JSON.stringify(newActivity));
+    };
 
     const checkStreak = () => {
         const lastPractice = localStorage.getItem('examRediLastPractice');
@@ -40,7 +74,6 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const lastDate = new Date(parseInt(lastPractice));
         const today = new Date();
 
-        // Reset time for comparison
         lastDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
 
@@ -48,9 +81,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays > 1) {
-            // Missed a day, reset streak
             setStreak(0);
-            localStorage.setItem('examRediStreak', '0');
+            saveProgress(0, recentActivity);
         }
     };
 
@@ -60,28 +92,27 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             timestamp: Date.now()
         };
 
+        let updatedActivity: RecentActivity[] = [];
         setRecentActivity(prev => {
-            // Remove if already exists to move to top
             const filtered = prev.filter(a => a.id !== activity.id);
-            const updated = [newActivity, ...filtered].slice(0, 5); // Keep last 5
-            localStorage.setItem('examRediRecentActivity', JSON.stringify(updated));
-            return updated;
+            updatedActivity = [newActivity, ...filtered].slice(0, 5);
+            return updatedActivity;
         });
 
-        // Update streak if it's the first activity of the day
+        // Update streak logic
         const lastPractice = localStorage.getItem('examRediLastPractice');
         const todayPrice = new Date().setHours(0, 0, 0, 0);
+        let newStreak = streak;
 
         if (!lastPractice || new Date(parseInt(lastPractice)).setHours(0, 0, 0, 0) !== todayPrice) {
-            setStreak(prev => {
-                const newStreak = prev + 1;
-                localStorage.setItem('examRediStreak', newStreak.toString());
-                localStorage.setItem('examRediLastPractice', Date.now().toString());
-                return newStreak;
-            });
+            newStreak = streak + 1;
+            setStreak(newStreak);
+            localStorage.setItem('examRediLastPractice', Date.now().toString());
         } else {
             localStorage.setItem('examRediLastPractice', Date.now().toString());
         }
+
+        saveProgress(newStreak, updatedActivity);
     };
 
     return (

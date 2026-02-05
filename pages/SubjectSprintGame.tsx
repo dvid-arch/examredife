@@ -5,6 +5,8 @@ import Card from '../components/Card.tsx';
 import { pastPapersData } from '../data/pastQuestions.ts';
 import { ChallengeQuestion } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import apiService from '../services/apiService.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 // --- ICONS ---
 const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4-4h2a2 2 0 012 2v4a2 2 0 01-2 2h-2m-4 4H5a2 2 0 01-2-2v-4a2 2 0 012-2h2" /></svg>;
@@ -19,6 +21,7 @@ const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5
 const subjects = [...new Set(pastPapersData.map(p => p.subject))].sort();
 
 const SubjectSprintGame: React.FC = () => {
+    const { user } = useAuth();
     const [gameState, setGameState] = useState<'selection' | 'playing' | 'results'>('selection');
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -27,6 +30,23 @@ const SubjectSprintGame: React.FC = () => {
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [answerStatus, setAnswerStatus] = useState<'correct' | 'incorrect' | 'unanswered' | null>(null);
 
+    const handleGameOver = async (finalScore: number) => {
+        setGameState('results');
+        try {
+            await apiService('/data/leaderboard', {
+                method: 'POST',
+                body: {
+                    user: user?.name || 'Anonymous',
+                    score: finalScore,
+                    game: 'Subject Sprint',
+                    date: new Date().toISOString()
+                }
+            });
+        } catch (error) {
+            console.error("Failed to post score to leaderboard:", error);
+        }
+    };
+
     const goToNextQuestion = () => {
         if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
@@ -34,7 +54,7 @@ const SubjectSprintGame: React.FC = () => {
             setSelectedAnswer(null);
             setAnswerStatus(null);
         } else {
-            setGameState('results');
+            handleGameOver(score);
         }
     };
 
@@ -58,7 +78,7 @@ const SubjectSprintGame: React.FC = () => {
         const subjectQuestions = pastPapersData
             .filter(p => p.subject === subject)
             .flatMap(paper => paper.questions.map(q => ({ ...q, subject })));
-        
+
         const gameQuestions = shuffleArray(subjectQuestions).slice(0, QUESTIONS_PER_GAME);
         setQuestions(gameQuestions);
         setCurrentQuestionIndex(0);
@@ -68,7 +88,7 @@ const SubjectSprintGame: React.FC = () => {
         setAnswerStatus(null);
         setGameState('playing');
     };
-    
+
     const handleAnswerSelect = (optionKey: string) => {
         if (answerStatus) return;
 
@@ -122,7 +142,7 @@ const SubjectSprintGame: React.FC = () => {
                     </div>
 
                     <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                        <div 
+                        <div
                             className="bg-primary h-2.5 rounded-full transition-all duration-1000 ease-linear"
                             style={{ width: `${(timeLeft / TIME_PER_QUESTION) * 100}%` }}
                         ></div>
@@ -137,7 +157,7 @@ const SubjectSprintGame: React.FC = () => {
                             const value = currentQuestion.options[key];
                             const isSelected = selectedAnswer === key;
                             const isCorrect = currentQuestion.answer === key;
-                            
+
                             let buttonClass = 'bg-white border-gray-200 hover:bg-gray-50';
                             if (answerStatus) {
                                 if (isCorrect) {
@@ -146,7 +166,7 @@ const SubjectSprintGame: React.FC = () => {
                                     buttonClass = 'bg-red-100 border-red-500 text-red-800';
                                 }
                             }
-                            
+
                             return (
                                 <button
                                     key={key}
@@ -173,7 +193,7 @@ const SubjectSprintGame: React.FC = () => {
             // We'll have to infer from score, which is imperfect.
             // A better approach would be to store answers. Let's assume for now we just show score.
         }).length;
-        
+
         return (
             <Card className="text-center p-8">
                 <TrophyIcon />

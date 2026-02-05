@@ -290,11 +290,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const updateUser = async (details: Partial<UserProfile>) => {
-        // This is a local-only update for now as there's no backend endpoint for it.
         if (user) {
-            const updatedUser = { ...user, ...details };
-            setUser(updatedUser);
-            localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
+            try {
+                // Persist update to backend
+                const updatedUser = await apiService<UserProfile>('/user/profile', {
+                    method: 'PUT',
+                    body: details
+                });
+                setUser(updatedUser);
+                localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
+            } catch (error) {
+                console.error("Failed to update user profile on backend:", error);
+                // Fallback to local-only update or alert user
+                const optimisticUser = { ...user, ...details };
+                setUser(optimisticUser);
+                localStorage.setItem('examRediUser', JSON.stringify(optimisticUser));
+            }
         }
     };
 
