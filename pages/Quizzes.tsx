@@ -264,7 +264,7 @@ const Quizzes: React.FC = () => {
                                         id="custom-count"
                                         type="range"
                                         min="5"
-                                        max="20"
+                                        max="60"
                                         value={customQuestionCount}
                                         onChange={(e) => setCustomQuestionCount(Number(e.target.value))}
                                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
