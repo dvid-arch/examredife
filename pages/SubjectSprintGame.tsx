@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card.tsx';
-import { pastPapersData } from '../data/pastQuestions.ts';
+
 import { ChallengeQuestion } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import apiService from '../services/apiService.ts';
@@ -18,17 +18,36 @@ const TIME_PER_QUESTION = 15;
 
 // --- HELPERS ---
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
-const subjects = [...new Set(pastPapersData.map(p => p.subject))].sort();
 
 const SubjectSprintGame: React.FC = () => {
     const { user } = useAuth();
     const [gameState, setGameState] = useState<'selection' | 'playing' | 'results'>('selection');
+    const [allPapers, setAllPapers] = useState<any[]>([]);
+    const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [answerStatus, setAnswerStatus] = useState<'correct' | 'incorrect' | 'unanswered' | null>(null);
+
+    useEffect(() => {
+        const fetchPapers = async () => {
+            try {
+                const data = await apiService<any[]>('/data/papers');
+                setAllPapers(data);
+                const subjs = [...new Set(data.map(p => p.subject))].sort();
+                setAvailableSubjects(subjs);
+            } catch (error) {
+                console.error("Failed to fetch papers:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPapers();
+    }, []);
 
     const handleGameOver = async (finalScore: number) => {
         setGameState('results');
@@ -75,9 +94,9 @@ const SubjectSprintGame: React.FC = () => {
 
 
     const startGame = (subject: string) => {
-        const subjectQuestions = pastPapersData
+        const subjectQuestions = allPapers
             .filter(p => p.subject === subject)
-            .flatMap(paper => paper.questions.map(q => ({ ...q, subject })));
+            .flatMap(paper => paper.questions.map((q: any) => ({ ...q, subject })));
 
         const gameQuestions = shuffleArray(subjectQuestions).slice(0, QUESTIONS_PER_GAME);
         setQuestions(gameQuestions);
@@ -115,17 +134,20 @@ const SubjectSprintGame: React.FC = () => {
             <StopwatchIcon />
             <h1 className="text-3xl font-bold text-slate-800 mt-4">Subject Sprint</h1>
             <p className="text-slate-600 mt-2 mb-6 max-w-md mx-auto">Choose a subject and answer {QUESTIONS_PER_GAME} questions as fast as you can. The quicker you answer correctly, the more points you get!</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {subjects.map(subject => (
-                    <button
-                        key={subject}
-                        onClick={() => startGame(subject)}
-                        className="p-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-slate-700 hover:border-primary hover:bg-primary-light hover:text-primary transition-all duration-200"
-                    >
-                        {subject}
-                    </button>
-                ))}
-            </div>
+
+            {isLoading ? <p>Loading subjects...</p> : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {availableSubjects.map(subject => (
+                        <button
+                            key={subject}
+                            onClick={() => startGame(subject)}
+                            className="p-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-slate-700 hover:border-primary hover:bg-primary-light hover:text-primary transition-all duration-200"
+                        >
+                            {subject}
+                        </button>
+                    ))}
+                </div>
+            )}
         </Card>
     );
 

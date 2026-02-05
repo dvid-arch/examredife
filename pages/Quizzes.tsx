@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
-import { pastPapersData } from '../data/pastQuestions.ts';
+
 
 
 import apiService from '../services/apiService.ts';
@@ -17,10 +17,11 @@ const Quizzes: React.FC = () => {
         const fetchPapers = async () => {
             try {
                 const data = await apiService<PastPaper[]>('/data/papers');
-                setAllPapers(data.length > 0 ? data : pastPapersData);
+                setAllPapers(data);
             } catch (error) {
                 console.error("Failed to fetch papers:", error);
-                setAllPapers(pastPapersData); // Fallback
+                setAllPapers([]); // No fallback
+
             } finally {
                 setIsLoading(false);
             }

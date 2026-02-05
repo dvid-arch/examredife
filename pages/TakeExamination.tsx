@@ -6,7 +6,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
-import { pastPapersData } from '../data/pastQuestions.ts';
+
 import apiService from '../services/apiService.ts';
 
 

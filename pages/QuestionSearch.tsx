@@ -5,7 +5,7 @@ import { PastQuestion, PastPaper, StudyGuide } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
-import { pastPapersData } from '../data/pastQuestions.ts';
+
 import apiService from '../services/apiService.ts';
 import { Link } from 'react-router-dom';
 
@@ -48,13 +48,13 @@ const QuestionSearch: React.FC = () => {
             try {
                 // Fetch papers from API
                 const papers = await apiService<PastPaper[]>('/data/papers');
-                setAllPapers(papers.length > 0 ? papers : pastPapersData);
+                setAllPapers(papers);
 
                 const guides = await apiService<StudyGuide[]>('/data/guides');
                 setAllGuides(guides);
             } catch (error) {
                 console.error("Failed to fetch search data:", error);
-                setAllPapers(pastPapersData); // Fallback
+                setAllPapers([]); // Fallback
             } finally {
                 setIsLoading(false);
             }

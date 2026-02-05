@@ -3,7 +3,7 @@ import Card from '../../components/Card.tsx';
 import QuestionRenderer from '../../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import { PastPaper, StudyGuide, PastQuestion } from '../../types.ts';
-import { pastPapersData } from '../../data/pastQuestions.ts';
+
 import { allStudyGuides } from '../../data/studyGuides.ts';
 import apiService from '../../services/apiService.ts';
 
