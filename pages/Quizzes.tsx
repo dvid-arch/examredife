@@ -153,13 +153,12 @@ const Quizzes: React.FC = () => {
         sessionStorage.removeItem('practiceCompleted');
         navigate('/take-examination', {
             state: {
-                state: {
-                    selections: selectionsArray,
-                    // questionsPerSubject: undefined (implies all)
-                    examTitle: `Custom Practice`,
-                    timestamp: Date.now(),
-                },
-            });
+                selections: selectionsArray,
+                // questionsPerSubject: undefined (implies all)
+                examTitle: `Custom Practice`,
+                timestamp: Date.now(),
+            },
+        });
         // Mark that practice was properly started
         sessionStorage.setItem('practiceStarted', 'true');
     };
