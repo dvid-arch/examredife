@@ -5,6 +5,8 @@ import { PastPaper } from '../types.ts';
 import { pastPapersData } from '../data/pastQuestions.ts';
 
 
+import apiService from '../services/apiService.ts';
+
 const Quizzes: React.FC = () => {
     const navigate = useNavigate();
     const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>('standard');
@@ -14,10 +16,11 @@ const Quizzes: React.FC = () => {
     useEffect(() => {
         const fetchPapers = async () => {
             try {
-                // Use imported data instead of API call
-                setAllPapers(pastPapersData);
+                const data = await apiService<PastPaper[]>('/data/papers');
+                setAllPapers(data.length > 0 ? data : pastPapersData);
             } catch (error) {
-                console.error(error);
+                console.error("Failed to fetch papers:", error);
+                setAllPapers(pastPapersData); // Fallback
             } finally {
                 setIsLoading(false);
             }
@@ -26,7 +29,7 @@ const Quizzes: React.FC = () => {
     }, []);
 
     const subjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
-    
+
     const availableYears = useMemo(() => {
         const years = new Set(allPapers.map(p => p.year));
         // FIX: Explicitly cast years to numbers for sorting to resolve arithmetic operation type error.
@@ -36,7 +39,7 @@ const Quizzes: React.FC = () => {
     // State for Standard Mode
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['English']);
     const [standardSelectedYear, setStandardSelectedYear] = useState<'random' | number>('random');
-     useEffect(() => {
+    useEffect(() => {
         if (availableYears.length > 0) {
             setStandardSelectedYear(availableYears[0]);
         }
@@ -46,7 +49,7 @@ const Quizzes: React.FC = () => {
     // State for Custom Mode
     const [customSelections, setCustomSelections] = useState<Record<string, 'random' | number>>({});
     const [customQuestionCount, setCustomQuestionCount] = useState<number>(10);
-    
+
     const mostRecentYearBySubject = useMemo(() => {
         const yearMap = new Map<string, number>();
         subjects.forEach(subject => {
@@ -74,7 +77,7 @@ const Quizzes: React.FC = () => {
             return prev;
         });
     };
-    
+
     const handleCustomSubjectChange = (subject: string) => {
         setCustomSelections(prev => {
             const newSelections = { ...prev };
@@ -124,7 +127,7 @@ const Quizzes: React.FC = () => {
             alert('Please select at least one subject for your custom practice.');
             return;
         }
-        
+
         // Clear any previous session flags before starting new practice
         sessionStorage.removeItem('practiceExited');
         sessionStorage.removeItem('practiceCompleted');
@@ -162,7 +165,7 @@ const Quizzes: React.FC = () => {
                 </div>
             </Card>
 
-             {isLoading ? (
+            {isLoading ? (
                 <Card className="text-center p-8">Loading practice options...</Card>
             ) : (
                 <>
@@ -172,14 +175,14 @@ const Quizzes: React.FC = () => {
                             <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects.</p>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 {subjects.map(subject => (
-                                    <label 
-                                        key={subject} 
+                                    <label
+                                        key={subject}
                                         className={`flex items-center space-x-3 p-3 border rounded-lg transition-colors 
                                             ${subject === 'English' ? 'cursor-not-allowed bg-primary-light dark:bg-primary/20 border-primary' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 has-[:checked]:bg-primary-light has-[:checked]:border-primary dark:has-[:checked]:bg-primary/20'}
                                             ${selectedSubjects.length === 4 && !selectedSubjects.includes(subject) ? 'opacity-50 cursor-not-allowed' : ''}
                                         `}
                                     >
-                                        <input 
+                                        <input
                                             type="checkbox"
                                             checked={selectedSubjects.includes(subject)}
                                             disabled={subject === 'English'}
@@ -220,14 +223,14 @@ const Quizzes: React.FC = () => {
                         <Card>
                             <form onSubmit={handleStartCustomPractice} className="space-y-6">
                                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">Create a Custom Practice Session</h2>
-                                
+
                                 <div>
                                     <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">1. Select Subjects & Years</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                         {subjects.map(subject => (
                                             <div key={subject} className={`p-3 border rounded-lg transition-colors ${customSelections[subject] ? 'bg-primary-light dark:bg-primary/20 border-primary' : 'bg-white dark:bg-gray-800/50'}`}>
                                                 <label className="flex items-center space-x-3 cursor-pointer">
-                                                    <input 
+                                                    <input
                                                         type="checkbox"
                                                         checked={!!customSelections[subject]}
                                                         onChange={() => handleCustomSubjectChange(subject)}
@@ -254,7 +257,7 @@ const Quizzes: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
-                                
+
                                 <div>
                                     <label htmlFor="custom-count" className="block text-md font-semibold text-slate-700 dark:text-slate-300 mb-1">2. Number of Questions per Subject ({customQuestionCount})</label>
                                     <input
@@ -267,7 +270,7 @@ const Quizzes: React.FC = () => {
                                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                                     />
                                 </div>
-                                
+
                                 <div className="flex justify-end pt-2">
                                     <button
                                         type="submit"

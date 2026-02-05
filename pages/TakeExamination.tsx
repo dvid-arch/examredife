@@ -219,7 +219,15 @@ const TakeExamination: React.FC = () => {
                 preparedQuestions = customQuestions;
             } else {
                 try {
-                    const papers: PastPaper[] = pastPapersData;
+                    // Try to fetch from API first, fallback to local
+                    let papers: PastPaper[] = [];
+                    try {
+                        const apiData = await apiService<PastPaper[]>('/data/papers');
+                        papers = apiData.length > 0 ? apiData : pastPapersData;
+                    } catch (e) {
+                        console.warn("Failed to fetch papers in TakeExamination, using fallback", e);
+                        papers = pastPapersData;
+                    }
 
 
                     const numQuestions = questionsPerSubject || 10;
