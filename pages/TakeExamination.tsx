@@ -230,7 +230,7 @@ const TakeExamination: React.FC = () => {
                         papers = [];
                     }
 
-                    const numQuestions = questionsPerSubject || 60;
+                    const numQuestions = questionsPerSubject;
                     let practiceSelections: { subject: string, year: 'random' | number }[] = [];
 
                     if (selections) {
@@ -243,7 +243,8 @@ const TakeExamination: React.FC = () => {
                     }
 
                     if (practiceSelections.length > 0) {
-                        preparedQuestions = preparePracticeQuestions(papers, practiceSelections, numQuestions);
+                        // Pass undefined for numQuestions to select ALL
+                        preparedQuestions = preparePracticeQuestions(papers, practiceSelections, numQuestions || 9999);
                     }
                 } catch (error) {
                     console.error("Failed to prepare questions:", error);

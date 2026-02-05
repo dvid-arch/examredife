@@ -153,12 +153,13 @@ const Quizzes: React.FC = () => {
         sessionStorage.removeItem('practiceCompleted');
         navigate('/take-examination', {
             state: {
-                selections: selectionsArray,
-                questionsPerSubject: customQuestionCount,
-                examTitle: `Custom Practice`,
-                timestamp: Date.now(),
-            },
-        });
+                state: {
+                    selections: selectionsArray,
+                    // questionsPerSubject: undefined (implies all)
+                    examTitle: `Custom Practice`,
+                    timestamp: Date.now(),
+                },
+            });
         // Mark that practice was properly started
         sessionStorage.setItem('practiceStarted', 'true');
     };
@@ -281,18 +282,7 @@ const Quizzes: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label htmlFor="custom-count" className="block text-md font-semibold text-slate-700 dark:text-slate-300 mb-1">2. Number of Questions per Subject ({customQuestionCount})</label>
-                                    <input
-                                        id="custom-count"
-                                        type="range"
-                                        min="5"
-                                        max="60"
-                                        value={customQuestionCount}
-                                        onChange={(e) => setCustomQuestionCount(Number(e.target.value))}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                    />
-                                </div>
+
 
                                 <div className="flex justify-end pt-2">
                                     <button
