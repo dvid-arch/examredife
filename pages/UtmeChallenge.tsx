@@ -93,20 +93,39 @@ const UtmeChallenge: React.FC = () => {
         setGameState('results');
     }, [gameState, questions, userAnswers]);
 
+    // Timestamp-based Timer Logic
+    const [endTime, setEndTime] = useState<number | null>(null);
+
+    // Initialize/Reset Timer
     useEffect(() => {
-        if (gameState !== 'playing' || timeLeft === 0) return;
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
+        if (gameState === 'playing' && !endTime) {
+            // 60 seconds for the challenge
+            setEndTime(Date.now() + 60000);
+        } else if (gameState !== 'playing') {
+            setEndTime(null);
+        }
+    }, [gameState, endTime]);
+
+    useEffect(() => {
+        if (gameState === 'playing' && endTime) {
+            const timer = setInterval(() => {
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+                setTimeLeft(remaining);
+
+                if (remaining <= 0) {
                     clearInterval(timer);
                     handleSubmit();
-                    return 0;
                 }
-                return prev - 1;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [gameState, timeLeft, handleSubmit]);
+            }, 1000);
+
+            // Immediate update
+            setTimeLeft(Math.max(0, Math.floor((endTime - Date.now()) / 1000)));
+
+            return () => clearInterval(timer);
+        }
+    }, [gameState, endTime, handleSubmit]);
 
     const handleStartSelection = () => setGameState('selecting');
 
@@ -132,6 +151,7 @@ const UtmeChallenge: React.FC = () => {
         setCurrentQuestionIndex(0);
         setUserAnswers({});
         setTimeLeft(CHALLENGE_DURATION_MINUTES * 60);
+        setEndTime(null); // Will trigger new start
         setScoreSaved(false);
         setGameState('playing');
     };

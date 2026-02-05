@@ -70,6 +70,7 @@ const SubjectSprintGame: React.FC = () => {
         if (currentQuestionIndex < questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1);
             setTimeLeft(TIME_PER_QUESTION);
+            setEndTime(Date.now() + (TIME_PER_QUESTION * 1000));
             setSelectedAnswer(null);
             setAnswerStatus(null);
         } else {
@@ -77,20 +78,48 @@ const SubjectSprintGame: React.FC = () => {
         }
     };
 
+    // Timestamp-based Timer Logic
+    const [endTime, setEndTime] = useState<number | null>(null);
+
     useEffect(() => {
         if (gameState !== 'playing' || answerStatus) return;
 
-        if (timeLeft === 0) {
-            setAnswerStatus('unanswered');
-            const timer = setTimeout(goToNextQuestion, 2000);
-            return () => clearTimeout(timer);
+        // If no endTime set but we are playing, set it (e.g. on mount/restore)
+        if (!endTime) {
+            setEndTime(Date.now() + (timeLeft * 1000));
+            return;
         }
 
-        const interval = setInterval(() => {
-            setTimeLeft(prev => prev - 1);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [gameState, timeLeft, answerStatus]);
+        const timer = setInterval(() => {
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+            setTimeLeft(remaining);
+
+            if (remaining <= 0) {
+                clearInterval(timer);
+                setAnswerStatus('unanswered');
+                // Auto-advance is handled by effect or timeout, but we need to trigger it
+            }
+        }, 200); // Check more frequently for smooth UI
+
+        // Sync immediately
+        const immediateRemaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        if (immediateRemaining !== timeLeft) {
+            setTimeLeft(immediateRemaining);
+        }
+
+        return () => clearInterval(timer);
+    }, [gameState, endTime, answerStatus, timeLeft]);
+
+    // Handle Time Run Out specifically to trigger next question
+    useEffect(() => {
+        if (timeLeft === 0 && !answerStatus && gameState === 'playing') {
+            setAnswerStatus('unanswered');
+            const timeout = setTimeout(goToNextQuestion, 2000);
+            return () => clearTimeout(timeout);
+        }
+    }, [timeLeft, answerStatus, gameState]);
 
 
     const startGame = (subject: string) => {
@@ -102,10 +131,12 @@ const SubjectSprintGame: React.FC = () => {
         setQuestions(gameQuestions);
         setCurrentQuestionIndex(0);
         setScore(0);
-        setTimeLeft(TIME_PER_QUESTION);
+        setGameState('selecting');
+        setEndTime(null); // Corrected the syntax error from the instruction
         setSelectedAnswer(null);
         setAnswerStatus(null);
         setGameState('playing');
+        setEndTime(Date.now() + (TIME_PER_QUESTION * 1000));
     };
 
     const handleAnswerSelect = (optionKey: string) => {

@@ -163,6 +163,7 @@ const TakeExamination: React.FC = () => {
         setIsFinished(true);
         sessionStorage.setItem('practiceCompleted', 'true');
         sessionStorage.removeItem('practiceStarted');
+        sessionStorage.removeItem('practiceEndTime');
 
         if (isAuthenticated && user) {
             if (user.subscription === 'free') {
@@ -252,7 +253,7 @@ const TakeExamination: React.FC = () => {
             if (preparedQuestions.length > 0) {
                 setQuestions(preparedQuestions);
                 setActiveSubject(preparedQuestions[0].subject);
-                setTimeLeft(preparedQuestions.length * 60);
+                // setTimeLeft handled by endTime effect
                 // Clear completed flag when starting new practice
                 sessionStorage.removeItem('practiceCompleted');
             }
@@ -267,21 +268,52 @@ const TakeExamination: React.FC = () => {
     }, [location.state]);
 
 
+    // Timer Logic using Timestamp
+    const [endTime, setEndTime] = useState<number | null>(null);
+
+    // Initialize Timer on start
     useEffect(() => {
-        if (questions.length > 0 && !isFinished) {
+        if (questions.length > 0 && !isFinished && !endTime) {
+            // Check session storage for existing end time (persistence)
+            const storedEndTime = sessionStorage.getItem('practiceEndTime');
+            if (storedEndTime) {
+                const parsed = parseInt(storedEndTime, 10);
+                if (parsed > Date.now()) {
+                    setEndTime(parsed);
+                } else {
+                    // Timer expired while away
+                    setEndTime(Date.now()); // Expire immediately
+                }
+            } else {
+                // New timer
+                const durationSeconds = questions.length * 60; // 60s per question
+                const newEndTime = Date.now() + (durationSeconds * 1000);
+                setEndTime(newEndTime);
+                sessionStorage.setItem('practiceEndTime', newEndTime.toString());
+            }
+        }
+    }, [questions, isFinished, endTime]);
+
+    useEffect(() => {
+        if (questions.length > 0 && !isFinished && endTime) {
             const timer = setInterval(() => {
-                setTimeLeft(prevTime => {
-                    if (prevTime <= 1) {
-                        clearInterval(timer);
-                        handleSubmit();
-                        return 0;
-                    }
-                    return prevTime - 1;
-                });
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((endTime - now) / 1000));
+
+                setTimeLeft(remaining);
+
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    handleSubmit();
+                }
             }, 1000);
+
+            // Immediate update to avoid 1s delay
+            setTimeLeft(Math.max(0, Math.floor((endTime - Date.now()) / 1000)));
+
             return () => clearInterval(timer);
         }
-    }, [questions, isFinished, handleSubmit]);
+    }, [questions, isFinished, handleSubmit, endTime]);
 
     useEffect(() => {
         if (isFinished) {
@@ -328,6 +360,7 @@ const TakeExamination: React.FC = () => {
             if (confirm) {
                 sessionStorage.setItem('practiceExited', 'true');
                 sessionStorage.removeItem('practiceStarted');
+                sessionStorage.removeItem('practiceEndTime');
                 blocker.proceed();
             } else {
                 blocker.reset();
