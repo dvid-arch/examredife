@@ -398,11 +398,17 @@ const ManageContent: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // Use imported data instead of API calls
-                setPapers(pastPapersData);
-                setGuides(allStudyGuides);
+                // Use API calls
+                const papersData = await apiService<PastPaper[]>('/data/papers');
+                setPapers(papersData.length > 0 ? papersData : pastPapersData);
+
+                const guidesData = await apiService<StudyGuide[]>('/data/guides');
+                setGuides(guidesData.length > 0 ? guidesData : allStudyGuides);
             } catch (error) {
                 console.error("Failed to fetch content", error);
+                // Fallback
+                setPapers(pastPapersData);
+                setGuides(allStudyGuides);
             } finally {
                 setIsLoading(false);
             }

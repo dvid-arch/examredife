@@ -46,11 +46,15 @@ const QuestionSearch: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                setAllPapers(pastPapersData);
+                // Fetch papers from API
+                const papers = await apiService<PastPaper[]>('/data/papers');
+                setAllPapers(papers.length > 0 ? papers : pastPapersData);
+
                 const guides = await apiService<StudyGuide[]>('/data/guides');
                 setAllGuides(guides);
             } catch (error) {
                 console.error("Failed to fetch search data:", error);
+                setAllPapers(pastPapersData); // Fallback
             } finally {
                 setIsLoading(false);
             }
