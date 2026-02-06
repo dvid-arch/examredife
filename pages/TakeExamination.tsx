@@ -616,44 +616,50 @@ const TakeExamination: React.FC = () => {
                                     )}
 
                                     <div className="space-y-4">
-                                        {Object.keys(currentQuestion.options).map((key) => {
-                                            const value = currentQuestion.options[key];
-                                            const isCorrect = key === currentQuestion.answer;
-                                            const isSelected = userAnswers[currentQuestion.id] === key;
+                                        {currentQuestion.options ? (
+                                            Object.keys(currentQuestion.options).map((key) => {
+                                                const value = currentQuestion.options[key];
+                                                const isCorrect = key === currentQuestion.answer;
+                                                const isSelected = userAnswers[currentQuestion.id] === key;
 
-                                            let borderClass = 'border-gray-200 bg-white hover:border-primary-light';
-                                            if (isFinished) {
-                                                if (isCorrect) borderClass = 'border-green-500 bg-green-50';
-                                                else if (isSelected) borderClass = 'border-red-400 bg-red-50';
-                                            } else if (isSelected) {
-                                                borderClass = 'border-primary bg-primary-light';
-                                            }
+                                                let borderClass = 'border-gray-200 bg-white hover:border-primary-light';
+                                                if (isFinished) {
+                                                    if (isCorrect) borderClass = 'border-green-500 bg-green-50';
+                                                    else if (isSelected) borderClass = 'border-red-400 bg-red-50';
+                                                } else if (isSelected) {
+                                                    borderClass = 'border-primary bg-primary-light';
+                                                }
 
-                                            return (
-                                                <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all ${!isFinished ? 'cursor-pointer' : ''} ${borderClass}`}>
-                                                    <input
-                                                        type="radio"
-                                                        name={currentQuestion.id}
-                                                        value={key}
-                                                        disabled={isFinished}
-                                                        checked={isSelected}
-                                                        onChange={() => handleSelectOption(currentQuestion.id, key)}
-                                                        className="mt-1 h-5 w-5 text-primary focus:ring-primary border-gray-300 flex-shrink-0"
-                                                    />
-                                                    <div className="flex-1">
-                                                        <div className="flex items-start gap-2">
-                                                            <span className="font-bold text-slate-800">{key}.</span>
-                                                            <div className="text-slate-700"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
-                                                        </div>
-                                                        {value.diagram && (
-                                                            <div className="mt-3">
-                                                                <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                                return (
+                                                    <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all ${!isFinished ? 'cursor-pointer' : ''} ${borderClass}`}>
+                                                        <input
+                                                            type="radio"
+                                                            name={currentQuestion.id}
+                                                            value={key}
+                                                            disabled={isFinished}
+                                                            checked={isSelected}
+                                                            onChange={() => handleSelectOption(currentQuestion.id, key)}
+                                                            className="mt-1 h-5 w-5 text-primary focus:ring-primary border-gray-300 flex-shrink-0"
+                                                        />
+                                                        <div className="flex-1">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="font-bold text-slate-800">{key}.</span>
+                                                                <div className="text-slate-700"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            )
-                                        })}
+                                                            {value.diagram && (
+                                                                <div className="mt-3">
+                                                                    <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </label>
+                                                )
+                                            })
+                                        ) : (
+                                            <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md">
+                                                Options data not available for this question.
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             ) : <p>Loading question...</p>}
