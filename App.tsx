@@ -30,6 +30,8 @@ const QuestionSearch = lazy(() => import('./pages/QuestionSearch.tsx'));
 const Profile = lazy(() => import('./pages/Profile.tsx'));
 const Literature = lazy(() => import('./pages/Literature.tsx'));
 const Dictionary = lazy(() => import('./pages/Dictionary.tsx'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage.tsx'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.tsx'));
 
 // Admin - Lazy load admin pages
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout.tsx'));
@@ -136,10 +138,17 @@ const router = createHashRouter(
         <Route path="content" element={<Suspense fallback={<PageLoader />}><ManageContent /></Suspense>} />
       </Route>
 
-      {/* Fullscreen route */}
       <Route
         path="/take-examination"
         element={<Suspense fallback={<PageLoader />}><TakeExamination /></Suspense>}
+      />
+      <Route
+        path="/verify-email/:token"
+        element={<Suspense fallback={<PageLoader />}><VerifyEmailPage /></Suspense>}
+      />
+      <Route
+        path="/reset-password/:token"
+        element={<Suspense fallback={<PageLoader />}><ResetPasswordPage /></Suspense>}
       />
 
       {/* Fallback */}

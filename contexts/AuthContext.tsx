@@ -11,6 +11,7 @@ export interface UserProfile extends User {
     id: string;
     email: string;
     role: 'user' | 'admin';
+    isVerified?: boolean;
 }
 
 interface AuthContextType {
