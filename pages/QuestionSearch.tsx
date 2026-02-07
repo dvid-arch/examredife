@@ -4,9 +4,9 @@ import Card from '../components/Card.tsx';
 import { PastQuestion, PastPaper, StudyGuide } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
-import { useAuth } from '../contexts/AuthContext.tsx';
-
 import apiService from '../services/apiService.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
+import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import { Link } from 'react-router-dom';
 
 
@@ -26,13 +26,12 @@ const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const QuestionSearch: React.FC = () => {
     const location = useLocation();
     const { isAuthenticated, requestLogin } = useAuth();
+    const { papers: allPapers, guides: allGuides, isLoading, fetchPapers, fetchGuides } = usePastQuestions();
     const [activeTab, setActiveTab] = useState<'browse' | 'search'>('browse');
-    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
-    const [allGuides, setAllGuides] = useState<StudyGuide[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     // Search state
     const [query, setQuery] = useState('');
+    const [isLoadingSearch, setIsLoadingSearch] = useState(false);
     const [questionResults, setQuestionResults] = useState<SearchResult[]>([]);
     const [guideResults, setGuideResults] = useState<StudyGuide[]>([]);
     const [totalResultsCount, setTotalResultsCount] = useState(0);
@@ -59,62 +58,44 @@ const QuestionSearch: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                // Fetch papers from API
-                const papers = await apiService<PastPaper[]>('/data/papers');
-                setAllPapers(papers);
-
-                const guides = await apiService<StudyGuide[]>('/data/guides');
-                setAllGuides(guides);
-            } catch (error) {
-                console.error("Failed to fetch search data:", error);
-                setAllPapers([]); // Fallback
-            } finally {
-                setIsLoading(false);
-            }
+            await Promise.all([fetchPapers(), fetchGuides()]);
         };
         fetchData();
-    }, []);
+    }, [fetchPapers, fetchGuides]);
 
-    const performSearch = useCallback((searchQuery: string) => {
+    const performSearch = useCallback(async (searchQuery: string) => {
         if (!searchQuery.trim()) return;
 
-        const lowerCaseQuery = searchQuery.toLowerCase();
-
-        // Search Questions
-        const allQuestions: SearchResult[] = allPapers.flatMap(paper =>
-            paper.questions.map(q => ({
-                ...q,
-                subject: paper.subject,
-                year: paper.year,
-                exam: paper.exam,
-            }))
-        );
-
-        const filteredQuestions = allQuestions.filter(q => {
-            const questionText = q.question?.toLowerCase() || '';
-            const optionsText = q.options ? Object.values(q.options).map(o => o.text).join(' ').toLowerCase() : '';
-            return questionText.includes(lowerCaseQuery) || optionsText.includes(lowerCaseQuery);
-        });
-
-        // Search Guides
-        const filteredGuides = allGuides.filter(g =>
-            g.title.toLowerCase().includes(lowerCaseQuery) ||
-            g.subject.toLowerCase().includes(lowerCaseQuery) ||
-            g.content.toLowerCase().includes(lowerCaseQuery)
-        );
-
-        setTotalResultsCount(filteredQuestions.length + filteredGuides.length);
-
-        if (isAuthenticated) {
-            setQuestionResults(filteredQuestions);
-            setGuideResults(filteredGuides);
-        } else {
-            setQuestionResults(filteredQuestions.slice(0, GUEST_RESULT_LIMIT));
-            setGuideResults(filteredGuides.slice(0, 1)); // Guest limit for guides
-        }
-
+        setIsLoadingSearch(true);
         setHasSearched(true);
+
+        try {
+            // Use backend search for better results (keyword matching on server)
+            const results = await apiService<SearchResult[]>(`/data/search?query=${encodeURIComponent(searchQuery)}`);
+
+            // Still search guides locally for now as there's no backend guide search yet, 
+            // but we can add one if needed.
+            const lowerCaseQuery = searchQuery.toLowerCase();
+            const filteredGuides = allGuides.filter(g =>
+                g.title.toLowerCase().includes(lowerCaseQuery) ||
+                g.subject.toLowerCase().includes(lowerCaseQuery) ||
+                g.content.toLowerCase().includes(lowerCaseQuery)
+            );
+
+            setTotalResultsCount(results.length + filteredGuides.length);
+
+            if (isAuthenticated) {
+                setQuestionResults(results);
+                setGuideResults(filteredGuides);
+            } else {
+                setQuestionResults(results.slice(0, GUEST_RESULT_LIMIT));
+                setGuideResults(filteredGuides.slice(0, 1));
+            }
+        } catch (error) {
+            console.error("Search failed:", error);
+        } finally {
+            setIsLoadingSearch(false);
+        }
 
         // Update History
         setRecentSearches(prev => {

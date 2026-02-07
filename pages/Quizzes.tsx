@@ -3,33 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 
-
-
-import apiService from '../services/apiService.ts';
 
 const Quizzes: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { papers: allPapers, isLoading, fetchPapers } = usePastQuestions();
     const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>('standard');
-    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPapers = async () => {
-            try {
-                const data = await apiService<PastPaper[]>('/data/papers');
-                setAllPapers(data);
-            } catch (error) {
-                console.error("Failed to fetch papers:", error);
-                setAllPapers([]); // No fallback
-
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchPapers();
-    }, []);
+    }, [fetchPapers]);
 
     const subjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
 
@@ -138,7 +123,7 @@ const Quizzes: React.FC = () => {
             state: {
                 subjects: selectedSubjects,
                 year: standardSelectedYear,
-                examTitle: `UTME Practice (${standardSelectedYear})`,
+                examTitle: `UTME Practice(${standardSelectedYear})`,
                 timestamp: Date.now(),
             },
         });
@@ -179,13 +164,13 @@ const Quizzes: React.FC = () => {
                 <div className="mt-4 flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800 max-w-sm">
                     <button
                         onClick={() => setPracticeMode('standard')}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${practiceMode === 'standard' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
+                        className={`flex - 1 py - 2 px - 4 rounded - md text - sm font - semibold transition - colors ${practiceMode === 'standard' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'} `}
                     >
                         Standard UTME Exam
                     </button>
                     <button
                         onClick={() => setPracticeMode('custom')}
-                        className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${practiceMode === 'custom' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
+                        className={`flex - 1 py - 2 px - 4 rounded - md text - sm font - semibold transition - colors ${practiceMode === 'custom' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'} `}
                     >
                         Custom Practice
                     </button>
@@ -220,10 +205,10 @@ const Quizzes: React.FC = () => {
                                 {displayedSubjects.map(subject => (
                                     <label
                                         key={subject}
-                                        className={`flex items-center space-x-3 p-3 border rounded-lg transition-colors 
+                                        className={`flex items - center space - x - 3 p - 3 border rounded - lg transition - colors 
                                             ${subject === 'English' ? 'cursor-not-allowed bg-primary-light dark:bg-primary/20 border-primary' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 has-[:checked]:bg-primary-light has-[:checked]:border-primary dark:has-[:checked]:bg-primary/20'}
                                             ${selectedSubjects.length === 4 && !selectedSubjects.includes(subject) ? 'opacity-50 cursor-not-allowed' : ''}
-                                        `}
+`}
                                     >
                                         <input
                                             type="checkbox"
@@ -258,7 +243,7 @@ const Quizzes: React.FC = () => {
                                     <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">1. Select Subjects & Years</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                         {subjects.map(subject => (
-                                            <div key={subject} className={`p-3 border rounded-lg transition-colors ${customSelections[subject] ? 'bg-primary-light dark:bg-primary/20 border-primary' : 'bg-white dark:bg-gray-800/50'}`}>
+                                            <div key={subject} className={`p - 3 border rounded - lg transition - colors ${customSelections[subject] ? 'bg-primary-light dark:bg-primary/20 border-primary' : 'bg-white dark:bg-gray-800/50'} `}>
                                                 <label className="flex items-center space-x-3 cursor-pointer">
                                                     <input
                                                         type="checkbox"

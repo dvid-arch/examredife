@@ -107,15 +107,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
-    // Close modals when navigating to a new page
+    // Close modals when navigating to a new page or using back button
     useEffect(() => {
-        const handleHashChange = () => {
+        const handlePopState = (e: PopStateEvent) => {
+            // If we are popping a state that was pushed for a modal, just close the modals
             setIsAuthModalOpen(false);
             setIsUpgradeModalOpen(false);
         };
 
-        window.addEventListener('hashchange', handleHashChange);
-        return () => window.removeEventListener('hashchange', handleHashChange);
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
     // --- Universal Auth Signaling ---
@@ -129,6 +130,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (authAction === 'login' && !isAuthenticated && !isAuthModalOpen) {
             console.log('Universal Auth Trigger: Opening login modal');
+            window.history.pushState({ modal: 'auth' }, '');
             setIsAuthModalOpen(true);
 
             // Clean up the URL to prevent re-triggering, keeping the same pathname
@@ -288,11 +290,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const requestLogin = () => {
+        window.history.pushState({ modal: 'auth' }, '');
         setIsAuthModalOpen(true);
     };
 
     const requestUpgrade = (request: UpgradeRequest) => {
         setUpgradeRequest(request);
+        window.history.pushState({ modal: 'upgrade' }, '');
         setIsUpgradeModalOpen(true);
     };
 
@@ -360,8 +364,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return (
         <AuthContext.Provider value={value}>
             {children}
-            {!isLoading && <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />}
-            <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} request={upgradeRequest} />
+            {!isLoading && (
+                <AuthModal
+                    isOpen={isAuthModalOpen}
+                    onClose={() => {
+                        if (isAuthModalOpen) {
+                            window.history.back();
+                            setIsAuthModalOpen(false);
+                        }
+                    }}
+                />
+            )}
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => {
+                    if (isUpgradeModalOpen) {
+                        window.history.back();
+                        setIsUpgradeModalOpen(false);
+                    }
+                }}
+                request={upgradeRequest}
+            />
         </AuthContext.Provider>
     );
 };

@@ -6,6 +6,7 @@ import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 
 import apiService from '../services/apiService.ts';
 
@@ -43,19 +44,18 @@ const formatTime = (seconds: number) => {
     return `${m}:${s}`;
 };
 
-
 // --- MAIN COMPONENT ---
 const UtmeChallenge: React.FC = () => {
     type GameState = 'lobby' | 'selecting' | 'playing' | 'results' | 'reviewing';
 
     const { isAuthenticated, user, requestLogin, requestUpgrade } = useAuth();
+    const { papers: allPapers, isLoading: isLoadingPapers, fetchPapers } = usePastQuestions();
     const [searchParams, setSearchParams] = useSearchParams();
     const [gameState, setGameState] = useState<GameState>(
         (searchParams.get('step') as GameState) || 'lobby'
     );
     const [leaderboard, setLeaderboard] = useState<LeaderboardScore[]>([]);
-    const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
-    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
@@ -65,23 +65,22 @@ const UtmeChallenge: React.FC = () => {
     const [scoreSaved, setScoreSaved] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setIsLoadingData(true);
+        const fetchLeaderboard = async () => {
+            setIsLoadingLeaderboard(true);
             try {
-                const [leaderboardData, papersData] = await Promise.all([
-                    apiService<LeaderboardScore[]>('/data/leaderboard'),
-                    apiService<PastPaper[]>('/data/papers')
-                ]);
+                const leaderboardData = await apiService<LeaderboardScore[]>('/data/leaderboard');
                 setLeaderboard(leaderboardData);
-                setAllPapers(papersData);
             } catch (error) {
-                console.error("Failed to fetch game data", error);
+                console.error("Failed to fetch leaderboard", error);
             } finally {
-                setIsLoadingData(false);
+                setIsLoadingLeaderboard(false);
             }
         };
-        fetchData();
-    }, []);
+        fetchLeaderboard();
+        fetchPapers();
+    }, [fetchPapers]);
+
+    const isLoadingData = isLoadingPapers || isLoadingLeaderboard;
 
     const availableSubjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
 

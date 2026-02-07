@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { usePrompt } from '../hooks/usePrompt.ts';
 import Card from '../components/Card.tsx';
@@ -8,6 +8,7 @@ import { ChallengeQuestion } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import apiService from '../services/apiService.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 
 // --- ICONS ---
 const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4-4h2a2 2 0 012 2v4a2 2 0 01-2 2h-2m-4 4H5a2 2 0 01-2-2v-4a2 2 0 012-2h2" /></svg>;
@@ -22,11 +23,10 @@ const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5
 
 const SubjectSprintGame: React.FC = () => {
     const { user } = useAuth();
+    const { papers: allPapers, isLoading: isLoadingPapers, fetchPapers } = usePastQuestions();
     const [searchParams, setSearchParams] = useSearchParams();
     const [gameState, setGameState] = useState<'selection' | 'playing' | 'results'>('selection');
-    const [allPapers, setAllPapers] = useState<any[]>([]);
-    const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -36,20 +36,11 @@ const SubjectSprintGame: React.FC = () => {
     const [answerStatus, setAnswerStatus] = useState<'correct' | 'incorrect' | 'unanswered' | null>(null);
 
     useEffect(() => {
-        const fetchPapers = async () => {
-            try {
-                const data = await apiService<any[]>('/data/papers');
-                setAllPapers(data);
-                const subjs = [...new Set(data.map(p => p.subject))].sort();
-                setAvailableSubjects(subjs);
-            } catch (error) {
-                console.error("Failed to fetch papers:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchPapers();
-    }, []);
+    }, [fetchPapers]);
+
+    const availableSubjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+    const isLoading = isLoadingPapers || isLoadingLeaderboard;
 
     const handleGameOver = async (finalScore: number) => {
         setGameState('results');

@@ -12,6 +12,7 @@ import { PwaInstallProvider } from './contexts/PwaContext.tsx';
 import { ThemeProvider } from './contexts/ThemeContext.tsx';
 import { UserProgressProvider } from './contexts/UserProgressContext.tsx';
 import { ToastProvider } from './contexts/ToastContext.tsx';
+import { PastQuestionsProvider } from './contexts/PastQuestionsContext.tsx';
 
 // Pages - Lazy load all pages for faster initial load
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
@@ -57,12 +58,14 @@ const RootLayout: React.FC = () => {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <UserProgressProvider>
-            <PwaInstallProvider>
-              <Outlet />
-              <PwaInstallBanner />
-            </PwaInstallProvider>
-          </UserProgressProvider>
+          <PastQuestionsProvider>
+            <UserProgressProvider>
+              <PwaInstallProvider>
+                <Outlet />
+                <PwaInstallBanner />
+              </PwaInstallProvider>
+            </UserProgressProvider>
+          </PastQuestionsProvider>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>
@@ -73,21 +76,40 @@ const RootLayout: React.FC = () => {
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Close sidebar when navigating to a new page
+  // Close sidebar when navigating to a new page or using back button
   useEffect(() => {
+    const handlePopState = () => {
+      setIsSidebarOpen(false);
+    };
+
     const handleHashChange = () => {
       setIsSidebarOpen(false);
     };
 
+    window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   return (
     <div className="flex h-screen h-[100dvh] bg-gray-100 dark:bg-gray-950 font-sans overflow-hidden">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => {
+          if (isSidebarOpen) {
+            window.history.back();
+            setIsSidebarOpen(false);
+          }
+        }}
+      />
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onMenuClick={() => setIsSidebarOpen(true)} />
+        <Header onMenuClick={() => {
+          window.history.pushState({ modal: 'sidebar' }, '');
+          setIsSidebarOpen(true);
+        }} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 pb-24 sm:pb-4 sm:p-4 md:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <Suspense fallback={<PageLoader />}>

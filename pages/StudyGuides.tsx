@@ -117,11 +117,20 @@ const StudyGuides: React.FC = () => {
 
     useEffect(() => {
         if (location.state?.viewGuide) {
-            setViewingGuide(location.state.viewGuide);
+            handleViewGuide(location.state.viewGuide);
         }
     }, [location.state]);
 
+    useEffect(() => {
+        const handlePopState = () => {
+            setViewingGuide(null);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
     const handleViewGuide = (guide: StudyGuide) => {
+        window.history.pushState({ modal: 'guide' }, '');
         setViewingGuide(guide);
         addActivity({
             id: guide.id,
@@ -306,7 +315,17 @@ const StudyGuides: React.FC = () => {
                 </Card>
             )}
 
-            {viewingGuide && <GuideModal guide={viewingGuide} onClose={() => setViewingGuide(null)} />}
+            {viewingGuide && (
+                <GuideModal
+                    guide={viewingGuide}
+                    onClose={() => {
+                        if (viewingGuide) {
+                            window.history.back();
+                            setViewingGuide(null);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };
