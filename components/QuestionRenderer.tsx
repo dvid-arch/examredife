@@ -11,7 +11,7 @@ interface QuestionRendererProps {
 }
 
 const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionContent, className = '', imageClassName = '', forceLightMode = false }) => {
-  const content = questionContent || question.question;
+  const content = questionContent || question?.question || '';
   const hasPlaceholder = content.includes('[IMAGE]');
   const hasDiagram = !!question.questionDiagram;
 
@@ -38,8 +38,8 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
     <div className={className}>
       <MarkdownRenderer content={content} forceLightMode={forceLightMode} />
       {hasDiagram && (
-         <div className="my-4 flex justify-center">
-            <img src={question.questionDiagram} alt="Question diagram" className={`max-w-full h-auto rounded-lg border bg-white shadow-sm dark:border-slate-600 ${imageClassName}`} />
+        <div className="my-4 flex justify-center">
+          <img src={question.questionDiagram} alt="Question diagram" className={`max-w-full h-auto rounded-lg border bg-white shadow-sm dark:border-slate-600 ${imageClassName}`} />
         </div>
       )}
     </div>
