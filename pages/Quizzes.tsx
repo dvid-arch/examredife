@@ -62,27 +62,22 @@ const Quizzes: React.FC = () => {
     const [customSelections, setCustomSelections] = useState<Record<string, 'random' | number>>({});
     const [customQuestionCount, setCustomQuestionCount] = useState<number>(10);
 
-    const mostRecentYearBySubject = useMemo(() => {
-        const yearMap = new Map<string, number>();
+    const yearsBySubject = useMemo(() => {
+        const map = new Map<string, number[]>();
         subjects.forEach(subject => {
-            const yearsForSubject = allPapers
+            const years = new Set(allPapers
                 .filter(p => p.subject === subject)
                 .map(p => p.year)
-                .filter(y => typeof y === 'number' && !isNaN(y));
-            if (yearsForSubject.length > 0) {
-                const maxYear = Math.max(...yearsForSubject);
-                yearMap.set(subject, maxYear);
-            }
+                .filter(y => typeof y === 'number' && !isNaN(y)));
+
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            map.set(subject, sortedYears);
         });
-        return yearMap;
+        return map;
     }, [allPapers, subjects]);
 
-
     const getYearsForSubject = (subject: string) => {
-        const years = new Set(allPapers
-            .filter(p => p.subject === subject)
-            .map(p => p.year));
-        return Array.from(years).sort((a, b) => Number(b) - Number(a));
+        return yearsBySubject.get(subject) || [];
     };
 
     const handleStandardSubjectChange = (subject: string) => {
@@ -104,7 +99,7 @@ const Quizzes: React.FC = () => {
                 delete newSelections[subject]; // uncheck
             } else {
                 // check, default to most recent year for that specific subject
-                const subjectYears = getYearsForSubject(subject);
+                const subjectYears = yearsBySubject.get(subject) || [];
                 const defaultYear = subjectYears.length > 0 ? subjectYears[0] : 'random';
                 newSelections[subject] = defaultYear;
             }

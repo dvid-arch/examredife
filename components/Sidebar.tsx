@@ -37,8 +37,8 @@ const NavItem: React.FC<{ item: NavItemType; onClick?: () => void }> = ({ item, 
     return (
         <NavLink
             to={item.path}
+            replace
             {...navLinkProps}
-            onClick={onClick}
             className={({ isActive }) =>
                 `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
                     ? 'bg-primary-light dark:bg-primary/20 text-primary font-semibold'
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <Logo />
                 <nav className="flex-1 space-y-2 overflow-y-auto">
                     {NAV_ITEMS.map((item) => (
-                        <NavItem key={item.path} item={item} onClick={onClose} />
+                        <NavItem key={item.path} item={item} />
                     ))}
                 </nav>
 
