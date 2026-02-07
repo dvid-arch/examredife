@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { User } from '../types.ts';
@@ -40,6 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const location = useLocation();
 
     const fetchUserProfile = async () => {
         try {
@@ -119,19 +120,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         if (isLoading) return;
 
-        // Use URLSearchParams on the current hash or search
-        const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1]);
+        const params = new URLSearchParams(location.search || location.hash.split('?')[1]);
         const authAction = params.get('auth');
 
         if (authAction === 'login' && !isAuthenticated && !isAuthModalOpen) {
             console.log('Universal Auth Trigger: Opening login modal');
             setIsAuthModalOpen(true);
 
-            // Clean up the URL to prevent re-triggering
-            const newUrl = window.location.pathname + window.location.hash.split('?')[0];
-            window.history.replaceState({}, '', newUrl);
+            // Clean up the URL to prevent re-triggering, keeping the same pathname
+            navigate(location.pathname, { replace: true });
         }
-    }, [isLoading, isAuthenticated, isAuthModalOpen]);
+    }, [isLoading, isAuthenticated, isAuthModalOpen, location.search, location.hash, location.pathname, navigate]);
 
     // When the user returns to the tab or the window gains focus, try to refresh profile
     // This helps avoid being unexpectedly logged out after the access token expires while the tab was inactive.
