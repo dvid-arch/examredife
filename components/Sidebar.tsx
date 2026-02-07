@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <Logo />
                 <nav className="flex-1 space-y-2 overflow-y-auto">
                     {NAV_ITEMS.map((item) => (
-                        <NavItem key={item.path} item={item} onClick={onClose} />
+                        <NavItem key={item.path} item={item} />
                     ))}
                 </nav>
 
@@ -95,7 +95,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
                         <NavLink
                             to="/admin"
-                            onClick={onClose}
                             className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 font-semibold"
                         >
                             <AdminIcon />

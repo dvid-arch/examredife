@@ -11,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 interface PwaInstallContextType {
+    canInstall: boolean;
     triggerInstallPrompt: () => void;
     notificationStatus: NotificationPermission | 'unsupported';
     requestNotificationPermission: () => Promise<boolean>;
