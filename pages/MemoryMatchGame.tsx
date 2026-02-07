@@ -126,6 +126,9 @@ const MemoryMatchGame: React.FC = () => {
     };
 
     const restartGame = () => {
+        if (moves > 0 && !isGameComplete) {
+            if (!window.confirm('Restart game? Your current progress will be lost.')) return;
+        }
         setCards(initializeBoard());
         setFlippedCards([]);
         setMatchedPairs(0);
@@ -133,6 +136,18 @@ const MemoryMatchGame: React.FC = () => {
         setIsGameComplete(false);
         setIsChecking(false);
     };
+
+    // Prevent accidental tab close/reload
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (moves > 0 && !isGameComplete) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [moves, isGameComplete]);
 
     return (
         <div className="space-y-6">

@@ -51,13 +51,16 @@ const Profile: React.FC = () => {
         if (name.trim() === '') return;
         if (updateUser) {
             await updateUser({ name });
+            alert('Profile updated successfully!');
         }
         setIsEditing(false);
     };
 
     const handleLogout = () => {
-        logout();
-        navigate('/dashboard');
+        if (window.confirm('Are you sure you want to log out?')) {
+            logout();
+            navigate('/dashboard');
+        }
     };
 
     if (isLoading) {

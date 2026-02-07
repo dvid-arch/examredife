@@ -200,9 +200,24 @@ const UtmeChallenge: React.FC = () => {
     };
 
     const resetGame = () => {
+        if (gameState === 'playing' || (gameState === 'results' && !scoreSaved)) {
+            if (!window.confirm('Leave challenge? Unsaved progress will be lost.')) return;
+        }
         setSelectedSubjects([]);
         setGameState('lobby');
     };
+
+    // Prevent accidental tab close/reload
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (gameState === 'playing') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [gameState]);
 
     const scoreBySubject = useMemo(() => {
         return selectedSubjects.map(subject => {

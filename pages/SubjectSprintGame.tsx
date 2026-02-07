@@ -157,8 +157,23 @@ const SubjectSprintGame: React.FC = () => {
     };
 
     const restartGame = () => {
+        if (gameState === 'playing' && score > 0) {
+            if (!window.confirm('Restart game? Your current progress will be lost.')) return;
+        }
         setGameState('selection');
     };
+
+    // Prevent accidental tab close/reload
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (gameState === 'playing') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [gameState]);
 
     const renderSelectionScreen = () => (
         <Card className="text-center p-6">

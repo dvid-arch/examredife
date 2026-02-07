@@ -34,7 +34,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, onSave, onClose }) => {
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Name</label>
                         <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
-                     <div>
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
                         <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
@@ -45,7 +45,7 @@ const UserModal: React.FC<UserModalProps> = ({ user, onSave, onClose }) => {
                             <option value="pro">Pro</option>
                         </select>
                     </div>
-                     <div>
+                    <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Role</label>
                         <select name="role" value={formData.role} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700">
                             <option value="user">User</option>
@@ -85,8 +85,14 @@ const ManageUsers: React.FC = () => {
     useEffect(() => {
         fetchUsers();
     }, []);
-    
+
     const handleSubscriptionChange = async (userId: string, newSubscription: 'free' | 'pro') => {
+        const confirmMessage = newSubscription === 'pro'
+            ? 'Are you sure you want to upgrade this user to PRO? This will grant them unlimited access.'
+            : 'Are you sure you want to downgrade this user to FREE?';
+
+        if (!window.confirm(confirmMessage)) return;
+
         try {
             const updatedUser = await apiService<UserProfile>(`/admin/users/${userId}/subscription`, {
                 method: 'PUT',
@@ -111,7 +117,7 @@ const ManageUsers: React.FC = () => {
     const handleSaveUser = async (userToSave: UserProfile) => {
         try {
             let savedUser: UserProfile;
-                if (userToSave.id) {
+            if (userToSave.id) {
                 // Edit existing user
                 savedUser = await apiService<UserProfile>(`/admin/users/${userToSave.id}`, {
                     method: 'PUT',
@@ -133,9 +139,9 @@ const ManageUsers: React.FC = () => {
             alert(err instanceof Error ? err.message : 'Failed to save user');
         }
     };
-    
+
     const handleDeleteUser = async (userId: string) => {
-        if(window.confirm("Are you sure you want to delete this user?")) {
+        if (window.confirm("Are you sure you want to delete this user?")) {
             try {
                 await apiService(`/admin/users/${userId}`, { method: 'DELETE' });
                 setUsers(users.filter(u => u.id !== userId));
@@ -150,12 +156,12 @@ const ManageUsers: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Manage Users</h1>
-                 <button onClick={() => openModal(null)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">
+                <button onClick={() => openModal(null)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">
                     Add User
                 </button>
             </div>
             <Card>
-                 <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
+                <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
                     <table className="min-w-full text-left text-sm">
                         <thead className="bg-slate-50 dark:bg-slate-800">
                             <tr>
@@ -184,20 +190,20 @@ const ManageUsers: React.FC = () => {
                                         <td className="px-2 py-4 sm:px-4 text-center">
                                             {user.role !== 'admin' ? (
                                                 <label htmlFor={`pro-toggle-${user.id}`} className="relative inline-flex items-center cursor-pointer">
-                                                  <input 
-                                                    type="checkbox" 
-                                                    id={`pro-toggle-${user.id}`}
-                                                    className="sr-only peer" 
-                                                    checked={user.subscription === 'pro'}
-                                                    onChange={(e) => handleSubscriptionChange(user.id, e.target.checked ? 'pro' : 'free')}
-                                                  />
-                                                  <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`pro-toggle-${user.id}`}
+                                                        className="sr-only peer"
+                                                        checked={user.subscription === 'pro'}
+                                                        onChange={(e) => handleSubscriptionChange(user.id, e.target.checked ? 'pro' : 'free')}
+                                                    />
+                                                    <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-slate-600 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                                                 </label>
                                             ) : (
                                                 <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">-</span>
                                             )}
                                         </td>
-                                         <td className="px-2 py-4 sm:px-4 flex flex-col items-start gap-1 sm:flex-row sm:gap-2">
+                                        <td className="px-2 py-4 sm:px-4 flex flex-col items-start gap-1 sm:flex-row sm:gap-2">
                                             <button onClick={() => openModal(user)} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Edit</button>
                                             {user.role !== 'admin' && (
                                                 <button onClick={() => handleDeleteUser(user.id)} className="font-semibold text-red-600 dark:text-red-400 hover:underline">Delete</button>

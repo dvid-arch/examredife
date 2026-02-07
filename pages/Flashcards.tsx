@@ -112,6 +112,18 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
         setIsComplete(false);
     };
 
+    // Prevent accidental tab close/reload
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (!isComplete && currentIndex > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isComplete, currentIndex]);
+
     if (isComplete) {
         return (
             <Card className="flex flex-col items-center justify-center text-center p-6">
@@ -143,7 +155,15 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <button onClick={onFinish} className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold hover:text-primary transition-colors">
+                <button
+                    onClick={() => {
+                        if (!isComplete) {
+                            if (!window.confirm('Back to deck? Your session progress will be lost.')) return;
+                        }
+                        onFinish();
+                    }}
+                    className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold hover:text-primary transition-colors"
+                >
                     <BackArrowIcon />
                     <span>Back to Deck</span>
                 </button>
