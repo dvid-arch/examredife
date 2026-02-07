@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useBlocker } from 'react-router-dom';
+import { Link, useBlocker, useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { memoryMatchConcepts } from '../data/gameData.ts';
 import { MemoryCardType } from '../types.ts';
@@ -37,12 +37,38 @@ const initializeBoard = (): MemoryCardType[] => {
 
 const MemoryMatchGame: React.FC = () => {
     const { user } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [cards, setCards] = useState<MemoryCardType[]>(initializeBoard());
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
     const [matchedPairs, setMatchedPairs] = useState(0);
     const [moves, setMoves] = useState(0);
     const [isGameComplete, setIsGameComplete] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
+
+    // Sync game state with URL for back button support
+    useEffect(() => {
+        if (moves > 0 && !isGameComplete) {
+            if (searchParams.get('playing') !== 'true') {
+                setSearchParams({ playing: 'true' });
+            }
+        } else if (moves === 0 || isGameComplete) {
+            if (searchParams.get('playing') === 'true') {
+                setSearchParams({});
+            }
+        }
+    }, [moves, isGameComplete, searchParams]);
+
+    // Handle back button specifically
+    useEffect(() => {
+        if (searchParams.get('playing') !== 'true' && moves > 0 && !isGameComplete) {
+            // User clicked back button - reset game state to lobby
+            setCards(initializeBoard());
+            setFlippedCards([]);
+            setMatchedPairs(0);
+            setMoves(0);
+            setIsGameComplete(false);
+        }
+    }, [searchParams]);
 
     const handleGameOver = async () => {
         setIsGameComplete(true);
@@ -135,6 +161,7 @@ const MemoryMatchGame: React.FC = () => {
         setMoves(0);
         setIsGameComplete(false);
         setIsChecking(false);
+        setSearchParams({});
     };
 
     // React Router navigation guard

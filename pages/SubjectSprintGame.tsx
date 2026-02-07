@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useBlocker } from 'react-router-dom';
+import { Link, useBlocker, useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 
 import { ChallengeQuestion } from '../types.ts';
@@ -21,6 +21,7 @@ const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5
 
 const SubjectSprintGame: React.FC = () => {
     const { user } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [gameState, setGameState] = useState<'selection' | 'playing' | 'results'>('selection');
     const [allPapers, setAllPapers] = useState<any[]>([]);
     const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
@@ -161,7 +162,29 @@ const SubjectSprintGame: React.FC = () => {
             if (!window.confirm('Restart game? Your current progress will be lost.')) return;
         }
         setGameState('selection');
+        setSearchParams({});
     };
+
+    // Sync game state with URL for back button support
+    useEffect(() => {
+        if (gameState === 'playing') {
+            if (searchParams.get('playing') !== 'true') {
+                setSearchParams({ playing: 'true' });
+            }
+        } else {
+            if (searchParams.get('playing') === 'true') {
+                setSearchParams({});
+            }
+        }
+    }, [gameState, searchParams]);
+
+    // Handle back button specifically
+    useEffect(() => {
+        if (searchParams.get('playing') !== 'true' && gameState === 'playing') {
+            // User clicked back button - reset to selection
+            setGameState('selection');
+        }
+    }, [searchParams]);
 
     // React Router navigation guard
     const blocker = useBlocker(

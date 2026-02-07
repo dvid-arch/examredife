@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useBlocker } from 'react-router-dom';
+import { useNavigate, useBlocker, useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
@@ -48,7 +48,10 @@ const UtmeChallenge: React.FC = () => {
     type GameState = 'lobby' | 'selecting' | 'playing' | 'results' | 'reviewing';
 
     const { isAuthenticated, user, requestLogin, requestUpgrade } = useAuth();
-    const [gameState, setGameState] = useState<GameState>('lobby');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [gameState, setGameState] = useState<GameState>(
+        (searchParams.get('step') as GameState) || 'lobby'
+    );
     const [leaderboard, setLeaderboard] = useState<LeaderboardScore[]>([]);
     const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -128,7 +131,10 @@ const UtmeChallenge: React.FC = () => {
         }
     }, [gameState, endTime, handleSubmit]);
 
-    const handleStartSelection = () => setGameState('selecting');
+    const handleStartSelection = () => {
+        setSearchParams({ step: 'selecting' });
+        setGameState('selecting');
+    };
 
     const handleSubjectToggle = (subject: string) => {
         setSelectedSubjects(prev => {
@@ -154,6 +160,7 @@ const UtmeChallenge: React.FC = () => {
         setTimeLeft(CHALLENGE_DURATION_MINUTES * 60);
         setEndTime(null); // Will trigger new start
         setScoreSaved(false);
+        setSearchParams({ step: 'playing' });
         setGameState('playing');
     };
 
@@ -201,12 +208,21 @@ const UtmeChallenge: React.FC = () => {
     };
 
     const resetGame = () => {
-        if (gameState === 'playing' || (gameState === 'results' && !scoreSaved)) {
+        if (gameState === 'playing') {
             if (!window.confirm('Leave challenge? Unsaved progress will be lost.')) return;
         }
         setSelectedSubjects([]);
+        setSearchParams({});
         setGameState('lobby');
     };
+
+    // Sync gameState with URL for back button support
+    useEffect(() => {
+        const urlStep = searchParams.get('step') as GameState || 'lobby';
+        if (urlStep !== gameState) {
+            setGameState(urlStep);
+        }
+    }, [searchParams]);
 
     // React Router navigation guard
     const blocker = useBlocker(
@@ -376,7 +392,10 @@ const UtmeChallenge: React.FC = () => {
                     </div>
                 </Card>
                 <div className="flex justify-center gap-4">
-                    <button onClick={() => setGameState('reviewing')} className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light">Review Answers</button>
+                    <button onClick={() => {
+                        setSearchParams({ step: 'reviewing' });
+                        setGameState('reviewing');
+                    }} className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light">Review Answers</button>
                     <button onClick={resetGame} className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700">Play Again</button>
                 </div>
             </div>
@@ -389,7 +408,10 @@ const UtmeChallenge: React.FC = () => {
             <div className="flex flex-col h-full max-h-[calc(100vh-120px)]">
                 <div className="bg-white p-3 border-b shadow-sm rounded-t-lg flex justify-between items-center">
                     <h2 className="font-bold text-lg text-primary">Reviewing Answers</h2>
-                    <button onClick={() => setGameState('results')} className="flex items-center gap-2 font-semibold text-slate-600 hover:text-primary"><BackArrowIcon /> Back to Results</button>
+                    <button onClick={() => {
+                        setSearchParams({ step: 'results' });
+                        setGameState('results');
+                    }} className="flex items-center gap-2 font-semibold text-slate-600 hover:text-primary"><BackArrowIcon /> Back to Results</button>
                 </div>
                 <div className="flex-1 bg-gray-50 p-4 overflow-y-auto">
                     <p className="font-semibold text-slate-700 mb-2">Question {currentQuestionIndex + 1}/{TOTAL_QUESTIONS}</p>

@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useBlocker } from 'react-router-dom';
+import { useBlocker, useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { Flashcard as FlashcardType, FlashcardDeck } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -316,11 +316,32 @@ const ReminderModal: React.FC<ReminderModalProps> = ({ decks, onSave, onCancel }
 
 // --- MAIN COMPONENT ---
 const Flashcards: React.FC = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [decks, setDecks] = useState<FlashcardDeck[]>([]);
+
+    // Derived state from URL
+    const selectedDeckId = searchParams.get('deck');
+    const isStudyingParam = searchParams.get('study') === 'true';
+
     const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
+    const [isStudying, setIsStudying] = useState(false);
+
+    // Sync state with URL params
+    useEffect(() => {
+        if (decks.length > 0 && selectedDeckId) {
+            const deck = decks.find(d => d.id === selectedDeckId);
+            if (deck) {
+                setSelectedDeck(deck);
+                setIsStudying(isStudyingParam);
+            }
+        } else {
+            setSelectedDeck(null);
+            setIsStudying(false);
+        }
+    }, [selectedDeckId, isStudyingParam, decks]);
+
     const [isDeckFormVisible, setDeckFormVisible] = useState(false);
     const [isCardFormVisible, setCardFormVisible] = useState(false);
-    const [isStudying, setIsStudying] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isReminderModalVisible, setReminderModalVisible] = useState(false);
@@ -468,7 +489,11 @@ const Flashcards: React.FC = () => {
     // --- RENDER LOGIC ---
     if (selectedDeck) {
         if (isStudying) {
-            return <StudySession deck={selectedDeck} onFinish={() => setIsStudying(false)} />
+            return <StudySession deck={selectedDeck} onFinish={() => {
+                const params = new URLSearchParams(searchParams);
+                params.delete('study');
+                setSearchParams(params);
+            }} />
         }
 
         const filteredCards = selectedDeck.cards.filter(card =>
@@ -478,7 +503,7 @@ const Flashcards: React.FC = () => {
 
         return (
             <div className="space-y-6">
-                <button onClick={() => { setSelectedDeck(null); setSearchQuery(''); }} className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold hover:text-primary transition-colors">
+                <button onClick={() => { setSearchParams({}); setSearchQuery(''); }} className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-semibold hover:text-primary transition-colors">
                     <BackArrowIcon />
                     <span>All Decks</span>
                 </button>
@@ -494,7 +519,7 @@ const Flashcards: React.FC = () => {
                                     alert("This deck has no cards. Please add some before studying.");
                                     return;
                                 }
-                                setIsStudying(true);
+                                setSearchParams({ deck: selectedDeck.id, study: 'true' });
                             }}
                             className="font-semibold text-primary py-2 px-5 rounded-lg border-2 border-primary hover:bg-primary-light dark:hover:bg-primary/20 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={selectedDeck.cards.length === 0}
@@ -590,7 +615,7 @@ const Flashcards: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {decks.map((deck) => (
-                    <div key={deck.id} onClick={() => setSelectedDeck(deck)} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
+                    <div key={deck.id} onClick={() => setSearchParams({ deck: deck.id })} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-50">{deck.name}</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">{deck.subject}</p>
                         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-600 flex justify-between items-center">
