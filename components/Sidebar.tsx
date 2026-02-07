@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <Logo />
                 <nav className="flex-1 space-y-2 overflow-y-auto">
                     {NAV_ITEMS.map((item) => (
-                        <NavItem key={item.path} item={item} />
+                        <NavItem key={item.path} item={item} onClick={onClose} />
                     ))}
                 </nav>
 

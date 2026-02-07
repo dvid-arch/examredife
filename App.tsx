@@ -106,8 +106,11 @@ const MainLayout: React.FC = () => {
         isOpen={isSidebarOpen}
         onClose={() => {
           if (isSidebarOpen) {
-            window.history.back();
-            setIsSidebarOpen(false);
+            if (window.history.state?.modal === 'sidebar') {
+              window.history.back();
+            } else {
+              setIsSidebarOpen(false);
+            }
           }
         }}
       />
