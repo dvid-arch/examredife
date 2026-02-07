@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useBlocker } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 
 import { ChallengeQuestion } from '../types.ts';
@@ -162,6 +162,24 @@ const SubjectSprintGame: React.FC = () => {
         }
         setGameState('selection');
     };
+
+    // React Router navigation guard
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            gameState === 'playing' &&
+            currentLocation.pathname !== nextLocation.pathname
+    );
+
+    useEffect(() => {
+        if (blocker.state === "blocked") {
+            const confirm = window.confirm('Are you sure you want to leave this game? Your progress will be lost.');
+            if (confirm) {
+                blocker.proceed();
+            } else {
+                blocker.reset();
+            }
+        }
+    }, [blocker]);
 
     // Prevent accidental tab close/reload
     useEffect(() => {

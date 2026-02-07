@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate, useBlocker } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
@@ -207,7 +208,24 @@ const UtmeChallenge: React.FC = () => {
         setGameState('lobby');
     };
 
-    // Prevent accidental tab close/reload
+    // React Router navigation guard
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            gameState === 'playing' &&
+            currentLocation.pathname !== nextLocation.pathname
+    );
+
+    useEffect(() => {
+        if (blocker.state === "blocked") {
+            const confirm = window.confirm('Are you sure you want to leave this challenge? Your progress will be lost.');
+            if (confirm) {
+                blocker.proceed();
+            } else {
+                blocker.reset();
+            }
+        }
+    }, [blocker]);
+
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             if (gameState === 'playing') {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useBlocker } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { memoryMatchConcepts } from '../data/gameData.ts';
 import { MemoryCardType } from '../types.ts';
@@ -136,6 +136,24 @@ const MemoryMatchGame: React.FC = () => {
         setIsGameComplete(false);
         setIsChecking(false);
     };
+
+    // React Router navigation guard
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            moves > 0 && !isGameComplete &&
+            currentLocation.pathname !== nextLocation.pathname
+    );
+
+    useEffect(() => {
+        if (blocker.state === "blocked") {
+            const confirm = window.confirm('Are you sure you want to leave this game? Your progress will be lost.');
+            if (confirm) {
+                blocker.proceed();
+            } else {
+                blocker.reset();
+            }
+        }
+    }, [blocker]);
 
     // Prevent accidental tab close/reload
     useEffect(() => {
