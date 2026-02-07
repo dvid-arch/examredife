@@ -28,6 +28,7 @@ interface AuthContextType {
     useAiCredit: () => Promise<void>;
     incrementMessageCount: () => Promise<{ success: boolean; remaining: number }>;
     isLoading: boolean;
+    justRegistered: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [justRegistered, setJustRegistered] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { success, error: toastError } = useToasts();
@@ -192,6 +194,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 body: details,
                 useAuth: false,
             });
+            setJustRegistered(false);
             await handleAuthSuccess(data);
         } catch (error: any) {
             // Log the raw error for debugging
@@ -231,6 +234,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 body: details,
                 useAuth: false,
             });
+            setJustRegistered(true);
             await handleAuthSuccess(data);
         } catch (error: any) {
             // Log the raw error for debugging
@@ -351,7 +355,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: remaining > 0, remaining };
     };
 
-    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, isLoading };
+    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, isLoading, justRegistered };
 
     return (
         <AuthContext.Provider value={value}>

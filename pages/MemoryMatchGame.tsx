@@ -153,9 +153,7 @@ const MemoryMatchGame: React.FC = () => {
     };
 
     const restartGame = () => {
-        if (moves > 0 && !isGameComplete) {
-            if (!window.confirm('Restart game? Your current progress will be lost.')) return;
-        }
+        // usePrompt handles blocking while game is in progress
         setCards(initializeBoard());
         setFlippedCards([]);
         setMatchedPairs(0);
@@ -165,8 +163,8 @@ const MemoryMatchGame: React.FC = () => {
         setSearchParams({}, { replace: true });
     };
 
-    // Unified navigation guard
-    usePrompt(moves > 0 && !isGameComplete, 'Are you sure you want to leave this game? Your progress will be lost.');
+    // Unified navigation guard - trigger immediately if playing
+    usePrompt(!isGameComplete, 'Are you sure you want to leave this game? Your progress will be lost.');
 
     return (
         <div className="space-y-6">

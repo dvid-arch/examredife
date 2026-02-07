@@ -115,7 +115,7 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
     };
 
     // Unified navigation guard
-    usePrompt(!isComplete && currentIndex > 0, 'Are you sure you want to leave this study session? Your progress will be lost.');
+    usePrompt(!isComplete, 'Are you sure you want to leave this study session? Your progress will be lost.');
 
     if (isComplete) {
         return (

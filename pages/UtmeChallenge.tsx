@@ -209,9 +209,7 @@ const UtmeChallenge: React.FC = () => {
     };
 
     const resetGame = () => {
-        if (gameState === 'playing') {
-            if (!window.confirm('Leave challenge? Unsaved progress will be lost.')) return;
-        }
+        // usePrompt handles the blocking logic during 'playing' state
         setSelectedSubjects([]);
         setSearchParams({}, { replace: true });
         setGameState('lobby');

@@ -159,9 +159,7 @@ const SubjectSprintGame: React.FC = () => {
     };
 
     const restartGame = () => {
-        if (gameState === 'playing' && score > 0) {
-            if (!window.confirm('Restart game? Your current progress will be lost.')) return;
-        }
+        // usePrompt handles blocking during 'playing' state
         setGameState('selection');
         setSearchParams({}, { replace: true });
     };
