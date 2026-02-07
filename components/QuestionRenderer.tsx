@@ -36,7 +36,11 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
   // Fallback to original behavior
   return (
     <div className={className}>
-      <MarkdownRenderer content={content} forceLightMode={forceLightMode} />
+      {content ? (
+        <MarkdownRenderer content={content} forceLightMode={forceLightMode} />
+      ) : (
+        <p className="text-slate-400 italic">Question text not available.</p>
+      )}
       {hasDiagram && (
         <div className="my-4 flex justify-center">
           <img src={question.questionDiagram} alt="Question diagram" className={`max-w-full h-auto rounded-lg border bg-white shadow-sm dark:border-slate-600 ${imageClassName}`} />

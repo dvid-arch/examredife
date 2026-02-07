@@ -602,6 +602,18 @@ const TakeExamination: React.FC = () => {
                                             <span className="text-sm text-slate-500"> of {totalQuestionsInSubject}</span>
                                         </p>
                                     </div>
+                                    {(() => {
+                                        if (currentQuestion) {
+                                            console.log('Current Question Debug:', {
+                                                id: currentQuestion.id,
+                                                subject: currentQuestion.subject,
+                                                hasQuestionText: !!currentQuestion.question,
+                                                hasOptions: !!currentQuestion.options,
+                                                optionsKeys: currentQuestion.options ? Object.keys(currentQuestion.options) : []
+                                            });
+                                        }
+                                        return null;
+                                    })()}
                                     <QuestionRenderer
                                         question={currentQuestion}
                                         className="text-lg text-slate-800 mb-4 min-h-[40px]"
@@ -702,7 +714,7 @@ const TakeExamination: React.FC = () => {
 
                                 return (
                                     <div key={subject}>
-                                        <div className="grid grid-cols-10 sm:grid-cols-12 md:grid-cols-15 lg:grid-cols-18 gap-1.5">
+                                        <div className="flex flex-wrap gap-2">
                                             {Array.from({ length: questionCount }).map((_, localIndex) => {
                                                 const globalIndex = bounds.start + localIndex;
                                                 const q = questions[globalIndex];
@@ -737,7 +749,7 @@ const TakeExamination: React.FC = () => {
                                                     <button
                                                         key={q.id}
                                                         onClick={() => handleJumpToQuestion(globalIndex)}
-                                                        className={`w-full aspect-square rounded-sm text-xs font-medium transition-all duration-150 ${buttonClass}`}
+                                                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg text-sm font-bold flex items-center justify-center transition-all duration-150 ${buttonClass}`}
                                                         aria-label={`Go to ${subject} question ${localIndex + 1}`}
                                                     >
                                                         {isLocked ? (
