@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
+import { useToasts } from './ToastContext.tsx';
 import { User } from '../types.ts';
 import apiService from '../services/apiService.ts';
 
@@ -41,6 +42,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
     const location = useLocation();
+    const { success, error: toastError } = useToasts();
 
     const fetchUserProfile = async () => {
         try {
@@ -302,9 +304,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setUser(updatedUser);
                 localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
                 setIsUpgradeModalOpen(false);
+                success("Successfully upgraded to Pro!");
             } catch (error) {
                 console.error("Failed to upgrade user:", error);
-                alert("Could not complete upgrade. Please try again.");
+                toastError("Could not complete upgrade. Please try again.");
             }
         }
     };

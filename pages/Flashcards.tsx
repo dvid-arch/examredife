@@ -1,7 +1,8 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useBlocker, useSearchParams } from 'react-router-dom';
+import { usePrompt } from '../hooks/usePrompt.ts';
+import { useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { Flashcard as FlashcardType, FlashcardDeck } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -113,35 +114,8 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
         setIsComplete(false);
     };
 
-    // React Router navigation guard
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            !isComplete && currentIndex > 0 &&
-            currentLocation.pathname !== nextLocation.pathname
-    );
-
-    useEffect(() => {
-        if (blocker.state === "blocked") {
-            const confirm = window.confirm('Are you sure you want to leave this study session? Your progress will be lost.');
-            if (confirm) {
-                blocker.proceed();
-            } else {
-                blocker.reset();
-            }
-        }
-    }, [blocker]);
-
-    // Prevent accidental tab close/reload
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (!isComplete && currentIndex > 0) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [isComplete, currentIndex]);
+    // Unified navigation guard
+    usePrompt(!isComplete && currentIndex > 0, 'Are you sure you want to leave this study session? Your progress will be lost.');
 
     if (isComplete) {
         return (
@@ -492,7 +466,7 @@ const Flashcards: React.FC = () => {
             return <StudySession deck={selectedDeck} onFinish={() => {
                 const params = new URLSearchParams(searchParams);
                 params.delete('study');
-                setSearchParams(params);
+                setSearchParams(params, { replace: true });
             }} />
         }
 

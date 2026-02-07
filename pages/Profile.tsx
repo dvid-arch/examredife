@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Card from '../components/Card.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useToasts } from '../contexts/ToastContext.tsx';
 import { useNavigate } from 'react-router-dom';
 
 // --- Icons ---
@@ -37,21 +38,56 @@ const StatItem: React.FC<{ icon: React.ReactNode, title: string, value: string |
 
 const Profile: React.FC = () => {
     const { user, updateUser, logout, requestUpgrade, isLoading } = useAuth();
+    const { success, error: toastError } = useToasts();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(user?.name || '');
+    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.preferredSubjects || []);
+
+    const availableSubjects = [
+        "Mathematics", "English", "Biology", "Physics", "Chemistry", "Economics",
+        "Government", "Literature-in-English", "CRS", "IRS", "Commerce",
+        "Accounting", "Agricultural Science", "Geography", "History"
+    ].sort();
 
     useEffect(() => {
         if (user) {
             setName(user.name);
+            setSelectedSubjects(user.preferredSubjects || []);
         }
     }, [user]);
+
+    const handleToggleSubject = (subject: string) => {
+        if (subject === 'English') return; // Compulsory
+        setSelectedSubjects(prev => {
+            if (prev.includes(subject)) {
+                return prev.filter(s => s !== subject);
+            }
+            if (prev.length < 4) {
+                return [...prev, subject];
+            }
+            return prev;
+        });
+    };
+
+    const handleSaveSubjects = async () => {
+        if (updateUser) {
+            // Ensure English is always included if they have other selections
+            const subjectsToSave = selectedSubjects.includes('English') ? selectedSubjects : ['English', ...selectedSubjects.filter(s => s !== 'English')].slice(0, 4);
+            await updateUser({ preferredSubjects: subjectsToSave });
+            success('Preferred subjects updated!');
+        }
+    };
 
     const handleSave = async () => {
         if (name.trim() === '') return;
         if (updateUser) {
-            await updateUser({ name });
-            alert('Profile updated successfully!');
+            try {
+                await updateUser({ name });
+                success('Profile updated successfully!');
+            } catch (err) {
+                toastError('Failed to update profile.');
+            }
         }
         setIsEditing(false);
     };
@@ -145,6 +181,31 @@ const Profile: React.FC = () => {
                                 Upgrade to Pro
                             </button>
                         )}
+
+                        <div className="pt-6 border-t dark:border-slate-700">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Target Subjects (Exam Defaults)</h3>
+                            <p className="text-xs text-slate-500 mb-4 italic">English is compulsory. Selection is capped at 4 subjects.</p>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {availableSubjects.map(subject => (
+                                    <button
+                                        key={subject}
+                                        onClick={() => handleToggleSubject(subject)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${selectedSubjects.includes(subject)
+                                            ? 'bg-primary text-white shadow-md'
+                                            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                                            } ${subject === 'English' ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    >
+                                        {subject}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={handleSaveSubjects}
+                                className="w-full bg-slate-800 dark:bg-slate-700 text-white font-bold py-2 rounded-lg hover:bg-black transition-colors"
+                            >
+                                Save Subject Defaults
+                            </button>
+                        </div>
 
                         <div className="pt-6 border-t dark:border-slate-700">
                             <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-red-500 text-red-500 font-bold py-2 px-4 rounded-lg hover:bg-red-500 hover:text-white transition-colors">

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate, Link, useBlocker } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { usePrompt } from '../hooks/usePrompt.ts';
 import { ChallengeQuestion, QuizResult, PastPaper } from '../types.ts';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
@@ -94,6 +95,27 @@ const TakeExamination: React.FC = () => {
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // --- Auto-Save Persistence ---
+    // Load answers from sessionStorage on mount
+    useEffect(() => {
+        const savedAnswers = sessionStorage.getItem('practiceAnswers');
+        if (savedAnswers) {
+            try {
+                const parsed = JSON.parse(savedAnswers);
+                setUserAnswers(prev => ({ ...prev, ...parsed }));
+            } catch (e) {
+                console.error("Failed to parse saved answers", e);
+            }
+        }
+    }, []);
+
+    // Save answers to sessionStorage whenever they change
+    useEffect(() => {
+        if (Object.keys(userAnswers).length > 0) {
+            sessionStorage.setItem('practiceAnswers', JSON.stringify(userAnswers));
+        }
+    }, [userAnswers]);
+
     const examTitle = location.state?.examTitle;
 
     // Monitor for invalid access during navigation (back/forward) or initial load
@@ -164,6 +186,7 @@ const TakeExamination: React.FC = () => {
         sessionStorage.setItem('practiceCompleted', 'true');
         sessionStorage.removeItem('practiceStarted');
         sessionStorage.removeItem('practiceEndTime');
+        sessionStorage.removeItem('practiceAnswers');
 
         if (isAuthenticated && user) {
             if (user.subscription === 'free') {
@@ -323,51 +346,8 @@ const TakeExamination: React.FC = () => {
         }
     }, [isFinished]);
 
-    // Handle browser back/forward and tab closure prevention
-    useEffect(() => {
-        if (!isFinished && questions.length > 0) {
-            const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-                event.preventDefault();
-                event.returnValue = 'Are you sure you want to leave this practice session? Your progress will be lost.';
-                return event.returnValue;
-            };
-
-            const handlePopState = (event: PopStateEvent) => {
-                // This is a fallback, actual blocking is done by useBlocker for in-app nav
-            };
-
-            window.addEventListener('beforeunload', handleBeforeUnload);
-            window.addEventListener('popstate', handlePopState);
-
-            return () => {
-                window.removeEventListener('beforeunload', handleBeforeUnload);
-                window.removeEventListener('popstate', handlePopState);
-            };
-        }
-    }, [isFinished, questions.length]);
-
-    // React Router navigation guard - Use simple prompt approach
-    // Note: useBlocker is used because we are using a data router
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            !isFinished &&
-            questions.length > 0 &&
-            currentLocation.pathname !== nextLocation.pathname
-    );
-
-    useEffect(() => {
-        if (blocker.state === "blocked") {
-            const confirm = window.confirm('Are you sure you want to leave this practice session? Your progress will be lost.');
-            if (confirm) {
-                sessionStorage.setItem('practiceExited', 'true');
-                sessionStorage.removeItem('practiceStarted');
-                sessionStorage.removeItem('practiceEndTime');
-                blocker.proceed();
-            } else {
-                blocker.reset();
-            }
-        }
-    }, [blocker]);
+    // Unified navigation guard
+    usePrompt(!isFinished && questions.length > 0, 'Are you sure you want to leave this practice session? Your progress will be lost.');
 
     const subjectBoundaries = useMemo(() => {
         const boundaries: Record<string, { start: number, end: number }> = {};

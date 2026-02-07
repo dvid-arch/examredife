@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useBlocker, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { usePrompt } from '../hooks/usePrompt.ts';
 import Card from '../components/Card.tsx';
 import { memoryMatchConcepts } from '../data/gameData.ts';
 import { MemoryCardType } from '../types.ts';
@@ -49,14 +50,14 @@ const MemoryMatchGame: React.FC = () => {
     useEffect(() => {
         if (moves > 0 && !isGameComplete) {
             if (searchParams.get('playing') !== 'true') {
-                setSearchParams({ playing: 'true' });
+                setSearchParams({ playing: 'true' }, { replace: true });
             }
         } else if (moves === 0 || isGameComplete) {
             if (searchParams.get('playing') === 'true') {
-                setSearchParams({});
+                setSearchParams({}, { replace: true });
             }
         }
-    }, [moves, isGameComplete, searchParams]);
+    }, [moves, isGameComplete, searchParams, setSearchParams]);
 
     // Handle back button specifically
     useEffect(() => {
@@ -161,38 +162,11 @@ const MemoryMatchGame: React.FC = () => {
         setMoves(0);
         setIsGameComplete(false);
         setIsChecking(false);
-        setSearchParams({});
+        setSearchParams({}, { replace: true });
     };
 
-    // React Router navigation guard
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            moves > 0 && !isGameComplete &&
-            currentLocation.pathname !== nextLocation.pathname
-    );
-
-    useEffect(() => {
-        if (blocker.state === "blocked") {
-            const confirm = window.confirm('Are you sure you want to leave this game? Your progress will be lost.');
-            if (confirm) {
-                blocker.proceed();
-            } else {
-                blocker.reset();
-            }
-        }
-    }, [blocker]);
-
-    // Prevent accidental tab close/reload
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (moves > 0 && !isGameComplete) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [moves, isGameComplete]);
+    // Unified navigation guard
+    usePrompt(moves > 0 && !isGameComplete, 'Are you sure you want to leave this game? Your progress will be lost.');
 
     return (
         <div className="space-y-6">

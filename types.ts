@@ -96,4 +96,5 @@ export interface User {
   dailyMessageCount: number;
   lastMessageDate: string; // YYYY-MM-DD format
   role: 'user' | 'admin';
+  preferredSubjects?: string[];
 }

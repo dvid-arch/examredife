@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useBlocker, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePrompt } from '../hooks/usePrompt.ts';
 import Card from '../components/Card.tsx';
 import { LeaderboardScore, ChallengeQuestion, PastPaper } from '../types.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
@@ -132,7 +133,7 @@ const UtmeChallenge: React.FC = () => {
     }, [gameState, endTime, handleSubmit]);
 
     const handleStartSelection = () => {
-        setSearchParams({ step: 'selecting' });
+        setSearchParams({ step: 'selecting' }, { replace: true });
         setGameState('selecting');
     };
 
@@ -160,7 +161,7 @@ const UtmeChallenge: React.FC = () => {
         setTimeLeft(CHALLENGE_DURATION_MINUTES * 60);
         setEndTime(null); // Will trigger new start
         setScoreSaved(false);
-        setSearchParams({ step: 'playing' });
+        setSearchParams({ step: 'playing' }, { replace: true });
         setGameState('playing');
     };
 
@@ -212,7 +213,7 @@ const UtmeChallenge: React.FC = () => {
             if (!window.confirm('Leave challenge? Unsaved progress will be lost.')) return;
         }
         setSelectedSubjects([]);
-        setSearchParams({});
+        setSearchParams({}, { replace: true });
         setGameState('lobby');
     };
 
@@ -224,34 +225,8 @@ const UtmeChallenge: React.FC = () => {
         }
     }, [searchParams]);
 
-    // React Router navigation guard
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            gameState === 'playing' &&
-            currentLocation.pathname !== nextLocation.pathname
-    );
-
-    useEffect(() => {
-        if (blocker.state === "blocked") {
-            const confirm = window.confirm('Are you sure you want to leave this challenge? Your progress will be lost.');
-            if (confirm) {
-                blocker.proceed();
-            } else {
-                blocker.reset();
-            }
-        }
-    }, [blocker]);
-
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (gameState === 'playing') {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [gameState]);
+    // Unified navigation guard
+    usePrompt(gameState === 'playing', 'Are you sure you want to leave this challenge? Your progress will be lost.');
 
     const scoreBySubject = useMemo(() => {
         return selectedSubjects.map(subject => {
@@ -393,7 +368,7 @@ const UtmeChallenge: React.FC = () => {
                 </Card>
                 <div className="flex justify-center gap-4">
                     <button onClick={() => {
-                        setSearchParams({ step: 'reviewing' });
+                        setSearchParams({ step: 'reviewing' }, { replace: true });
                         setGameState('reviewing');
                     }} className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light">Review Answers</button>
                     <button onClick={resetGame} className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700">Play Again</button>
@@ -409,7 +384,7 @@ const UtmeChallenge: React.FC = () => {
                 <div className="bg-white p-3 border-b shadow-sm rounded-t-lg flex justify-between items-center">
                     <h2 className="font-bold text-lg text-primary">Reviewing Answers</h2>
                     <button onClick={() => {
-                        setSearchParams({ step: 'results' });
+                        setSearchParams({ step: 'results' }, { replace: true });
                         setGameState('results');
                     }} className="flex items-center gap-2 font-semibold text-slate-600 hover:text-primary"><BackArrowIcon /> Back to Results</button>
                 </div>

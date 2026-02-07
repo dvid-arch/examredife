@@ -11,6 +11,7 @@ import { AuthProvider } from './contexts/AuthContext.tsx';
 import { PwaInstallProvider } from './contexts/PwaContext.tsx';
 import { ThemeProvider } from './contexts/ThemeContext.tsx';
 import { UserProgressProvider } from './contexts/UserProgressContext.tsx';
+import { ToastProvider } from './contexts/ToastContext.tsx';
 
 // Pages - Lazy load all pages for faster initial load
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
@@ -54,14 +55,16 @@ const PageLoader = () => (
 const RootLayout: React.FC = () => {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <UserProgressProvider>
-          <PwaInstallProvider>
-            <Outlet />
-            <PwaInstallBanner />
-          </PwaInstallProvider>
-        </UserProgressProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <UserProgressProvider>
+            <PwaInstallProvider>
+              <Outlet />
+              <PwaInstallBanner />
+            </PwaInstallProvider>
+          </UserProgressProvider>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 };

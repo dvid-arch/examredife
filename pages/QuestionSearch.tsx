@@ -43,6 +43,20 @@ const QuestionSearch: React.FC = () => {
     const [selectedYear, setSelectedYear] = useState('all');
     const [expandedPaperId, setExpandedPaperId] = useState<string | null>(null);
 
+    // Recent Searches
+    const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('examRediSearchHistory');
+        if (saved) {
+            try {
+                setRecentSearches(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse search history", e);
+            }
+        }
+    }, []);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -101,6 +115,13 @@ const QuestionSearch: React.FC = () => {
         }
 
         setHasSearched(true);
+
+        // Update History
+        setRecentSearches(prev => {
+            const newHistory = [searchQuery, ...prev.filter(s => s.toLowerCase() !== searchQuery.toLowerCase())].slice(0, 5);
+            localStorage.setItem('examRediSearchHistory', JSON.stringify(newHistory));
+            return newHistory;
+        });
     }, [isAuthenticated, allPapers, allGuides]);
 
     useEffect(() => {
@@ -264,6 +285,24 @@ const QuestionSearch: React.FC = () => {
                         Search
                     </button>
                 </form>
+
+                {recentSearches.length > 0 && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Recent:</span>
+                        {recentSearches.map((s, i) => (
+                            <button
+                                key={i}
+                                onClick={() => {
+                                    setQuery(s);
+                                    performSearch(s);
+                                }}
+                                className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full text-xs text-slate-700 dark:text-slate-200 transition-colors"
+                            >
+                                {s}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 <div className="mt-6 min-h-[400px]">
                     {isLoading ? (

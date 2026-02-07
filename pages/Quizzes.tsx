@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 
 
@@ -9,6 +10,7 @@ import apiService from '../services/apiService.ts';
 
 const Quizzes: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>('standard');
     const [allPapers, setAllPapers] = useState<PastPaper[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -57,8 +59,13 @@ const Quizzes: React.FC = () => {
     useEffect(() => {
         if (availableYears.length > 0) {
             setStandardSelectedYear(availableYears[0]);
+
+            // Apply preferred subjects if they exist and only default (English) is selected
+            if (user?.preferredSubjects && user.preferredSubjects.length > 0 && selectedSubjects.length === 1 && selectedSubjects[0] === 'English') {
+                setSelectedSubjects(user.preferredSubjects);
+            }
         }
-    }, [availableYears]);
+    }, [availableYears, user?.preferredSubjects]);
 
     // Reset selection if a selected subject is no longer available in the new year
     useEffect(() => {

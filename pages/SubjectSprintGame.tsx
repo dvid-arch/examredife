@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useBlocker, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import { usePrompt } from '../hooks/usePrompt.ts';
 import Card from '../components/Card.tsx';
 
 import { ChallengeQuestion } from '../types.ts';
@@ -162,21 +163,21 @@ const SubjectSprintGame: React.FC = () => {
             if (!window.confirm('Restart game? Your current progress will be lost.')) return;
         }
         setGameState('selection');
-        setSearchParams({});
+        setSearchParams({}, { replace: true });
     };
 
     // Sync game state with URL for back button support
     useEffect(() => {
         if (gameState === 'playing') {
             if (searchParams.get('playing') !== 'true') {
-                setSearchParams({ playing: 'true' });
+                setSearchParams({ playing: 'true' }, { replace: true });
             }
         } else {
             if (searchParams.get('playing') === 'true') {
-                setSearchParams({});
+                setSearchParams({}, { replace: true });
             }
         }
-    }, [gameState, searchParams]);
+    }, [gameState, searchParams, setSearchParams]);
 
     // Handle back button specifically
     useEffect(() => {
@@ -186,35 +187,8 @@ const SubjectSprintGame: React.FC = () => {
         }
     }, [searchParams]);
 
-    // React Router navigation guard
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            gameState === 'playing' &&
-            currentLocation.pathname !== nextLocation.pathname
-    );
-
-    useEffect(() => {
-        if (blocker.state === "blocked") {
-            const confirm = window.confirm('Are you sure you want to leave this game? Your progress will be lost.');
-            if (confirm) {
-                blocker.proceed();
-            } else {
-                blocker.reset();
-            }
-        }
-    }, [blocker]);
-
-    // Prevent accidental tab close/reload
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (gameState === 'playing') {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [gameState]);
+    // Unified navigation guard
+    usePrompt(gameState === 'playing', 'Are you sure you want to leave this game? Your progress will be lost.');
 
     const renderSelectionScreen = () => (
         <Card className="text-center p-6">
@@ -228,9 +202,13 @@ const SubjectSprintGame: React.FC = () => {
                         <button
                             key={subject}
                             onClick={() => startGame(subject)}
-                            className="p-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-slate-700 hover:border-primary hover:bg-primary-light hover:text-primary transition-all duration-200"
+                            className={`p-4 bg-white border-2 rounded-lg font-semibold text-slate-700 hover:border-primary hover:bg-primary-light hover:text-primary transition-all duration-200 ${user?.preferredSubjects?.includes(subject) ? 'border-primary bg-primary-light/30' : 'border-gray-200'
+                                }`}
                         >
                             {subject}
+                            {user?.preferredSubjects?.includes(subject) && (
+                                <span className="block text-[10px] text-primary mt-1">⭐ Target Subject</span>
+                            )}
                         </button>
                     ))}
                 </div>
