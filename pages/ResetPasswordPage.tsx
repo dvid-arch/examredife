@@ -44,7 +44,7 @@ const ResetPasswordPage: React.FC = () => {
             });
             setSuccess(true);
             setTimeout(() => {
-                navigate('/dashboard');
+                navigate('/dashboard?auth=login');
             }, 3000);
         } catch (err: any) {
             setError(err.message || 'Failed to reset password. Token may be invalid or expired.');
@@ -64,7 +64,7 @@ const ResetPasswordPage: React.FC = () => {
                     </div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Password Reset!</h2>
                     <p className="text-slate-600 dark:text-slate-300 mb-6">Your password has been updated successfully. Redirecting you to login...</p>
-                    <Link to="/dashboard" className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors">
+                    <Link to="/dashboard?auth=login" className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors">
                         Go to Login
                     </Link>
                 </Card>

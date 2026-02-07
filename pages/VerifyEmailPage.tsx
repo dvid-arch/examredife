@@ -47,7 +47,7 @@ const VerifyEmailPage: React.FC = () => {
                         </div>
                         <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Email Verified!</h2>
                         <p className="text-slate-600 dark:text-slate-300 mb-6">Your account is now fully active.</p>
-                        <Link to="/dashboard" className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors">
+                        <Link to="/dashboard?auth=login" className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors">
                             Go to Dashboard
                         </Link>
                     </div>

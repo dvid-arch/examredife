@@ -113,6 +113,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
 
+    // --- Universal Auth Signaling ---
+    // Listen for ?auth=login or ?auth=register in the URL to auto-open the modal
+    // This is useful after redirects (e.g., from Reset Password or Email Verification)
+    useEffect(() => {
+        if (isLoading) return;
+
+        // Use URLSearchParams on the current hash or search
+        const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1]);
+        const authAction = params.get('auth');
+
+        if (authAction === 'login' && !isAuthenticated && !isAuthModalOpen) {
+            console.log('Universal Auth Trigger: Opening login modal');
+            setIsAuthModalOpen(true);
+
+            // Clean up the URL to prevent re-triggering
+            const newUrl = window.location.pathname + window.location.hash.split('?')[0];
+            window.history.replaceState({}, '', newUrl);
+        }
+    }, [isLoading, isAuthenticated, isAuthModalOpen]);
+
     // When the user returns to the tab or the window gains focus, try to refresh profile
     // This helps avoid being unexpectedly logged out after the access token expires while the tab was inactive.
     useEffect(() => {
