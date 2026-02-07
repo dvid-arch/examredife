@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Route, Navigate, Outlet, createHashRouter, createRoutesFromElements, RouterProvider } from 'react-router-dom';
+import { Route, Navigate, Outlet, createHashRouter, createRoutesFromElements, RouterProvider, useLocation } from 'react-router-dom';
 
 // Components
 import Header from './components/Header.tsx';
@@ -76,7 +76,13 @@ const RootLayout: React.FC = () => {
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const location = useLocation();
+
   // Close sidebar when navigating to a new page or using back button
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location]);
+
   useEffect(() => {
     const handlePopState = () => {
       setIsSidebarOpen(false);
