@@ -308,7 +308,7 @@ const QuestionSearch: React.FC = () => {
                                     </h2>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {guideResults.map(guide => (
-                                            <Link key={guide.id} to="/guides" state={{ viewGuide: guide }} className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
+                                            <Link key={guide.id} to="/study-guides" state={{ viewGuide: guide }} className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
                                                 <h3 className="font-bold text-slate-800 dark:text-white">{guide.title}</h3>
                                                 <p className="text-xs text-slate-500 mt-1 uppercase font-semibold">{guide.subject}</p>
                                             </Link>

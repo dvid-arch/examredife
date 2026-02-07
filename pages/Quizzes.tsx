@@ -78,6 +78,13 @@ const Quizzes: React.FC = () => {
     }, [allPapers, subjects]);
 
 
+    const getYearsForSubject = (subject: string) => {
+        const years = new Set(allPapers
+            .filter(p => p.subject === subject)
+            .map(p => p.year));
+        return Array.from(years).sort((a, b) => Number(b) - Number(a));
+    };
+
     const handleStandardSubjectChange = (subject: string) => {
         if (subject === 'English') return;
         setSelectedSubjects(prev => {
@@ -96,8 +103,9 @@ const Quizzes: React.FC = () => {
             if (newSelections[subject]) {
                 delete newSelections[subject]; // uncheck
             } else {
-                // check, default to most recent year for that subject
-                const defaultYear = mostRecentYearBySubject.get(subject) ?? 'random';
+                // check, default to most recent year for that specific subject
+                const subjectYears = getYearsForSubject(subject);
+                const defaultYear = subjectYears.length > 0 ? subjectYears[0] : 'random';
                 newSelections[subject] = defaultYear;
             }
             return newSelections;
@@ -146,7 +154,7 @@ const Quizzes: React.FC = () => {
         navigate('/take-examination', {
             state: {
                 selections: selectionsArray,
-                // questionsPerSubject: undefined (implies all)
+                questionsPerSubject: customQuestionCount, // FIX: Added missing param
                 examTitle: `Custom Practice`,
                 timestamp: Date.now(),
             },
@@ -261,7 +269,7 @@ const Quizzes: React.FC = () => {
                                                             onClick={(e) => e.stopPropagation()}
                                                             className="w-full bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-slate-600 border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                                                         >
-                                                            {availableYears.map(year => (
+                                                            {getYearsForSubject(subject).map(year => (
                                                                 <option key={year} value={year}>{year}</option>
                                                             ))}
                                                             <option value="random">Random Year</option>
