@@ -122,18 +122,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                                     </button>
                                 )
                             )}
-                            <button
-                                onClick={() => {
-                                    if (window.confirm('Are you sure you want to log out?')) {
-                                        logout();
-                                        onClose();
-                                    }
-                                }}
-                                className="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-red-500 text-red-500 font-bold py-3 px-4 rounded-lg hover:bg-red-500 hover:text-white transition-colors duration-200 mt-4"
-                            >
-                                <LogoutIcon />
-                                <span>Logout</span>
-                            </button>
                         </>
                     ) : (
                         <button onClick={requestLogin} className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-accent transition-colors">
