@@ -78,8 +78,8 @@ const QuestionSearch: React.FC = () => {
         );
 
         const filteredQuestions = allQuestions.filter(q => {
-            const questionText = q.question.toLowerCase();
-            const optionsText = Object.values(q.options).map(o => o.text).join(' ').toLowerCase();
+            const questionText = q.question?.toLowerCase() || '';
+            const optionsText = q.options ? Object.values(q.options).map(o => o.text).join(' ').toLowerCase() : '';
             return questionText.includes(lowerCaseQuery) || optionsText.includes(lowerCaseQuery);
         });
 
@@ -204,7 +204,7 @@ const QuestionSearch: React.FC = () => {
                                                         imageClassName="max-w-md"
                                                     />
                                                     <div className="space-y-2">
-                                                        {Object.keys(q.options).map(key => {
+                                                        {q.options ? Object.keys(q.options).map(key => {
                                                             const value = q.options[key];
                                                             const isCorrect = key === q.answer;
                                                             return (
@@ -222,7 +222,11 @@ const QuestionSearch: React.FC = () => {
                                                                     </div>
                                                                 </div>
                                                             )
-                                                        })}
+                                                        }) : (
+                                                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
+                                                                <p className="text-yellow-700 dark:text-yellow-400 text-sm italic">Options data not available for this question.</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -313,7 +317,7 @@ const QuestionSearch: React.FC = () => {
                                                     imageClassName="max-w-md"
                                                 />
                                                 <div className="space-y-2">
-                                                    {Object.keys(q.options).map(key => {
+                                                    {q.options ? Object.keys(q.options).map(key => {
                                                         const value = q.options[key];
                                                         const isCorrect = key === q.answer;
                                                         return (
@@ -326,7 +330,11 @@ const QuestionSearch: React.FC = () => {
                                                                 </div>
                                                             </div>
                                                         )
-                                                    })}
+                                                    }) : (
+                                                        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
+                                                            <p className="text-yellow-700 dark:text-yellow-400 text-sm italic">Options data not available for this question.</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
