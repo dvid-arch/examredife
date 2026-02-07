@@ -301,23 +301,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const upgradeToPro = async () => {
-        if (user) {
-            try {
-                // In a real app, this would trigger a payment flow.
-                // Here we just update the user's status on the backend.
-                const updatedUser = await apiService<UserProfile>(`/admin/users/${user.id}/subscription`, {
-                    method: 'PUT',
-                    body: { subscription: 'pro' }
-                });
-                setUser(updatedUser);
-                localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
-                setIsUpgradeModalOpen(false);
-                success("Successfully upgraded to Pro!");
-            } catch (error) {
-                console.error("Failed to upgrade user:", error);
-                toastError("Could not complete upgrade. Please try again.");
-            }
-        }
+        // This is now handled manually via WhatsApp in the UI.
+        // We keep this function as a placeholder or for future use.
+        console.log("Upgrade to Pro requested. User should follow WhatsApp flow.");
     };
 
     const updateUser = async (details: Partial<UserProfile>) => {

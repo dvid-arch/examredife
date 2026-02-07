@@ -50,6 +50,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         };
 
         syncProgress();
+        checkStreak();
     }, [isAuthenticated]);
 
     const saveProgress = async (newStreak: number, newActivity: RecentActivity[]) => {
@@ -101,17 +102,35 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
         // Update streak logic
         const lastPractice = localStorage.getItem('examRediLastPractice');
-        const todayPrice = new Date().setHours(0, 0, 0, 0);
+        const now = new Date();
+        const todayAtZero = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
         let newStreak = streak;
 
-        if (!lastPractice || new Date(parseInt(lastPractice)).setHours(0, 0, 0, 0) !== todayPrice) {
-            newStreak = streak + 1;
-            setStreak(newStreak);
-            localStorage.setItem('examRediLastPractice', Date.now().toString());
+        if (!lastPractice) {
+            newStreak = 1;
+            setStreak(1);
         } else {
-            localStorage.setItem('examRediLastPractice', Date.now().toString());
+            const lastPracticeDate = new Date(parseInt(lastPractice));
+            const lastPracticeAtZero = new Date(lastPracticeDate.getFullYear(), lastPracticeDate.getMonth(), lastPracticeDate.getDate()).getTime();
+
+            const oneDayInMs = 24 * 60 * 60 * 1000;
+            const diffInDays = (todayAtZero - lastPracticeAtZero) / oneDayInMs;
+
+            if (diffInDays === 1) {
+                // Practiced yesterday, increment
+                newStreak = streak + 1;
+                setStreak(newStreak);
+            } else if (diffInDays > 1) {
+                // Missed at least one day, reset to 1
+                newStreak = 1;
+                setStreak(1);
+            } else if (diffInDays === 0) {
+                // Already practiced today, keep current streak
+                // No change to newStreak
+            }
         }
 
+        localStorage.setItem('examRediLastPractice', Date.now().toString());
         saveProgress(newStreak, updatedActivity);
     };
 

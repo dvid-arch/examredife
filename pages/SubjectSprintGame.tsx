@@ -34,6 +34,7 @@ const SubjectSprintGame: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(TIME_PER_QUESTION);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [answerStatus, setAnswerStatus] = useState<'correct' | 'incorrect' | 'unanswered' | null>(null);
+    const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
         fetchPapers();
@@ -48,8 +49,10 @@ const SubjectSprintGame: React.FC = () => {
             await apiService('/data/leaderboard', {
                 method: 'POST',
                 body: {
-                    user: user?.name || 'Anonymous',
+                    name: user?.name || 'Anonymous',
                     score: finalScore,
+                    totalQuestions: QUESTIONS_PER_GAME,
+                    answers: userAnswers,
                     game: 'Subject Sprint',
                     date: new Date().toISOString()
                 }
@@ -124,6 +127,7 @@ const SubjectSprintGame: React.FC = () => {
         setQuestions(gameQuestions);
         setCurrentQuestionIndex(0);
         setScore(0);
+        setUserAnswers({});
         setGameState('selecting');
         setEndTime(null); // Corrected the syntax error from the instruction
         setSelectedAnswer(null);
@@ -137,6 +141,10 @@ const SubjectSprintGame: React.FC = () => {
 
         setSelectedAnswer(optionKey);
         const currentQuestion = questions[currentQuestionIndex];
+
+        // Track the answer
+        setUserAnswers(prev => ({ ...prev, [currentQuestion.id]: optionKey }));
+
         const isCorrect = optionKey === currentQuestion.answer;
 
         if (isCorrect) {

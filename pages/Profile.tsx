@@ -3,6 +3,7 @@ import Card from '../components/Card.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useToasts } from '../contexts/ToastContext.tsx';
 import { useNavigate } from 'react-router-dom';
+import { usePwaInstall } from '../contexts/PwaContext.tsx';
 
 // --- Icons ---
 const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536l12.232-12.232z" /></svg>;
@@ -38,11 +39,13 @@ const StatItem: React.FC<{ icon: React.ReactNode, title: string, value: string |
 
 const Profile: React.FC = () => {
     const { user, updateUser, logout, requestUpgrade, isLoading } = useAuth();
-    const { success, error: toastError } = useToasts();
+    const { success, error: toastError, info } = useToasts();
+    const { notificationStatus, requestNotificationPermission } = usePwaInstall();
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(user?.name || '');
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.preferredSubjects || []);
+    const [biometricsEnabled, setBiometricsEnabled] = useState(localStorage.getItem('examRediBiometricsEnabled') === 'true');
 
     const availableSubjects = [
         "Mathematics", "English", "Biology", "Physics", "Chemistry", "Economics",
@@ -96,6 +99,37 @@ const Profile: React.FC = () => {
         if (window.confirm('Are you sure you want to log out?')) {
             logout();
             navigate('/dashboard');
+        }
+    };
+
+    const handleBiometricToggle = async () => {
+        if (!biometricsEnabled) {
+            // SIMULATION: In a real app, use WebAuthn API
+            info("Please follow your device's prompt to register biometrics...");
+
+            setTimeout(() => {
+                // Mock success
+                localStorage.setItem('examRediBiometricsEnabled', 'true');
+                setBiometricsEnabled(true);
+                success("Biometric login enabled successfully!");
+            }, 1500);
+        } else {
+            localStorage.removeItem('examRediBiometricsEnabled');
+            setBiometricsEnabled(false);
+            success("Biometric login disabled.");
+        }
+    };
+
+    const handleNotificationToggle = async () => {
+        if (notificationStatus !== 'granted') {
+            const granted = await requestNotificationPermission();
+            if (granted) {
+                success("Push notifications enabled!");
+            } else {
+                toastError("Notification permission denied.");
+            }
+        } else {
+            info("Notifications are already enabled in your browser settings.");
         }
     };
 
@@ -246,16 +280,40 @@ const Profile: React.FC = () => {
                         )}
 
                         <div className="pt-6">
-                            <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2 mb-4">Mobile App Settings</h2>
-                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                                <div>
-                                    <p className="font-semibold text-slate-800 dark:text-white">Biometric Login</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Use FaceID or Fingerprint to log in</p>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2 mb-4">Device Settings</h2>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                    <div>
+                                        <p className="font-semibold text-slate-800 dark:text-white">Biometric Login</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Use FaceID or Fingerprint to log in</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={biometricsEnabled}
+                                            onChange={handleBiometricToggle}
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/10 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                    </label>
                                 </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" defaultChecked />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                                </label>
+
+                                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                    <div>
+                                        <p className="font-semibold text-slate-800 dark:text-white">Push Notifications</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Get alerts for streaks and reminders</p>
+                                    </div>
+                                    <button
+                                        onClick={handleNotificationToggle}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${notificationStatus === 'granted'
+                                                ? 'bg-green-100 text-green-700 cursor-default'
+                                                : 'bg-primary text-white hover:bg-accent'
+                                            }`}
+                                    >
+                                        {notificationStatus === 'granted' ? 'Enabled' : 'Enable'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

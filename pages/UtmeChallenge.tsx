@@ -103,8 +103,8 @@ const UtmeChallenge: React.FC = () => {
     // Initialize/Reset Timer
     useEffect(() => {
         if (gameState === 'playing' && !endTime) {
-            // 60 seconds for the challenge
-            setEndTime(Date.now() + 60000);
+            // 30 minutes for the challenge
+            setEndTime(Date.now() + (CHALLENGE_DURATION_MINUTES * 60 * 1000));
         } else if (gameState !== 'playing') {
             setEndTime(null);
         }
@@ -190,10 +190,11 @@ const UtmeChallenge: React.FC = () => {
             return;
         }
 
-        const newScore: LeaderboardScore = {
+        const newScore = {
             name: user.name,
             score: finalScore,
             totalQuestions: TOTAL_QUESTIONS,
+            answers: userAnswers,
             date: Date.now(),
         };
 

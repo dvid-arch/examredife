@@ -11,11 +11,9 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 interface PwaInstallContextType {
-    canInstall: boolean;
-    isBannerVisible: boolean;
-    showInstallBanner: () => void;
-    hideInstallBanner: () => void;
     triggerInstallPrompt: () => void;
+    notificationStatus: NotificationPermission | 'unsupported';
+    requestNotificationPermission: () => Promise<boolean>;
 }
 
 const PwaInstallContext = createContext<PwaInstallContextType | undefined>(undefined);
@@ -23,6 +21,9 @@ const PwaInstallContext = createContext<PwaInstallContextType | undefined>(undef
 export const PwaInstallProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isBannerVisible, setIsBannerVisible] = useState(false);
+    const [notificationStatus, setNotificationStatus] = useState<NotificationPermission | 'unsupported'>(
+        'Notification' in window ? Notification.permission : 'unsupported'
+    );
 
     useEffect(() => {
         const handler = (e: Event) => {
@@ -38,13 +39,13 @@ export const PwaInstallProvider: React.FC<{ children: ReactNode }> = ({ children
     }, []);
 
     const canInstall = !!deferredPrompt;
-    
+
     const showInstallBanner = () => {
         if (canInstall) {
             setIsBannerVisible(true);
         }
     };
-    
+
     const hideInstallBanner = () => {
         setIsBannerVisible(false);
     };
@@ -64,7 +65,24 @@ export const PwaInstallProvider: React.FC<{ children: ReactNode }> = ({ children
         }
     };
 
-    const value = { canInstall, isBannerVisible, showInstallBanner, hideInstallBanner, triggerInstallPrompt };
+    const requestNotificationPermission = async () => {
+        if ('Notification' in window) {
+            const permission = await Notification.requestPermission();
+            setNotificationStatus(permission);
+            return permission === 'granted';
+        }
+        return false;
+    };
+
+    const value = {
+        canInstall,
+        isBannerVisible,
+        showInstallBanner,
+        hideInstallBanner,
+        triggerInstallPrompt,
+        notificationStatus,
+        requestNotificationPermission
+    };
 
     return (
         <PwaInstallContext.Provider value={value}>
