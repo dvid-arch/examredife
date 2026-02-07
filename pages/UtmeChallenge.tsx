@@ -49,6 +49,7 @@ const UtmeChallenge: React.FC = () => {
     type GameState = 'lobby' | 'selecting' | 'playing' | 'results' | 'reviewing';
 
     const { isAuthenticated, user, requestLogin, requestUpgrade } = useAuth();
+    const navigate = useNavigate();
     const { papers: allPapers, isLoading: isLoadingPapers, fetchPapers } = usePastQuestions();
     const [searchParams, setSearchParams] = useSearchParams();
     const [gameState, setGameState] = useState<GameState>(
@@ -233,6 +234,62 @@ const UtmeChallenge: React.FC = () => {
             return { subject, score: correct, total: subjectQuestions.length };
         });
     }, [questions, userAnswers, selectedSubjects]);
+
+    // --- GATING LOGIC ---
+    if (!isLoadingData && !isAuthenticated) {
+        return (
+            <Card className="text-center p-8 flex flex-col items-center justify-center h-full max-w-md mx-auto">
+                <div className="mb-6">
+                    <TrophyIcon />
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-4 mb-2">UTME Challenge</h2>
+                    <p className="text-slate-600 dark:text-slate-300 mb-4">
+                        Join the elite competition! Sign in to participate in the UTME Challenge and rank on the leaderboard.
+                    </p>
+                </div>
+                <button
+                    onClick={requestLogin}
+                    className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors mb-4 w-full"
+                >
+                    Sign In to Play
+                </button>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Don't have an account? <button onClick={requestLogin} className="text-primary hover:underline font-semibold">Join ExamRedi</button>
+                </p>
+            </Card>
+        );
+    }
+
+    if (!isLoadingData && user?.subscription === 'free') {
+        return (
+            <Card className="text-center p-8 flex flex-col items-center justify-center h-full max-w-lg mx-auto">
+                <div className="bg-yellow-50 text-yellow-600 rounded-full p-4 inline-block mb-6">
+                    <TrophyIcon />
+                </div>
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">ExamRedi Pro Feature</h1>
+                <p className="text-slate-600 dark:text-slate-400 mt-2 mb-6 text-lg">
+                    The <strong>UTME Challenge</strong> is an exclusive competition for our Pro members. Face the clock, prove your knowledge, and win your spot on the national leaderboard.
+                </p>
+                <button
+                    onClick={() => requestUpgrade({
+                        title: "Unlock UTME Challenge",
+                        message: "Get access to the most realistic exam simulation and compete with students across the country.",
+                        featureList: [
+                            "Unlimited UTME Challenge Attempts",
+                            "Secure Leaderboard Verification",
+                            "Detailed Performance Analytics",
+                            "Full Exam History Tracking"
+                        ]
+                    })}
+                    className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors w-full"
+                >
+                    Upgrade to Pro
+                </button>
+                <button onClick={() => navigate('/dashboard')} className="mt-4 text-slate-500 hover:text-primary font-medium">
+                    Back to Dashboard
+                </button>
+            </Card>
+        );
+    }
 
     // --- RENDER FUNCTIONS ---
 
