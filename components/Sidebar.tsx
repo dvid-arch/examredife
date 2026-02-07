@@ -29,7 +29,7 @@ const Logo = () => (
     </div>
 );
 
-const NavItem: React.FC<{ item: NavItemType }> = ({ item }) => {
+const NavItem: React.FC<{ item: NavItemType; onClick?: () => void }> = ({ item, onClick }) => {
     const navLinkProps: { [key: string]: any } = {};
     if (item.path === '/ai-buddy') navLinkProps['data-tour-id'] = 'ai-tutor-nav';
     if (item.path === '/performance') navLinkProps['data-tour-id'] = 'performance-nav';
@@ -38,6 +38,7 @@ const NavItem: React.FC<{ item: NavItemType }> = ({ item }) => {
         <NavLink
             to={item.path}
             {...navLinkProps}
+            onClick={onClick}
             className={({ isActive }) =>
                 `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
                     ? 'bg-primary-light dark:bg-primary/20 text-primary font-semibold'
@@ -86,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <Logo />
                 <nav className="flex-1 space-y-2 overflow-y-auto">
                     {NAV_ITEMS.map((item) => (
-                        <NavItem key={item.path} item={item} />
+                        <NavItem key={item.path} item={item} onClick={onClose} />
                     ))}
                 </nav>
 
@@ -94,6 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
                         <NavLink
                             to="/admin"
+                            onClick={onClose}
                             className="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 font-semibold"
                         >
                             <AdminIcon />

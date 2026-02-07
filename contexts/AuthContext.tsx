@@ -183,9 +183,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsAuthModalOpen(false);
 
         if (userData.role === 'admin') {
-            navigate('/admin/dashboard');
+            navigate('/admin/dashboard', { replace: true });
         } else {
-            navigate(navigatePath);
+            navigate(navigatePath, { replace: true });
         }
     };
 
@@ -285,19 +285,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('refreshToken');
             setIsAuthenticated(false);
             setUser(null);
-            navigate('/dashboard');
+            navigate('/dashboard', { replace: true });
         }
     };
 
     const requestLogin = () => {
-        window.history.pushState({ modal: 'auth' }, '');
-        setIsAuthModalOpen(true);
+        if (!isAuthModalOpen) {
+            window.history.pushState({ modal: 'auth' }, '');
+            setIsAuthModalOpen(true);
+        }
     };
 
     const requestUpgrade = (request: UpgradeRequest) => {
         setUpgradeRequest(request);
-        window.history.pushState({ modal: 'upgrade' }, '');
-        setIsUpgradeModalOpen(true);
+        if (!isUpgradeModalOpen) {
+            window.history.pushState({ modal: 'upgrade' }, '');
+            setIsUpgradeModalOpen(true);
+        }
     };
 
     const upgradeToPro = async () => {
