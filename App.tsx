@@ -162,8 +162,7 @@ const router = createHashRouter(
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
-        <Route path="/practice" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
-        <Route path="/practice/:tab" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
+        <Route path="/practice/:tab?" element={<Quizzes />} />
         <Route path="/practice/topic/:subject/:topicSlug" element={<Suspense fallback={<PageLoader />}><TopicPracticeSetup /></Suspense>} />
         <Route path="/ai-buddy" element={<Suspense fallback={<PageLoader />}><ExamWithAI /></Suspense>} />
         <Route path="/question-search" element={<Suspense fallback={<PageLoader />}><QuestionSearch /></Suspense>} />
