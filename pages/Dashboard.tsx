@@ -171,20 +171,49 @@ const Dashboard: React.FC = () => {
 
             {isAuthenticated && recentActivity.length > 0 && (
                 <section>
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Continue Studying</h2>
+                    <div className="flex justify-between items-end mb-4">
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
+                        <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All Guides</Link>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {recentActivity.map((activity) => (
-                            <Link key={activity.id} to={activity.path} className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
-                                    activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
-                                    }`}>
-                                    {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
-                                </div>
-                            </Link>
+                            <div key={activity.id} className="flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
+                                <Link to={activity.path} state={activity.state} className="flex items-center gap-4 flex-1 min-w-0 mb-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
+                                        activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
+                                        }`}>
+                                        {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
+                                        <div className="flex justify-between items-center mt-0.5">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
+                                            {activity.type === 'quiz' && activity.state?.savedAnswers && (
+                                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
+                                                    {Object.keys(activity.state.savedAnswers).length} Answered
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Link>
+                                {activity.type === 'quiz' && activity.state && !activity.title.startsWith('Completed') && (
+                                    <Link
+                                        to={activity.path}
+                                        state={activity.state}
+                                        className="bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
+                                    >
+                                        Resume Session
+                                    </Link>
+                                )}
+                                {activity.title.startsWith('Completed') && (
+                                    <Link
+                                        to="/performance"
+                                        className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                                    >
+                                        View Analysis
+                                    </Link>
+                                )}
+                            </div>
                         ))}
                     </div>
                 </section>

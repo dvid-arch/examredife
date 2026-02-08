@@ -1,21 +1,25 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card.tsx';
-import { QuizResult } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import apiService from '../services/apiService.ts';
-
+import {
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, Cell
+} from 'recharts';
 
 const Performance: React.FC = () => {
     const { isAuthenticated, user, requestLogin, requestUpgrade, isLoading } = useAuth();
-    const [results, setResults] = useState<QuizResult[]>([]);
+    const { streakHistory, streak } = useUserProgress();
+    const [results, setResults] = useState<any[]>([]);
     const [isDataLoading, setIsDataLoading] = useState(true);
 
     useEffect(() => {
         const fetchResults = async () => {
             if (isAuthenticated && user?.subscription === 'pro') {
                 try {
-                    const storedResults = await apiService<QuizResult[]>('/data/performance');
+                    const storedResults = await apiService<any[]>('/data/performance');
                     setResults(storedResults);
                 } catch (error) {
                     console.error("Failed to fetch performance data:", error);
@@ -24,9 +28,9 @@ const Performance: React.FC = () => {
             } else {
                 setResults([]);
             }
-             setIsDataLoading(false);
+            setIsDataLoading(false);
         };
-        
+
         if (!isLoading) { // Only fetch when auth state is resolved
             fetchResults();
         }
@@ -44,7 +48,7 @@ const Performance: React.FC = () => {
                 averageScore: 0,
                 quizzesTaken: 0,
                 bestSubject: 'N/A',
-                performanceBySubject: {},
+                performanceBySubject: [],
                 weakSubjects: [],
             };
         }
@@ -53,25 +57,34 @@ const Performance: React.FC = () => {
         const totalQuestions = results.reduce((sum, r) => sum + r.totalQuestions, 0);
         const avg = totalQuestions > 0 ? (totalScore / totalQuestions) * 100 : 0;
 
-        const bySubject = results.reduce<Record<string, { scores: number[]; totalQuestions: number }>>((acc, result) => {
-            const subjects = result.subject.split(', ');
-            subjects.forEach(subject => {
-                 if (!acc[subject]) {
-                    acc[subject] = { scores: [], totalQuestions: 0 };
-                }
-                // Approximate score for multi-subject tests
-                acc[subject].scores.push(result.score / subjects.length);
-                acc[subject].totalQuestions += result.totalQuestions / subjects.length;
-            });
-            return acc;
-        }, {});
+        // Process topicBreakdown for new results
+        const topicMap: Record<string, { correct: number, total: number }> = {};
 
-        const subjectAverages = Object.keys(bySubject).map((subject) => {
-            const data = bySubject[subject];
-            const totalScored = data.scores.reduce((sum, s) => sum + s, 0);
+        results.forEach(result => {
+            if (result.topicBreakdown) {
+                // MongoDB Map comes as object
+                Object.entries(result.topicBreakdown).forEach(([topic, data]: [string, any]) => {
+                    if (!topicMap[topic]) topicMap[topic] = { correct: 0, total: 0 };
+                    topicMap[topic].correct += data.correct;
+                    topicMap[topic].total += data.total;
+                });
+            } else {
+                // Fallback for old results
+                const subjects = result.subject.split(', ');
+                subjects.forEach(subject => {
+                    if (!topicMap[subject]) topicMap[subject] = { correct: 0, total: 0 };
+                    topicMap[subject].correct += result.score / subjects.length;
+                    topicMap[subject].total += result.totalQuestions / subjects.length;
+                });
+            }
+        });
+
+        const subjectAverages = Object.keys(topicMap).map((subject) => {
+            const data = topicMap[subject];
             return {
                 subject,
-                average: data.totalQuestions > 0 ? (totalScored / data.totalQuestions) * 100 : 0,
+                average: data.total > 0 ? (data.correct / data.total) * 100 : 0,
+                total: data.total
             };
         });
 
@@ -85,6 +98,34 @@ const Performance: React.FC = () => {
             weakSubjects: subjectAverages.filter(s => s.average < 60).map(s => s.subject),
         };
     }, [results]);
+
+    const trendData = useMemo(() => {
+        return [...results]
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(-10) // Last 10 sessions
+            .map(r => ({
+                name: new Date(r.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                score: Math.round((r.score / r.totalQuestions) * 100),
+                fullDate: new Date(r.date).toLocaleString()
+            }));
+    }, [results]);
+
+    // Streak Calendar Helper
+    const streakDays = useMemo(() => {
+        return new Set(streakHistory);
+    }, [streakHistory]);
+
+    const last30Days = useMemo(() => {
+        const days = [];
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            days.push(date.toISOString().split('T')[0]);
+        }
+        return days;
+    }, []);
+
+    const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     if (isLoading || isDataLoading) {
         return <div className="flex justify-center items-center h-full"><Card><p className="p-8">Loading performance data...</p></Card></div>;
@@ -102,7 +143,7 @@ const Performance: React.FC = () => {
                         Sign in to view your performance analytics, track your scores, and identify areas for improvement.
                     </p>
                 </div>
-                <button 
+                <button
                     onClick={requestLogin}
                     className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-accent transition-colors mb-4"
                 >
@@ -123,7 +164,7 @@ const Performance: React.FC = () => {
                 </div>
                 <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Unlock Performance Analysis</h1>
                 <p className="text-slate-600 dark:text-slate-400 mt-2 mb-6 max-w-md">Track your progress, identify weak spots, and see detailed analytics by upgrading to ExamRedi Pro.</p>
-                <button 
+                <button
                     onClick={() => requestUpgrade({
                         title: "Unlock Performance Analysis",
                         message: "Go beyond just scores. Get detailed insights into your study habits and areas for improvement with ExamRedi Pro.",
@@ -142,7 +183,6 @@ const Performance: React.FC = () => {
         );
     }
 
-
     if (results.length === 0) {
         return (
             <Card className="text-center p-8">
@@ -154,38 +194,129 @@ const Performance: React.FC = () => {
             </Card>
         );
     }
-    
+
     return (
         <div className="space-y-6">
             <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Performance Analysis</h1>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="text-center">
-                    <p className="text-slate-600 dark:text-slate-400">Average Score</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="text-center flex flex-col justify-center py-6">
+                    <p className="text-slate-600 dark:text-slate-400 font-semibold mb-1 text-sm">Average Score</p>
                     <p className="text-4xl font-extrabold text-primary">{averageScore}%</p>
                 </Card>
-                 <Card className="text-center">
-                    <p className="text-slate-600 dark:text-slate-400">Quizzes Taken</p>
+                <Card className="text-center flex flex-col justify-center py-6">
+                    <p className="text-slate-600 dark:text-slate-400 font-semibold mb-1 text-sm">Quizzes Taken</p>
                     <p className="text-4xl font-extrabold text-primary">{quizzesTaken}</p>
                 </Card>
-                 <Card className="text-center">
-                    <p className="text-slate-600 dark:text-slate-400">Best Subject</p>
-                    <p className="text-4xl font-extrabold text-primary">{bestSubject}</p>
+                <Card className="text-center flex flex-col justify-center py-6">
+                    <p className="text-slate-600 dark:text-slate-400 font-semibold mb-1 text-sm">Best Subject</p>
+                    <p className="text-2xl font-extrabold text-primary truncate px-2">{bestSubject}</p>
+                </Card>
+                <Card className="text-center flex flex-col justify-center py-6 border-2 border-primary/20">
+                    <p className="text-slate-600 dark:text-slate-400 font-semibold mb-1 text-sm">Active Streak</p>
+                    <p className="text-4xl font-extrabold text-orange-500">🔥 {streak}</p>
+                </Card>
+            </div>
+
+            <Card className="overflow-hidden">
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4 flex items-center gap-2">
+                    <span>📅</span> Study Consistency (Last 30 Days)
+                </h2>
+                <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+                    {last30Days.map(day => (
+                        <div
+                            key={day}
+                            title={day}
+                            className={`w-4 h-4 rounded-sm transition-colors ${streakDays.has(day)
+                                    ? 'bg-primary'
+                                    : 'bg-slate-200 dark:bg-slate-700'
+                                }`}
+                        />
+                    ))}
+                </div>
+                <div className="mt-4 flex justify-between items-center text-xs text-slate-500">
+                    <p>Total Study Days: <span className="font-bold text-primary">{streakDays.size}</span></p>
+                    <div className="flex items-center gap-2">
+                        <span>Less</span>
+                        <div className="flex gap-1">
+                            <div className="w-3 h-3 bg-slate-200 dark:bg-slate-700 rounded-sm"></div>
+                            <div className="w-3 h-3 bg-primary rounded-sm"></div>
+                        </div>
+                        <span>More</span>
+                    </div>
+                </div>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-6">Score Trend (Last 10 Sessions)</h2>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                                <XAxis dataKey="name" stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#64748B" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    formatter={(value: number) => [`${value}%`, 'Score']}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="score"
+                                    stroke="#22c55e"
+                                    strokeWidth={4}
+                                    dot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#fff' }}
+                                    activeDot={{ r: 8 }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Card>
+
+                <Card>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-6">Subject Proficiency</h2>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={performanceBySubject} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis
+                                    dataKey="subject"
+                                    type="category"
+                                    stroke="#64748B"
+                                    fontSize={12}
+                                    width={100}
+                                    tickLine={false}
+                                    axisLine={false}
+                                />
+                                <Tooltip
+                                    cursor={{ fill: 'transparent' }}
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    formatter={(value: number) => [`${Math.round(value)}%`, 'Average']}
+                                />
+                                <Bar dataKey="average" radius={[0, 4, 4, 0]} barSize={20}>
+                                    {performanceBySubject.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </Card>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="md:col-span-2">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Performance by Subject</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Mastery Breakdown</h2>
                     <div className="space-y-4">
-                        {Array.isArray(performanceBySubject) && performanceBySubject.map(({ subject, average }) => (
+                        {Array.isArray(performanceBySubject) && performanceBySubject.map(({ subject, average }, index) => (
                             <div key={subject}>
                                 <div className="flex justify-between mb-1">
                                     <span className="font-semibold text-slate-700 dark:text-slate-200">{subject}</span>
                                     <span className="font-semibold text-primary">{Math.round(average)}%</span>
                                 </div>
                                 <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-4">
-                                    <div className="bg-primary h-4 rounded-full" style={{ width: `${average}%` }}></div>
+                                    <div className="h-4 rounded-full" style={{ width: `${average}%`, backgroundColor: COLORS[index % COLORS.length] }}></div>
                                 </div>
                             </div>
                         ))}
@@ -204,12 +335,12 @@ const Performance: React.FC = () => {
                             <p className="text-slate-600 dark:text-slate-400 mt-4">Try reviewing the <Link to="/study-guides" className="text-primary font-semibold underline">Study Guides</Link> for these topics.</p>
                         </div>
                     ) : (
-                         <p className="text-slate-600 dark:text-slate-400">Excellent work! You're showing strong performance across all subjects. Keep up the consistent practice!</p>
+                        <p className="text-slate-600 dark:text-slate-400">Excellent work! You're showing strong performance across all subjects. Keep up the consistent practice!</p>
                     )}
                 </Card>
             </div>
 
-             <Card>
+            <Card>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Quiz History</h2>
                 <div className="overflow-x-auto border border-gray-200 dark:border-slate-700 rounded-lg">
                     <table className="min-w-full text-left text-sm">
@@ -222,11 +353,13 @@ const Performance: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {results.sort((a, b) => b.completedAt - a.completedAt).map(result => (
-                                <tr key={result.completedAt} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                    <td className="p-4 text-slate-700 dark:text-slate-300">{new Date(result.completedAt).toLocaleDateString()}</td>
+                            {results.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(result => (
+                                <tr key={result._id || result.date} className="border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td className="p-4 text-slate-700 dark:text-slate-300">{new Date(result.date).toLocaleDateString()}</td>
                                     <td className="p-4 font-medium text-slate-800 dark:text-slate-200 break-words">{result.subject}</td>
-                                    <td className="p-4 text-slate-700 dark:text-slate-300 break-words">{result.exam}</td>
+                                    <td className="p-4 text-slate-700 dark:text-slate-300 break-words">
+                                        {result.metadata?.exam || result.metadata?.title || result.exam || 'Practice'} ({result.metadata?.year || result.year || 'N/A'})
+                                    </td>
                                     <td className="p-4 font-medium text-primary">{result.score}/{result.totalQuestions} ({Math.round(result.score / result.totalQuestions * 100)}%)</td>
                                 </tr>
                             ))}

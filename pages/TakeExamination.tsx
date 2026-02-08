@@ -67,10 +67,10 @@ const TakeExamination: React.FC = () => {
     const validatePracticeState = (state: any) => {
         if (!state) return false;
 
-        // Check if state is too old (more than 5 minutes)
+        // Check if state is too old (skip for resumed sessions)
         const now = Date.now();
         const stateTimestamp = state.timestamp || 0;
-        if (now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
+        if (!state.resumed && now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
 
         // Check for standard mode state
         if (state.subjects && Array.isArray(state.subjects) && state.subjects.length > 0) {
@@ -96,18 +96,20 @@ const TakeExamination: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     // --- Auto-Save Persistence ---
-    // Load answers from sessionStorage on mount
+    // Load answers from sessionStorage or resumed state on mount
     useEffect(() => {
         const savedAnswers = sessionStorage.getItem('practiceAnswers');
-        if (savedAnswers) {
+        const resumedAnswers = location.state?.savedAnswers;
+
+        if (savedAnswers || resumedAnswers) {
             try {
-                const parsed = JSON.parse(savedAnswers);
-                setUserAnswers(prev => ({ ...prev, ...parsed }));
+                const parsed = savedAnswers ? JSON.parse(savedAnswers) : {};
+                setUserAnswers(prev => ({ ...prev, ...parsed, ...resumedAnswers }));
             } catch (e) {
                 console.error("Failed to parse saved answers", e);
             }
         }
-    }, []);
+    }, [location.state?.savedAnswers]);
 
     // Save answers to sessionStorage whenever they change
     useEffect(() => {
@@ -168,19 +170,25 @@ const TakeExamination: React.FC = () => {
     const handleSubmit = useCallback(async () => {
         if (isFinished) return;
 
-        // Guest scoring: limited to GUEST_QUESTION_LIMIT?
-        // Actually, if we allow them to answer ANY 5 questions, we should score them on the whole exam?
-        // Or just the ones they answered?
-        // The previous logic sliced questions. Now strictly speaking, any question COULD be answered.
-        // Let's just score normally based on userAnswers.
-        const questionsForScoring = questions;
-
         let score = 0;
-        questionsForScoring.forEach(q => {
+        const topicBreakdown: Record<string, { correct: number, total: number }> = {};
+        const incorrectQuestions: string[] = [];
+
+        questions.forEach(q => {
+            const subjectKey = q.subject || 'Unknown';
+            if (!topicBreakdown[subjectKey]) {
+                topicBreakdown[subjectKey] = { correct: 0, total: 0 };
+            }
+            topicBreakdown[subjectKey].total++;
+
             if (userAnswers[q.id] === q.answer) {
                 score++;
+                topicBreakdown[subjectKey].correct++;
+            } else if (userAnswers[q.id] !== undefined) {
+                incorrectQuestions.push(q.id);
             }
         });
+
         setFinalScore(score);
         setIsFinished(true);
         sessionStorage.setItem('practiceCompleted', 'true');
@@ -192,14 +200,16 @@ const TakeExamination: React.FC = () => {
             if (user.subscription === 'free') {
                 showInstallBanner();
             }
-            const result: Omit<QuizResult, 'id'> = {
-                paperId: 'practice-session',
+            const result = {
+                paperId: location.state?.paperId || 'practice-session',
                 exam: examTitle || 'Practice',
                 subject: subjects.join(', '),
-                year: new Date().getFullYear(),
+                year: location.state?.year || new Date().getFullYear(),
                 score: score,
                 totalQuestions: questions.length,
                 userAnswers,
+                topicBreakdown,
+                incorrectQuestions,
                 completedAt: Date.now(),
             };
             try {
@@ -209,15 +219,31 @@ const TakeExamination: React.FC = () => {
             }
         }
 
-        // Add to recent activity
+        // Update recent activity to mark as finished (remove resume state)
         addActivity({
-            id: `practice-${Date.now()}`,
-            title: examTitle || 'Practice Session',
-            path: '/practice',
+            id: `practice-${examTitle || 'UTME'}`,
+            title: `Completed: ${examTitle || 'Practice Session'}`,
+            path: '/performance', // Redirect to performance on click after completion
             type: 'quiz'
         });
 
-    }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity]);
+    }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);
+
+    // Periodically update resume state with latest answers
+    useEffect(() => {
+        if (!isFinished && questions.length > 0 && Object.keys(userAnswers).length > 0) {
+            const timer = setTimeout(() => {
+                addActivity({
+                    id: `practice-${examTitle || 'UTME'}`,
+                    title: examTitle || 'Practice Session',
+                    path: '/take-examination',
+                    type: 'quiz',
+                    state: { ...location.state, resumed: true, savedAnswers: userAnswers }
+                });
+            }, 2000); // Debounce updates
+            return () => clearTimeout(timer);
+        }
+    }, [userAnswers, isFinished, questions.length, examTitle, addActivity, location.state]);
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
@@ -275,15 +301,28 @@ const TakeExamination: React.FC = () => {
             }
 
             if (preparedQuestions.length > 0) {
-                // Fresh start: Clear any stale timer or answers from previous sessions
-                sessionStorage.removeItem('practiceEndTime');
-                sessionStorage.removeItem('practiceAnswers');
-                sessionStorage.setItem('practiceStarted', 'true');
+                const isResuming = location.state?.resumed;
+
+                // Only clean slate if it's a fresh start (not a resume)
+                if (!isResuming) {
+                    sessionStorage.removeItem('practiceEndTime');
+                    sessionStorage.removeItem('practiceAnswers');
+                    sessionStorage.setItem('practiceStarted', 'true');
+                }
 
                 setQuestions(preparedQuestions);
                 setActiveSubject(preparedQuestions[0].subject);
-                // setTimeLeft handled by endTime effect
-                // Clear completed flag when starting new practice
+
+                // Add to recent activity for "Continue Studying"
+                // Store the state so it can be resumed
+                addActivity({
+                    id: `practice-${examTitle || 'UTME'}`, // Stable ID per exam type
+                    title: examTitle || 'Practice Session',
+                    path: '/take-examination',
+                    type: 'quiz',
+                    state: { ...location.state, resumed: true } // Save state for resume
+                });
+
                 sessionStorage.removeItem('practiceCompleted');
             }
             setIsLoading(false);
