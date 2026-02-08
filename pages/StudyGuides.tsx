@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { generateStudyGuide } from '../services/aiService.ts';
 import { StudyGuide } from '../types.ts';
@@ -103,6 +103,7 @@ const AccordionItem: React.FC<{
 
 const StudyGuides: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { isAuthenticated, user, requestLogin, requestUpgrade, useAiCredit } = useAuth();
     const { addActivity } = useUserProgress();
     const [allStudyGuides, setAllStudyGuides] = useState<StudyGuide[]>([]);
@@ -117,9 +118,18 @@ const StudyGuides: React.FC = () => {
 
     useEffect(() => {
         if (location.state?.viewGuide) {
-            handleViewGuide(location.state.viewGuide);
+            // Direct set for deep links/search results - DO NOT push state here to avoid loops
+            setViewingGuide(location.state.viewGuide);
+
+            // Manually track activity since we're bypassing handleViewGuide
+            addActivity({
+                id: location.state.viewGuide.id,
+                title: location.state.viewGuide.title,
+                path: '/guides',
+                type: 'guide'
+            });
         }
-    }, [location.state]);
+    }, [location.state, addActivity]);
 
     useEffect(() => {
         const handlePopState = () => {
@@ -319,7 +329,14 @@ const StudyGuides: React.FC = () => {
                 <GuideModal
                     guide={viewingGuide}
                     onClose={() => {
-                        if (viewingGuide) {
+                        if (location.state?.viewGuide) {
+                            // If we came from a deep link (like Search), replace state to "close" modal 
+                            // but stay on page (showing list), without going back to Search immediately.
+                            // This gives user context of "I am on the guides page now".
+                            navigate('.', { replace: true, state: {} });
+                            setViewingGuide(null);
+                        } else {
+                            // Standard navigation (pushed state) - pop to close
                             window.history.back();
                             setViewingGuide(null);
                         }
