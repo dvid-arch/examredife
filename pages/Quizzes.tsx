@@ -138,6 +138,11 @@ const Quizzes: React.FC = () => {
         e.preventDefault();
         const selectionsArray = Object.entries(customSelections).map(([subject, year]) => ({ subject, year }));
 
+        console.log('[Diagnostic] Starting Custom Practice:', {
+            count: customQuestionCount,
+            selections: selectionsArray
+        });
+
         if (selectionsArray.length === 0) {
             alert('Please select at least one subject for your custom practice.');
             return;
@@ -276,7 +281,21 @@ const Quizzes: React.FC = () => {
                                     </div>
                                 </div>
 
-
+                                <div>
+                                    <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">2. Questions Per Subject</h3>
+                                    <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-slate-700 rounded-lg">
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="50"
+                                            value={customQuestionCount}
+                                            onChange={(e) => setCustomQuestionCount(Number(e.target.value))}
+                                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                                        />
+                                        <span className="font-bold text-primary min-w-[3rem] text-center">{customQuestionCount}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1 italic">Note: Pro users can take up to 50 questions per subject.</p>
+                                </div>
 
                                 <div className="flex justify-end pt-2">
                                     <button
