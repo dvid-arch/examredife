@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import apiService from '../../services/apiService.ts';
 import { StudyGuide } from '../../types.ts';
@@ -88,20 +88,22 @@ const GuideReader: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="p-8 prose prose-slate dark:prose-invert max-w-none">
-                    <MarkdownRenderer content={guide.content} />
+                <div className="p-4 sm:p-8">
+                    <MarkdownRenderer content={guide.content.trim()} />
                 </div>
 
-                <div className="p-8 pt-0 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col items-center text-center">
-                    <div className="w-16 h-1 bg-slate-200 dark:bg-slate-700 rounded-full mb-6"></div>
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Feeling confident?</h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">Try answering some questions related to this topic in the Practice Arena.</p>
-                    <button
-                        onClick={() => navigate('/practice/standard')}
-                        className="bg-primary text-white font-bold py-3 px-8 rounded-2xl hover:bg-green-700 transition-all shadow-lg shadow-primary/20"
+                <div className="mt-8 p-8 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-center">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Feeling confident?</h3>
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 font-medium">Test your mastery of {guide.title} with real past questions.</p>
+                    <Link
+                        to={`/practice/topic/${guide.subject.toLowerCase()}/${guide.title.toLowerCase().replace(/\s+/g, '-')}`}
+                        className="inline-flex items-center gap-2 bg-primary text-white font-black py-4 px-8 rounded-2xl hover:bg-accent transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95"
                     >
-                        Test Knowledge
-                    </button>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Test Your Knowledge
+                    </Link>
                 </div>
             </div>
         </div>

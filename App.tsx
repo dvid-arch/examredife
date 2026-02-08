@@ -24,6 +24,7 @@ const StudyGuideLibrary = lazy(() => import('./pages/study-guides/StudyGuideLibr
 const SubjectIndex = lazy(() => import('./pages/study-guides/SubjectIndex.tsx'));
 const GuideReader = lazy(() => import('./pages/study-guides/GuideReader.tsx'));
 const GuideGenerator = lazy(() => import('./pages/study-guides/GuideGenerator.tsx'));
+const TopicPracticeSetup = lazy(() => import('./pages/practice/TopicPracticeSetup.tsx'));
 const TakeExamination = lazy(() => import('./pages/TakeExamination.tsx'));
 const EducationalGames = lazy(() => import('./pages/EducationalGames.tsx'));
 const Performance = lazy(() => import('./pages/Performance.tsx'));
@@ -148,7 +149,10 @@ const router = createHashRouter(
         <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
         <Route path="/practice" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
+        <Route path="/practice/standard" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
+        <Route path="/practice/custom" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
         <Route path="/practice/:tab" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
+        <Route path="/practice/topic/:subject/:topicSlug" element={<Suspense fallback={<PageLoader />}><TopicPracticeSetup /></Suspense>} />
         <Route path="/ai-buddy" element={<Suspense fallback={<PageLoader />}><ExamWithAI /></Suspense>} />
         <Route path="/question-search" element={<Suspense fallback={<PageLoader />}><QuestionSearch /></Suspense>} />
         <Route path="/study-guides" element={<Suspense fallback={<PageLoader />}><StudyGuides /></Suspense>}>

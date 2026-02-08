@@ -173,7 +173,10 @@ const TakeExamination: React.FC = () => {
         const incorrectQuestions: string[] = [];
 
         questions.forEach(q => {
-            const subjectKey = q.subject || 'Unknown';
+            const subjectKey = (location.state?.isTopicTest && location.state?.topicName)
+                ? location.state.topicName
+                : (q.subject || 'Unknown');
+
             if (!topicBreakdown[subjectKey]) {
                 topicBreakdown[subjectKey] = { correct: 0, total: 0 };
             }

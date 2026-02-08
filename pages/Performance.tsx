@@ -41,6 +41,7 @@ const Performance: React.FC = () => {
         quizzesTaken,
         bestSubject,
         performanceBySubject,
+        performanceByTopic,
         weakSubjects,
     } = useMemo(() => {
         if (results.length === 0) {
@@ -49,38 +50,44 @@ const Performance: React.FC = () => {
                 quizzesTaken: 0,
                 bestSubject: 'N/A',
                 performanceBySubject: [],
+                performanceByTopic: [],
                 weakSubjects: [],
             };
         }
+
+        const standardSubjects = ['Biology', 'Chemistry', 'Physics', 'Mathematics', 'English', 'Economics', 'Government', 'Literature', 'CRS', 'Geography', 'Commerce', 'Financial Accounting', 'Agricultural Science'];
 
         const totalScore = results.reduce((sum, r) => sum + r.score, 0);
         const totalQuestions = results.reduce((sum, r) => sum + r.totalQuestions, 0);
         const avg = totalQuestions > 0 ? (totalScore / totalQuestions) * 100 : 0;
 
         // Process topicBreakdown for new results
+        const subjectMap: Record<string, { correct: number, total: number }> = {};
         const topicMap: Record<string, { correct: number, total: number }> = {};
 
         results.forEach(result => {
             if (result.topicBreakdown) {
-                // MongoDB Map comes as object
-                Object.entries(result.topicBreakdown).forEach(([topic, data]: [string, any]) => {
-                    if (!topicMap[topic]) topicMap[topic] = { correct: 0, total: 0 };
-                    topicMap[topic].correct += data.correct;
-                    topicMap[topic].total += data.total;
+                Object.entries(result.topicBreakdown).forEach(([key, data]: [string, any]) => {
+                    const isStandard = standardSubjects.some(s => s.toLowerCase() === key.toLowerCase());
+                    const targetMap = isStandard ? subjectMap : topicMap;
+
+                    if (!targetMap[key]) targetMap[key] = { correct: 0, total: 0 };
+                    targetMap[key].correct += data.correct;
+                    targetMap[key].total += data.total;
                 });
             } else {
-                // Fallback for old results
+                // Fallback for old results (usually just have .subject string)
                 const subjects = result.subject.split(', ');
                 subjects.forEach(subject => {
-                    if (!topicMap[subject]) topicMap[subject] = { correct: 0, total: 0 };
-                    topicMap[subject].correct += result.score / subjects.length;
-                    topicMap[subject].total += result.totalQuestions / subjects.length;
+                    if (!subjectMap[subject]) subjectMap[subject] = { correct: 0, total: 0 };
+                    subjectMap[subject].correct += result.score / subjects.length;
+                    subjectMap[subject].total += result.totalQuestions / subjects.length;
                 });
             }
         });
 
-        const subjectAverages = Object.keys(topicMap).map((subject) => {
-            const data = topicMap[subject];
+        const subjectAverages = Object.keys(subjectMap).map((subject) => {
+            const data = subjectMap[subject];
             return {
                 subject,
                 average: data.total > 0 ? (data.correct / data.total) * 100 : 0,
@@ -88,13 +95,24 @@ const Performance: React.FC = () => {
             };
         });
 
+        const topicAverages = Object.keys(topicMap).map((topic) => {
+            const data = topicMap[topic];
+            return {
+                topic,
+                average: data.total > 0 ? (data.correct / data.total) * 100 : 0,
+                total: data.total
+            };
+        });
+
         subjectAverages.sort((a, b) => b.average - a.average);
+        topicAverages.sort((a, b) => b.average - a.average);
 
         return {
             averageScore: Math.round(avg),
             quizzesTaken: results.length,
             bestSubject: subjectAverages.length > 0 ? subjectAverages[0].subject : 'N/A',
             performanceBySubject: subjectAverages,
+            performanceByTopic: topicAverages,
             weakSubjects: subjectAverages.filter(s => s.average < 60).map(s => s.subject),
         };
     }, [results]);
@@ -228,8 +246,8 @@ const Performance: React.FC = () => {
                             key={day}
                             title={day}
                             className={`w-4 h-4 rounded-sm transition-colors ${streakDays.has(day)
-                                    ? 'bg-primary'
-                                    : 'bg-slate-200 dark:bg-slate-700'
+                                ? 'bg-primary'
+                                : 'bg-slate-200 dark:bg-slate-700'
                                 }`}
                         />
                     ))}
@@ -305,9 +323,9 @@ const Performance: React.FC = () => {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="md:col-span-2">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Mastery Breakdown</h2>
+            <div className={`grid grid-cols-1 ${performanceByTopic.length > 0 ? 'lg:grid-cols-2' : ''} gap-6`}>
+                <Card>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Subject Mastery</h2>
                     <div className="space-y-4">
                         {Array.isArray(performanceBySubject) && performanceBySubject.map(({ subject, average }, index) => (
                             <div key={subject}>
@@ -322,23 +340,46 @@ const Performance: React.FC = () => {
                         ))}
                     </div>
                 </Card>
-                <Card>
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Personalized Feedback</h2>
-                    {weakSubjects.length > 0 ? (
-                        <div>
-                            <p className="text-slate-600 dark:text-slate-400 mb-3">You're doing great! To improve even more, focus on these areas:</p>
-                            <ul className="list-disc list-inside space-y-2">
-                                {weakSubjects.map(subject => (
-                                    <li key={subject} className="font-semibold text-slate-700 dark:text-slate-200">{subject}</li>
-                                ))}
-                            </ul>
-                            <p className="text-slate-600 dark:text-slate-400 mt-4">Try reviewing the <Link to="/study-guides" className="text-primary font-semibold underline">Study Guides</Link> for these topics.</p>
+
+                {performanceByTopic.length > 0 && (
+                    <Card>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Topic Mastery</h2>
+                        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                            {performanceByTopic.map(({ topic, average }, index) => (
+                                <div key={topic}>
+                                    <div className="flex justify-between mb-1">
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-slate-700 dark:text-slate-200 capitalize">{topic}</span>
+                                            <span className="text-[10px] text-slate-500 uppercase font-black tracking-tighter">Specific Topic</span>
+                                        </div>
+                                        <span className="font-semibold text-primary">{Math.round(average)}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div className="h-2 rounded-full bg-primary" style={{ width: `${average}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ) : (
-                        <p className="text-slate-600 dark:text-slate-400">Excellent work! You're showing strong performance across all subjects. Keep up the consistent practice!</p>
-                    )}
-                </Card>
+                    </Card>
+                )}
             </div>
+
+            <Card>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Personalized Feedback</h2>
+                {weakSubjects.length > 0 ? (
+                    <div>
+                        <p className="text-slate-600 dark:text-slate-400 mb-3">You're doing great! To improve even more, focus on these areas:</p>
+                        <ul className="list-disc list-inside space-y-2">
+                            {weakSubjects.map(subject => (
+                                <li key={subject} className="font-semibold text-slate-700 dark:text-slate-200">{subject}</li>
+                            ))}
+                        </ul>
+                        <p className="text-slate-600 dark:text-slate-400 mt-4">Try reviewing the <Link to="/study-guides" className="text-primary font-semibold underline">Study Guides</Link> for these topics.</p>
+                    </div>
+                ) : (
+                    <p className="text-slate-600 dark:text-slate-400">Excellent work! You're showing strong performance across all subjects. Keep up the consistent practice!</p>
+                )}
+            </Card>
 
             <Card>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50 mb-4">Quiz History</h2>
