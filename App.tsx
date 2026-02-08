@@ -20,6 +20,10 @@ const Flashcards = lazy(() => import('./pages/Flashcards.tsx'));
 const Quizzes = lazy(() => import('./pages/Quizzes.tsx'));
 const ExamWithAI = lazy(() => import('./pages/ExamWithAI.tsx'));
 const StudyGuides = lazy(() => import('./pages/StudyGuides.tsx'));
+const StudyGuideLibrary = lazy(() => import('./pages/study-guides/StudyGuideLibrary.tsx'));
+const SubjectIndex = lazy(() => import('./pages/study-guides/SubjectIndex.tsx'));
+const GuideReader = lazy(() => import('./pages/study-guides/GuideReader.tsx'));
+const GuideGenerator = lazy(() => import('./pages/study-guides/GuideGenerator.tsx'));
 const TakeExamination = lazy(() => import('./pages/TakeExamination.tsx'));
 const EducationalGames = lazy(() => import('./pages/EducationalGames.tsx'));
 const Performance = lazy(() => import('./pages/Performance.tsx'));
@@ -147,7 +151,12 @@ const router = createHashRouter(
         <Route path="/practice/:tab" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
         <Route path="/ai-buddy" element={<Suspense fallback={<PageLoader />}><ExamWithAI /></Suspense>} />
         <Route path="/question-search" element={<Suspense fallback={<PageLoader />}><QuestionSearch /></Suspense>} />
-        <Route path="/study-guides" element={<Suspense fallback={<PageLoader />}><StudyGuides /></Suspense>} />
+        <Route path="/study-guides" element={<Suspense fallback={<PageLoader />}><StudyGuides /></Suspense>}>
+          <Route index element={<Suspense fallback={<PageLoader />}><StudyGuideLibrary /></Suspense>} />
+          <Route path="generator" element={<Suspense fallback={<PageLoader />}><GuideGenerator /></Suspense>} />
+          <Route path=":category" element={<Suspense fallback={<PageLoader />}><SubjectIndex /></Suspense>} />
+          <Route path=":category/:slug" element={<Suspense fallback={<PageLoader />}><GuideReader /></Suspense>} />
+        </Route>
         <Route path="/games" element={<Suspense fallback={<PageLoader />}><EducationalGames /></Suspense>} />
         <Route path="/games/memory-match" element={<Suspense fallback={<PageLoader />}><MemoryMatchGame /></Suspense>} />
         <Route path="/games/subject-sprint" element={<Suspense fallback={<PageLoader />}><SubjectSprintGame /></Suspense>} />
