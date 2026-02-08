@@ -26,11 +26,11 @@ const Quizzes: React.FC = () => {
 
     // State for Standard Mode
     // 1. First select the year
-    const [standardSelectedYear, setStandardSelectedYear] = useState<'random' | number>('random');
+    const [standardSelectedYear, setStandardSelectedYear] = useState<number>(0);
 
     // 2. Filter subjects available for that year
     const displayedSubjects = useMemo(() => {
-        if (standardSelectedYear === 'random') return subjects;
+        if (!standardSelectedYear) return subjects;
 
         return subjects.filter(subject => {
             const hasPaperForYear = allPapers.some(p => p.subject === subject && p.year === standardSelectedYear);
@@ -138,11 +138,6 @@ const Quizzes: React.FC = () => {
         e.preventDefault();
         const selectionsArray = Object.entries(customSelections).map(([subject, year]) => ({ subject, year }));
 
-        console.log('[Diagnostic] Starting Custom Practice:', {
-            count: customQuestionCount,
-            selections: selectionsArray
-        });
-
         if (selectionsArray.length === 0) {
             alert('Please select at least one subject for your custom practice.');
             return;
@@ -197,18 +192,17 @@ const Quizzes: React.FC = () => {
                                 <select
                                     id="year-select"
                                     value={String(standardSelectedYear)}
-                                    onChange={(e) => setStandardSelectedYear(e.target.value === 'random' ? 'random' : Number(e.target.value))}
+                                    onChange={(e) => setStandardSelectedYear(Number(e.target.value))}
                                     className="w-full md:w-1/3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                                 >
                                     {availableYears.map(year => (
                                         <option key={year} value={year}>{year}</option>
                                     ))}
-                                    <option value="random">Random (All Years)</option>
                                 </select>
                             </div>
 
                             <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">2. Choose Your Subjects ({selectedSubjects.length}/4)</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects available for {standardSelectedYear === 'random' ? 'all time' : standardSelectedYear}.</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects available for {standardSelectedYear}.</p>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 {displayedSubjects.map(subject => (
                                     <label
