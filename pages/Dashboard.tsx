@@ -99,8 +99,6 @@ const Dashboard: React.FC = () => {
     const { recentActivity } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
 
-    if (isLoading) return <DashboardSkeleton />;
-
     // Close tour when navigating away
     useEffect(() => {
         const handleHashChange = () => {
@@ -165,6 +163,8 @@ const Dashboard: React.FC = () => {
                 position: 'right',
             },
         ];
+
+    if (isLoading) return <DashboardSkeleton />;
 
     return (
         <div className="space-y-8">

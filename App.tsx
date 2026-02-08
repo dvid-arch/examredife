@@ -6,6 +6,7 @@ import Header from './components/Header.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import PwaInstallBanner from './components/PwaInstallBanner.tsx';
 import ScrollToTop from './components/ScrollToTop.tsx';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Contexts
@@ -155,7 +156,7 @@ const MainLayout: React.FC = () => {
 // Create router with data API to support useBlocker and other modern features
 const router = createHashRouter(
   createRoutesFromElements(
-    <Route element={<RootLayout />}>
+    <Route element={<RootLayout />} errorElement={<ErrorBoundary />}>
       {/* Main App Routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
