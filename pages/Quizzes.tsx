@@ -11,7 +11,13 @@ const Quizzes: React.FC = () => {
     const { tab } = useParams<{ tab: string }>();
     const { user } = useAuth();
     const { papers: allPapers, isLoading, fetchPapers } = usePastQuestions();
-    const practiceMode = (tab === 'custom') ? 'custom' : 'standard';
+    const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>((tab === 'custom') ? 'custom' : 'standard');
+
+    useEffect(() => {
+        if (tab === 'custom' || tab === 'standard') {
+            setPracticeMode(tab);
+        }
+    }, [tab]);
 
     useEffect(() => {
         fetchPapers();
