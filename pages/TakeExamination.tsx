@@ -275,6 +275,11 @@ const TakeExamination: React.FC = () => {
             }
 
             if (preparedQuestions.length > 0) {
+                // Fresh start: Clear any stale timer or answers from previous sessions
+                sessionStorage.removeItem('practiceEndTime');
+                sessionStorage.removeItem('practiceAnswers');
+                sessionStorage.setItem('practiceStarted', 'true');
+
                 setQuestions(preparedQuestions);
                 setActiveSubject(preparedQuestions[0].subject);
                 // setTimeLeft handled by endTime effect
