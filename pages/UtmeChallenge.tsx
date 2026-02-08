@@ -12,9 +12,10 @@ import apiService from '../services/apiService.ts';
 
 
 // --- ICONS ---
-const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4-4h2a2 2 0 012 2v4a2 2 0 01-2 2h-2m-4 4H5a2 2 0 01-2-2v-4a2 2 0 012-2h2" /></svg>;
-const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-const BackArrowIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>;
+const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-yellow-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>;
+const ClockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const BackArrowIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>;
+const RefreshIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
 
 // --- CONSTANTS ---
 const CHALLENGE_DURATION_MINUTES = 30;
@@ -65,26 +66,60 @@ const UtmeChallenge: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(CHALLENGE_DURATION_MINUTES * 60);
     const [scoreSaved, setScoreSaved] = useState(false);
 
+    const fetchLeaderboard = useCallback(async () => {
+        setIsLoadingLeaderboard(true);
+        try {
+            const leaderboardData = await apiService<LeaderboardScore[]>('/data/leaderboard');
+            setLeaderboard(leaderboardData);
+        } catch (error) {
+            console.error("Failed to fetch leaderboard", error);
+        } finally {
+            setIsLoadingLeaderboard(false);
+        }
+    }, []);
+
     useEffect(() => {
-        const fetchLeaderboard = async () => {
-            setIsLoadingLeaderboard(true);
-            try {
-                const leaderboardData = await apiService<LeaderboardScore[]>('/data/leaderboard');
-                setLeaderboard(leaderboardData);
-            } catch (error) {
-                console.error("Failed to fetch leaderboard", error);
-            } finally {
-                setIsLoadingLeaderboard(false);
-            }
-        };
         fetchLeaderboard();
         fetchPapers();
-    }, [fetchPapers]);
+    }, [fetchLeaderboard, fetchPapers]);
 
     const isLoadingData = isLoadingPapers || isLoadingLeaderboard;
 
     const availableSubjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
 
+    const saveScoreToLeaderboard = useCallback(async (currentScore: number, answers: any) => {
+        if (!isAuthenticated || !user) return;
+
+        if (user.subscription === 'free') {
+            requestUpgrade({
+                title: "Join the Leaderboard!",
+                message: "Want to save your score and compete with other students? Upgrade to ExamRedi Pro.",
+                featureList: [
+                    "Save your UTME Challenge high scores",
+                    "See your name on the leaderboard",
+                    "Track your ranking over time",
+                    "Unlock all Pro features"
+                ]
+            });
+            return;
+        }
+
+        const newScore = {
+            name: user.name,
+            score: currentScore,
+            totalQuestions: TOTAL_QUESTIONS,
+            answers: answers,
+            date: Date.now(),
+        };
+
+        try {
+            const updatedLeaderboard = await apiService<LeaderboardScore[]>('/data/leaderboard', { method: 'POST', body: newScore });
+            setLeaderboard(updatedLeaderboard);
+            setScoreSaved(true);
+        } catch (error) {
+            console.error("Failed to save score:", error);
+        }
+    }, [isAuthenticated, user, requestUpgrade]);
 
     const handleSubmit = useCallback(() => {
         if (gameState !== 'playing') return;
@@ -96,7 +131,12 @@ const UtmeChallenge: React.FC = () => {
         });
         setFinalScore(score);
         setGameState('results');
-    }, [gameState, questions, userAnswers]);
+
+        // Auto-save for pro users
+        if (isAuthenticated && user?.subscription === 'pro') {
+            saveScoreToLeaderboard(score, userAnswers);
+        }
+    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard]);
 
     // Timestamp-based Timer Logic
     const [endTime, setEndTime] = useState<number | null>(null);
@@ -170,44 +210,11 @@ const UtmeChallenge: React.FC = () => {
     };
 
 
-    const handleSaveScore = async (e: React.FormEvent) => {
+    const handleSaveScoreClick = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isAuthenticated || !user) {
-            requestLogin();
-            return;
-        }
-
-        if (user.subscription === 'free') {
-            requestUpgrade({
-                title: "Join the Leaderboard!",
-                message: "Want to save your score and compete with other students? Upgrade to ExamRedi Pro.",
-                featureList: [
-                    "Save your UTME Challenge high scores",
-                    "See your name on the leaderboard",
-                    "Track your ranking over time",
-                    "Unlock all Pro features"
-                ]
-            });
-            return;
-        }
-
-        const newScore = {
-            name: user.name,
-            score: finalScore,
-            totalQuestions: TOTAL_QUESTIONS,
-            answers: userAnswers,
-            date: Date.now(),
-        };
-
-        try {
-            const updatedLeaderboard = await apiService<LeaderboardScore[]>('/data/leaderboard', { method: 'POST', body: newScore });
-            setLeaderboard(updatedLeaderboard);
-            setScoreSaved(true);
-        } catch (error) {
-            console.error("Failed to save score:", error);
-            alert("Could not save score. Please try again.");
-        }
+        saveScoreToLeaderboard(finalScore, userAnswers);
     };
+
 
     const resetGame = () => {
         // usePrompt handles the blocking logic during 'playing' state
@@ -304,7 +311,17 @@ const UtmeChallenge: React.FC = () => {
                 </button>
             </Card>
             <Card>
-                <h2 className="text-2xl font-bold text-slate-800 mb-4 text-center">Top Scores</h2>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold text-slate-800">Top Scores</h2>
+                    <button
+                        onClick={fetchLeaderboard}
+                        disabled={isLoadingLeaderboard}
+                        className="p-2 text-primary hover:bg-primary-light rounded-full transition-colors disabled:opacity-50"
+                        title="Refresh Leaderboard"
+                    >
+                        <RefreshIcon className={isLoadingLeaderboard ? 'animate-spin' : ''} />
+                    </button>
+                </div>
                 {isLoadingData ? <p>Loading leaderboard...</p> : leaderboard.length > 0 ? (
                     <ol className="list-decimal list-inside space-y-2">
                         {leaderboard.map((entry, index) => (
@@ -401,7 +418,7 @@ const UtmeChallenge: React.FC = () => {
                     <p className="text-6xl font-extrabold text-primary my-4">{finalScore} <span className="text-4xl text-slate-500">/ {TOTAL_QUESTIONS}</span></p>
 
                     {isAuthenticated && !scoreSaved && (
-                        <button onClick={handleSaveScore} className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">
+                        <button onClick={handleSaveScoreClick} className="bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-500">
                             {user?.subscription === 'pro' ? `Save Score as ${user.name}` : 'Save Score (Pro Only)'}
                         </button>
                     )}
