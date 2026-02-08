@@ -188,31 +188,35 @@ const Dashboard: React.FC = () => {
                                         <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
                                         <div className="flex justify-between items-center mt-0.5">
                                             <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
-                                            {activity.type === 'quiz' && activity.state?.savedAnswers && (
-                                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-bold">
-                                                    {Object.keys(activity.state.savedAnswers).length} Answered
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                 </Link>
-                                {activity.type === 'quiz' && activity.state && !activity.title.startsWith('Completed') && (
-                                    <Link
-                                        to={activity.path}
-                                        state={activity.state}
-                                        className="bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
-                                    >
-                                        Resume Session
-                                    </Link>
-                                )}
-                                {activity.title.startsWith('Completed') && (
-                                    <Link
-                                        to="/performance"
-                                        className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
-                                    >
-                                        View Analysis
-                                    </Link>
-                                )}
+                                <div className="flex items-center space-x-3">
+                                    {activity.type === 'quiz' ? (
+                                        <div className="flex w-full gap-2">
+                                            <Link
+                                                to={activity.path}
+                                                className="flex-1 bg-primary text-white text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
+                                            >
+                                                Practice Again
+                                            </Link>
+                                            <Link
+                                                to="/performance"
+                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                                            >
+                                                Analysis
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            to={activity.path}
+                                            state={activity.state}
+                                            className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
+                                        >
+                                            Resume Session
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -233,7 +237,7 @@ const Dashboard: React.FC = () => {
                     <span className="font-bold text-primary mr-2">Tip:</span> Consistent practice is the key to mastering any subject. Try a new topic today!
                 </p>
             </div>
-        </div>
+        </div >
     );
 };
 

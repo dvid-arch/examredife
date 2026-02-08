@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -8,9 +8,16 @@ import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 
 const Quizzes: React.FC = () => {
     const navigate = useNavigate();
+    const { tab } = useParams<{ tab: string }>();
     const { user } = useAuth();
     const { papers: allPapers, isLoading, fetchPapers } = usePastQuestions();
-    const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>('standard');
+    const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>((tab === 'custom') ? 'custom' : 'standard');
+
+    useEffect(() => {
+        if (tab === 'custom' || tab === 'standard') {
+            setPracticeMode(tab);
+        }
+    }, [tab]);
 
     useEffect(() => {
         fetchPapers();
@@ -166,13 +173,13 @@ const Quizzes: React.FC = () => {
                 <p className="text-slate-600 dark:text-slate-400 mt-2">Choose your practice mode. Take a standard exam simulation or create a custom quiz tailored to your needs.</p>
                 <div className="mt-4 flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800 max-w-sm">
                     <button
-                        onClick={() => setPracticeMode('standard')}
+                        onClick={() => navigate('/practice/standard')}
                         className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${practiceMode === 'standard' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                         Standard UTME Exam
                     </button>
                     <button
-                        onClick={() => setPracticeMode('custom')}
+                        onClick={() => navigate('/practice/custom')}
                         className={`flex-1 py-2 px-4 rounded-md text-sm font-semibold transition-colors ${practiceMode === 'custom' ? 'bg-primary text-white shadow' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                         Custom Practice

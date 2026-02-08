@@ -67,10 +67,10 @@ const TakeExamination: React.FC = () => {
     const validatePracticeState = (state: any) => {
         if (!state) return false;
 
-        // Check if state is too old (skip for resumed sessions)
+        // Check if state is too old
         const now = Date.now();
         const stateTimestamp = state.timestamp || 0;
-        if (!state.resumed && now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
+        if (now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
 
         // Check for standard mode state
         if (state.subjects && Array.isArray(state.subjects) && state.subjects.length > 0) {
@@ -95,21 +95,19 @@ const TakeExamination: React.FC = () => {
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    // --- Auto-Save Persistence ---
-    // Load answers from sessionStorage or resumed state on mount
+    // Load answers from sessionStorage on mount
     useEffect(() => {
         const savedAnswers = sessionStorage.getItem('practiceAnswers');
-        const resumedAnswers = location.state?.savedAnswers;
 
-        if (savedAnswers || resumedAnswers) {
+        if (savedAnswers) {
             try {
-                const parsed = savedAnswers ? JSON.parse(savedAnswers) : {};
-                setUserAnswers(prev => ({ ...prev, ...parsed, ...resumedAnswers }));
+                const parsed = JSON.parse(savedAnswers);
+                setUserAnswers(prev => ({ ...prev, ...parsed }));
             } catch (e) {
                 console.error("Failed to parse saved answers", e);
             }
         }
-    }, [location.state?.savedAnswers]);
+    }, []);
 
     // Save answers to sessionStorage whenever they change
     useEffect(() => {
@@ -229,21 +227,20 @@ const TakeExamination: React.FC = () => {
 
     }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);
 
-    // Periodically update resume state with latest answers
+    const finishedRef = React.useRef(isFinished);
     useEffect(() => {
-        if (!isFinished && questions.length > 0 && Object.keys(userAnswers).length > 0) {
-            const timer = setTimeout(() => {
-                addActivity({
-                    id: `practice-${examTitle || 'UTME'}`,
-                    title: examTitle || 'Practice Session',
-                    path: '/take-examination',
-                    type: 'quiz',
-                    state: { ...location.state, resumed: true, savedAnswers: userAnswers }
-                });
-            }, 2000); // Debounce updates
-            return () => clearTimeout(timer);
-        }
-    }, [userAnswers, isFinished, questions.length, examTitle, addActivity, location.state]);
+        finishedRef.current = isFinished;
+    }, [isFinished]);
+
+    // Auto-submit on departure/unmount
+    useEffect(() => {
+        return () => {
+            if (!finishedRef.current && questions.length > 0 && Object.keys(userAnswers).length > 0) {
+                console.log("Auto-submitting due to navigation away...");
+                handleSubmit();
+            }
+        };
+    }, [questions.length, handleSubmit]);
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
@@ -301,26 +298,19 @@ const TakeExamination: React.FC = () => {
             }
 
             if (preparedQuestions.length > 0) {
-                const isResuming = location.state?.resumed;
-
-                // Only clean slate if it's a fresh start (not a resume)
-                if (!isResuming) {
-                    sessionStorage.removeItem('practiceEndTime');
-                    sessionStorage.removeItem('practiceAnswers');
-                    sessionStorage.setItem('practiceStarted', 'true');
-                }
+                // Ensure flag is set so refreshes work
+                sessionStorage.setItem('practiceStarted', 'true');
 
                 setQuestions(preparedQuestions);
                 setActiveSubject(preparedQuestions[0].subject);
 
-                // Add to recent activity for "Continue Studying"
-                // Store the state so it can be resumed
+                // Add to recent activity for "Practice Again"
+                const isCustom = examTitle?.includes('Custom');
                 addActivity({
-                    id: `practice-${examTitle || 'UTME'}`, // Stable ID per exam type
+                    id: `practice-${examTitle || 'UTME'}`,
                     title: examTitle || 'Practice Session',
-                    path: '/take-examination',
-                    type: 'quiz',
-                    state: { ...location.state, resumed: true } // Save state for resume
+                    path: isCustom ? '/practice/custom' : '/practice/standard',
+                    type: 'quiz'
                 });
 
                 sessionStorage.removeItem('practiceCompleted');

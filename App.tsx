@@ -144,6 +144,7 @@ const router = createHashRouter(
         <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
         <Route path="/practice" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
+        <Route path="/practice/:tab" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
         <Route path="/ai-buddy" element={<Suspense fallback={<PageLoader />}><ExamWithAI /></Suspense>} />
         <Route path="/question-search" element={<Suspense fallback={<PageLoader />}><QuestionSearch /></Suspense>} />
         <Route path="/study-guides" element={<Suspense fallback={<PageLoader />}><StudyGuides /></Suspense>} />
