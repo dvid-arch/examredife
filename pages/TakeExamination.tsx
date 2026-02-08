@@ -94,6 +94,9 @@ const TakeExamination: React.FC = () => {
     const [finalScore, setFinalScore] = useState(0);
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [showAnswer, setShowAnswer] = useState(false);
+
+    const mode = location.state?.mode || 'practice';
 
     // Load answers from sessionStorage on mount
     useEffect(() => {
@@ -211,6 +214,7 @@ const TakeExamination: React.FC = () => {
                 userAnswers,
                 topicBreakdown,
                 incorrectQuestions,
+                mode,
                 completedAt: Date.now(),
             };
             try {
@@ -230,20 +234,27 @@ const TakeExamination: React.FC = () => {
 
     }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);
 
+    // Track latest values in refs for unmount auto-submission
+    const handleSubmitRef = React.useRef(handleSubmit);
+    const userAnswersRef = React.useRef(userAnswers);
     const finishedRef = React.useRef(isFinished);
+
     useEffect(() => {
+        handleSubmitRef.current = handleSubmit;
+        userAnswersRef.current = userAnswers;
         finishedRef.current = isFinished;
-    }, [isFinished]);
+    }, [handleSubmit, userAnswers, isFinished]);
 
     // Auto-submit on departure/unmount
     useEffect(() => {
         return () => {
-            if (!finishedRef.current && questions.length > 0 && Object.keys(userAnswers).length > 0) {
+            // Use refs to check latest state during unmount
+            if (!finishedRef.current && questions.length > 0 && Object.keys(userAnswersRef.current).length > 0) {
                 console.log("Auto-submitting due to navigation away...");
-                handleSubmit();
+                handleSubmitRef.current();
             }
         };
-    }, [questions.length, handleSubmit]);
+    }, [questions.length]); // Only re-run if questions change, but primarily for unmount cleanup
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
@@ -334,7 +345,7 @@ const TakeExamination: React.FC = () => {
 
     // Initialize Timer on start
     useEffect(() => {
-        if (questions.length > 0 && !isFinished && !endTime) {
+        if (questions.length > 0 && !isFinished && !endTime && mode !== 'study') {
             // Check session storage for existing end time (persistence)
             const storedEndTime = sessionStorage.getItem('practiceEndTime');
             if (storedEndTime) {
@@ -353,7 +364,7 @@ const TakeExamination: React.FC = () => {
                 sessionStorage.setItem('practiceEndTime', newEndTime.toString());
             }
         }
-    }, [questions, isFinished, endTime]);
+    }, [questions, isFinished, endTime, mode]);
 
     useEffect(() => {
         if (questions.length > 0 && !isFinished && endTime) {
@@ -457,6 +468,17 @@ const TakeExamination: React.FC = () => {
         return Object.keys(userAnswers).length >= GUEST_QUESTION_LIMIT;
     }, [isAuthenticated, userAnswers]);
 
+    const handlePrevQuestion = () => {
+        if (currentQuestionIndex > 0) {
+            const prevQuestion = questions[currentQuestionIndex - 1];
+            if (prevQuestion.subject !== activeSubject) {
+                setActiveSubject(prevQuestion.subject);
+            }
+            setCurrentQuestionIndex(prev => prev - 1);
+            setShowAnswer(false);
+        }
+    };
+
     const handleNextQuestion = () => {
         // Allow navigation always
         if (currentQuestionIndex < questions.length - 1) {
@@ -465,16 +487,7 @@ const TakeExamination: React.FC = () => {
                 setActiveSubject(nextQuestion.subject);
             }
             setCurrentQuestionIndex(prev => prev + 1);
-        }
-    };
-
-    const handlePrevQuestion = () => {
-        if (currentQuestionIndex > 0) {
-            const prevQuestion = questions[currentQuestionIndex - 1];
-            if (prevQuestion.subject !== activeSubject) {
-                setActiveSubject(prevQuestion.subject);
-            }
-            setCurrentQuestionIndex(prev => prev - 1);
+            setShowAnswer(false);
         }
     };
 
@@ -503,6 +516,7 @@ const TakeExamination: React.FC = () => {
             setActiveSubject(question.subject);
         }
         setCurrentQuestionIndex(index);
+        setShowAnswer(false);
     };
 
     const currentQuestion = questions[currentQuestionIndex];
@@ -572,9 +586,15 @@ const TakeExamination: React.FC = () => {
         <div className="relative flex flex-col h-screen bg-white font-sans light">
             <header className="bg-primary text-white p-3 flex justify-between items-center shadow-md flex-shrink-0">
                 <div className="font-bold text-xl">{examTitle || 'ExamRedi Practice'}</div>
-                <div className="bg-orange-500 text-white font-bold text-lg tracking-wider px-4 py-1 rounded-full w-32 text-center">
-                    {formatTime(timeLeft)}
-                </div>
+                {mode !== 'study' ? (
+                    <div className="bg-orange-500 text-white font-bold text-lg tracking-wider px-4 py-1 rounded-full w-32 text-center">
+                        {formatTime(timeLeft)}
+                    </div>
+                ) : (
+                    <div className="bg-blue-500 text-white font-bold px-4 py-1 rounded-full text-sm uppercase tracking-widest">
+                        Study Mode
+                    </div>
+                )}
                 <div className="relative group">
                     <button
                         onClick={() => { if (window.confirm('Are you sure you want to submit?')) handleSubmit(); }}
@@ -637,10 +657,28 @@ const TakeExamination: React.FC = () => {
                                         forceLightMode={true}
                                     />
 
-                                    {isFinished && currentQuestion.explanation && (
-                                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    {mode === 'study' && (
+                                        <div className="mb-6 flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">💡</span>
+                                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Want to see the answer?</span>
+                                            </div>
+                                            <button
+                                                onClick={() => setShowAnswer(!showAnswer)}
+                                                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${showAnswer
+                                                    ? 'bg-slate-200 text-slate-700'
+                                                    : 'bg-primary text-white shadow-lg shadow-primary/20'
+                                                    }`}
+                                            >
+                                                {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {((isFinished && mode !== 'mock') || (mode === 'study' && showAnswer)) && currentQuestion.explanation && (
+                                        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
                                             <p className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-1">Explanation</p>
-                                            <p className="text-blue-900"><MarkdownRenderer content={currentQuestion.explanation} forceLightMode={true} /></p>
+                                            <div className="text-blue-900"><MarkdownRenderer content={currentQuestion.explanation} forceLightMode={true} /></div>
                                         </div>
                                     )}
 
@@ -652,7 +690,11 @@ const TakeExamination: React.FC = () => {
                                                 const isSelected = userAnswers[currentQuestion.id] === key;
 
                                                 let borderClass = 'border-gray-200 bg-white hover:border-primary-light';
-                                                if (isFinished) {
+
+                                                if (mode === 'study' && showAnswer) {
+                                                    if (isCorrect) borderClass = 'border-green-500 bg-green-50 ring-2 ring-green-500/20';
+                                                    else if (isSelected) borderClass = 'border-red-400 bg-red-50';
+                                                } else if (isFinished && mode !== 'mock') {
                                                     if (isCorrect) borderClass = 'border-green-500 bg-green-50';
                                                     else if (isSelected) borderClass = 'border-red-400 bg-red-50';
                                                 } else if (isSelected) {

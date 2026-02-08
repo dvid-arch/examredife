@@ -121,6 +121,8 @@ const Quizzes: React.FC = () => {
         }));
     };
 
+    const [examMode, setExamMode] = useState<'study' | 'practice' | 'mock'>('practice');
+
     const handleStartStandardExam = () => {
         if (selectedSubjects.length !== 4) {
             alert('Please select exactly 4 subjects (including the compulsory English subject).');
@@ -134,6 +136,7 @@ const Quizzes: React.FC = () => {
                 subjects: selectedSubjects,
                 year: standardSelectedYear,
                 examTitle: `UTME Practice(${standardSelectedYear})`,
+                mode: examMode,
                 timestamp: Date.now(),
             },
         });
@@ -158,12 +161,68 @@ const Quizzes: React.FC = () => {
                 selections: selectionsArray,
                 questionsPerSubject: customQuestionCount, // FIX: Added missing param
                 examTitle: `Custom Practice`,
+                mode: examMode,
                 timestamp: Date.now(),
             },
         });
         // Mark that practice was properly started
         sessionStorage.setItem('practiceStarted', 'true');
     };
+
+    const modes = [
+        {
+            id: 'study',
+            name: 'Study',
+            icon: '📖',
+            description: 'No timing, reveal answers.'
+        },
+        {
+            id: 'practice',
+            name: 'Practice',
+            icon: '🎯',
+            description: 'Timed, with results.'
+        },
+        {
+            id: 'mock',
+            name: 'Mock',
+            icon: '⌛',
+            description: 'Timed, no corrections.'
+        }
+    ] as const;
+
+    const ModeSelector = () => (
+        <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Choose Your Mode</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {modes.map((m) => (
+                    <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setExamMode(m.id)}
+                        className={`flex flex-col p-3 rounded-xl border-2 transition-all text-left ${examMode === m.id
+                            ? 'border-primary bg-primary/5 ring-2 ring-primary/10'
+                            : 'border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600'
+                            }`}
+                    >
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-xl">{m.icon}</span>
+                            {examMode === m.id && (
+                                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                        <h4 className="font-bold text-sm text-slate-800 dark:text-white">{m.name}</h4>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                            {m.description}
+                        </p>
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
 
 
     return (
@@ -231,6 +290,8 @@ const Quizzes: React.FC = () => {
                                 ))}
                             </div>
 
+                            <ModeSelector />
+
                             <div className="flex justify-end mt-6">
                                 <button
                                     onClick={handleStartStandardExam}
@@ -297,6 +358,8 @@ const Quizzes: React.FC = () => {
                                     </div>
                                     <p className="text-xs text-slate-500 mt-1 italic">Note: Pro users can take up to 50 questions per subject.</p>
                                 </div>
+
+                                <ModeSelector />
 
                                 <div className="flex justify-end pt-2">
                                     <button

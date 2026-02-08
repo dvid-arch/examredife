@@ -57,6 +57,8 @@ export interface PastPaper {
   questions: PastQuestion[];
 }
 
+export type ExamMode = 'study' | 'practice' | 'mock';
+
 export interface QuizResult {
   id: string;
   paperId: string;
@@ -66,6 +68,7 @@ export interface QuizResult {
   score: number;
   totalQuestions: number;
   userAnswers: { [key: string]: string };
+  mode: ExamMode;
   completedAt: number;
 }
 
