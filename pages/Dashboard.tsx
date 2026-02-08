@@ -178,7 +178,14 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                         {recentActivity.map((activity) => (
                             <div key={activity.id} className="flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
-                                <Link to={activity.path} state={activity.state} className="flex items-center gap-4 flex-1 min-w-0 mb-3">
+                                <Link
+                                    to={activity.type === 'quiz' && activity.path.includes('performance')
+                                        ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
+                                        : activity.path
+                                    }
+                                    state={activity.state}
+                                    className="flex items-center gap-4 flex-1 min-w-0 mb-3"
+                                >
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
                                         activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
                                         }`}>
@@ -195,7 +202,10 @@ const Dashboard: React.FC = () => {
                                     {activity.type === 'quiz' ? (
                                         <div className="flex w-full gap-2">
                                             <Link
-                                                to={activity.path}
+                                                to={activity.path.includes('performance') || activity.path === '/practice'
+                                                    ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
+                                                    : activity.path
+                                                }
                                                 className="flex-1 bg-primary text-white text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
                                             >
                                                 Practice Again

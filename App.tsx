@@ -157,6 +157,8 @@ const router = createHashRouter(
           <Route path=":category" element={<Suspense fallback={<PageLoader />}><SubjectIndex /></Suspense>} />
           <Route path=":category/:slug" element={<Suspense fallback={<PageLoader />}><GuideReader /></Suspense>} />
         </Route>
+        <Route path="/guides" element={<Navigate to="/study-guides" replace />} />
+        <Route path="/guides/*" element={<Navigate to="/study-guides" replace />} />
         <Route path="/games" element={<Suspense fallback={<PageLoader />}><EducationalGames /></Suspense>} />
         <Route path="/games/memory-match" element={<Suspense fallback={<PageLoader />}><MemoryMatchGame /></Suspense>} />
         <Route path="/games/subject-sprint" element={<Suspense fallback={<PageLoader />}><SubjectSprintGame /></Suspense>} />
