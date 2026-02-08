@@ -104,6 +104,7 @@ const MainLayout: React.FC = () => {
     <div className="flex h-screen h-[100dvh] bg-gray-100 dark:bg-gray-950 font-sans overflow-hidden">
       <Sidebar
         isOpen={isSidebarOpen}
+        onNavigate={() => setIsSidebarOpen(false)}
         onClose={() => {
           if (isSidebarOpen) {
             if (window.history.state?.modal === 'sidebar') {
