@@ -99,10 +99,10 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                         // If refresh fails, logout
                         console.error("Session expired. Please log in again. Refresh response:", refreshResponse.status, refreshResponse.statusText);
                         processQueue(new Error("Session expired."));
-                        localStorage.removeItem('authToken');
-                        localStorage.removeItem('refreshToken');
-                        localStorage.removeItem('examRediUser');
-                        window.location.href = '/'; // Full page reload to reset state
+
+                        // Dispatch event for UI to handle (e.g. show login modal)
+                        window.dispatchEvent(new CustomEvent('auth:session-expired'));
+
                         throw new Error("Session expired. Please log in again.");
                     }
 
@@ -119,11 +119,8 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                 } catch (error) {
                     console.error("Session refresh failed:", error);
                     processQueue(error);
-                    // Force logout by clearing all auth data
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('refreshToken');
-                    localStorage.removeItem('examRediUser');
-                    window.location.href = '/';
+                    // Dispatch event for UI to handle
+                    window.dispatchEvent(new CustomEvent('auth:session-expired'));
                     throw error;
                 } finally {
                     isRefreshing = false;

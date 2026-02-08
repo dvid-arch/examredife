@@ -19,10 +19,19 @@ const TopicPracticeSetup: React.FC = () => {
             if (!topicName || !subject) return;
             setIsLoading(true);
             try {
-                // Search for questions matching the topic within the subject
-                const results = await apiService<ChallengeQuestion[]>(`/data/search?query=${encodeURIComponent(topicName)}`);
-                const filtered = results.filter(q => q.subject.toLowerCase() === subject.toLowerCase());
-                setAvailableQuestions(filtered);
+                // 1. Get semantic keywords from AI
+                const { keywords } = await apiService<{ keywords: string[] }>('/ai/topic-keywords', {
+                    method: 'POST',
+                    body: { topic: topicName, subject }
+                });
+
+                // 2. Perform batch search with these keywords
+                const results = await apiService<ChallengeQuestion[]>('/data/search-batch', {
+                    method: 'POST',
+                    body: { keywords: keywords || [topicName], subject }
+                });
+
+                setAvailableQuestions(results);
             } catch (err) {
                 console.error("Failed to fetch questions for topic:", err);
                 setError('Failed to load questions for this topic.');

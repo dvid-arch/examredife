@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import { generateStudyGuide } from '../../services/aiService.ts';
 import { useAuth } from '../../contexts/AuthContext.tsx';
 import { useUserProgress } from '../../contexts/UserProgressContext.tsx';
+import { useToasts } from '../../contexts/ToastContext.tsx';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 
 const GuideIcon = () => (
@@ -16,12 +17,30 @@ const GuideGenerator: React.FC = () => {
     const navigate = useNavigate();
     const { isAuthenticated, user, requestLogin, requestUpgrade, useAiCredit } = useAuth();
     const { addActivity } = useUserProgress();
+    const { error: toastError, success } = useToasts();
 
     const [subject, setSubject] = useState('');
     const [topic, setTopic] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
     const [generatedContent, setGeneratedContent] = useState('');
+
+    // Load drafts
+    useEffect(() => {
+        const draftSubject = localStorage.getItem('guide_draft_subject');
+        const draftTopic = localStorage.getItem('guide_draft_topic');
+        if (draftSubject) setSubject(draftSubject);
+        if (draftTopic) setTopic(draftTopic);
+    }, []);
+
+    const updateSubject = (val: string) => {
+        setSubject(val);
+        localStorage.setItem('guide_draft_subject', val);
+    };
+
+    const updateTopic = (val: string) => {
+        setTopic(val);
+        localStorage.setItem('guide_draft_topic', val);
+    };
 
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -59,12 +78,11 @@ const GuideGenerator: React.FC = () => {
         }
 
         if (!subject.trim() || !topic.trim()) {
-            setError('Please provide both a subject and a topic.');
+            toastError('Please provide both a subject and a topic.');
             return;
         }
 
         setIsLoading(true);
-        setError('');
         setGeneratedContent('');
 
         try {
@@ -78,8 +96,13 @@ const GuideGenerator: React.FC = () => {
                 path: '/study-guides/generator',
                 type: 'guide'
             });
+
+            // Clear drafts on success
+            localStorage.removeItem('guide_draft_subject');
+            localStorage.removeItem('guide_draft_topic');
+
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred during generation.');
+            toastError(err instanceof Error ? err.message : 'An error occurred during generation.');
         } finally {
             setIsLoading(false);
         }
@@ -115,7 +138,7 @@ const GuideGenerator: React.FC = () => {
                             <label className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-1">SUBJECT</label>
                             <input
                                 value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
+                                onChange={(e) => updateSubject(e.target.value)}
                                 placeholder="e.g. Chemistry"
                                 className="w-full p-4 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 focus:border-primary focus:ring-0 transition-all outline-none"
                             />
@@ -124,7 +147,7 @@ const GuideGenerator: React.FC = () => {
                             <label className="text-sm font-bold text-slate-600 dark:text-slate-400 ml-1">TOPIC / THEME</label>
                             <input
                                 value={topic}
-                                onChange={(e) => setTopic(e.target.value)}
+                                onChange={(e) => updateTopic(e.target.value)}
                                 placeholder="e.g. Periodic Table"
                                 className="w-full p-4 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 focus:border-primary focus:ring-0 transition-all outline-none"
                             />
@@ -154,12 +177,6 @@ const GuideGenerator: React.FC = () => {
                 </form>
             </Card>
 
-            {error && (
-                <div className="p-4 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-xl text-center font-semibold">
-                    {error}
-                </div>
-            )}
-
             {generatedContent && (
                 <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="p-8">
@@ -168,7 +185,7 @@ const GuideGenerator: React.FC = () => {
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(generatedContent);
-                                    alert('Copied to clipboard!');
+                                    success('Copied to clipboard!');
                                 }}
                                 className="text-primary text-sm font-bold flex items-center gap-1 hover:underline"
                             >

@@ -165,6 +165,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, []);
 
+    // Listen for session expiry event from apiService
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            console.warn('Session expired event received. Clearing state and prompting login.');
+
+            // Clear auth data
+            localStorage.removeItem('examRediUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+
+            setUser(null);
+            setIsAuthenticated(false);
+
+            // Show toast
+            toastError("Your session has expired. Please log in again.");
+
+            // Open login modal
+            setTimeout(() => {
+                if (!isAuthModalOpen) {
+                    window.history.pushState({ modal: 'auth' }, '');
+                    setIsAuthModalOpen(true);
+                }
+            }, 100);
+        };
+
+        window.addEventListener('auth:session-expired', handleSessionExpired);
+        return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+    }, [isAuthModalOpen, toastError]);
+
     const handleAuthSuccess = async (data: any, navigatePath = '/dashboard') => {
         const { accessToken, refreshToken, ...userData } = data;
 
