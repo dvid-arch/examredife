@@ -7,6 +7,7 @@ import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import OnboardingTour from '../components/OnboardingTour.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import VerificationBanner from '../components/VerificationBanner.tsx';
+import { DashboardSkeleton } from '../components/Skeletons.tsx';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
 const PracticeIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
@@ -94,9 +95,11 @@ const WelcomeBanner = () => {
 
 
 const Dashboard: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
     const { recentActivity } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
+
+    if (isLoading) return <DashboardSkeleton />;
 
     // Close tour when navigating away
     useEffect(() => {

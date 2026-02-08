@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/Card.tsx';
+import { PerformanceSkeleton } from '../components/Skeletons.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import apiService from '../services/apiService.ts';
@@ -146,7 +147,7 @@ const Performance: React.FC = () => {
     const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
     if (isLoading || isDataLoading) {
-        return <div className="flex justify-center items-center h-full"><Card><p className="p-8">Loading performance data...</p></Card></div>;
+        return <PerformanceSkeleton />;
     }
 
     if (!isAuthenticated) {
@@ -203,11 +204,22 @@ const Performance: React.FC = () => {
 
     if (results.length === 0) {
         return (
-            <Card className="text-center p-8">
-                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">No Performance Data Yet</h1>
-                <p className="text-slate-600 dark:text-slate-400 mt-2 mb-6">Complete a quiz or practice session to see your analysis here.</p>
-                <Link to="/practice" className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
-                    Start a Practice Session
+            <Card className="text-center p-12 flex flex-col items-center justify-center min-h-[400px]">
+                <div className="w-64 h-64 mb-6 relative">
+                    <svg viewBox="0 0 200 200" className="w-full h-full text-primary/10" fill="currentColor">
+                        <path d="M40 160 L160 160 L160 40 L40 40 Z" />
+                        <circle cx="100" cy="100" r="50" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 text-primary animate-bounce-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                </div>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Ready to Track Progress?</h1>
+                <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md">Complete your first quiz or practice session to unlock powerful performance analytics and subject mastery tracking.</p>
+                <Link to="/practice" className="bg-primary text-white font-bold py-3.5 px-10 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-primary/20 hover:scale-105 active:scale-95">
+                    Find Your First Practice
                 </Link>
             </Card>
         );
