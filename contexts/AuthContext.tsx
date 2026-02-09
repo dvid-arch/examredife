@@ -27,6 +27,7 @@ interface AuthContextType {
     updateUser: (details: Partial<UserProfile>) => Promise<void>;
     useAiCredit: () => Promise<void>;
     incrementMessageCount: () => Promise<{ success: boolean; remaining: number }>;
+    loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>;
     isLoading: boolean;
     justRegistered: boolean;
 }
@@ -218,7 +219,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+        localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        await fetchUserProfile();
+    };
+
     const login = async (details: AuthDetails) => {
+
         try {
             const data = await apiService('/auth/login', {
                 method: 'POST',
@@ -378,7 +386,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: remaining > 0, remaining };
     };
 
-    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, isLoading, justRegistered };
+    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, loginWithTokens, isLoading, justRegistered };
 
     return (
         <AuthContext.Provider value={value}>

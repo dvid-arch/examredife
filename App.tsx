@@ -42,6 +42,8 @@ const Literature = lazy(() => import('./pages/Literature.tsx'));
 const Dictionary = lazy(() => import('./pages/Dictionary.tsx'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage.tsx'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.tsx'));
+const AuthSuccess = lazy(() => import('./pages/AuthSuccess.tsx'));
+
 
 // Admin - Lazy load admin pages
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout.tsx'));
@@ -215,6 +217,11 @@ const router = createHashRouter(
         path="/reset-password/:token"
         element={<Suspense fallback={<PageLoader />}><ResetPasswordPage /></Suspense>}
       />
+      <Route
+        path="/auth-success"
+        element={<Suspense fallback={<PageLoader />}><AuthSuccess /></Suspense>}
+      />
+
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
