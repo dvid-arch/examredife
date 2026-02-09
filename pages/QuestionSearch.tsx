@@ -307,12 +307,21 @@ const QuestionSearch: React.FC = () => {
                                         Study Guides ({guideResults.length})
                                     </h2>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {guideResults.map(guide => (
-                                            <Link key={guide.id} to="/study-guides" state={{ viewGuide: guide }} className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow">
-                                                <h3 className="font-bold text-slate-800 dark:text-white">{guide.title}</h3>
-                                                <p className="text-xs text-slate-500 mt-1 uppercase font-semibold">{guide.subject}</p>
-                                            </Link>
-                                        ))}
+                                        {guideResults.map(guide => {
+                                            const category = guide.subject.toLowerCase().replace(/\s+/g, '-');
+                                            const slug = guide.title.toLowerCase().replace(/\s+/g, '-');
+                                            return (
+                                                <Link
+                                                    key={guide.id}
+                                                    to={`/study-guides/${category}/${slug}`}
+                                                    state={{ guide }}
+                                                    className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow"
+                                                >
+                                                    <h3 className="font-bold text-slate-800 dark:text-white">{guide.title}</h3>
+                                                    <p className="text-xs text-slate-500 mt-1 uppercase font-semibold">{guide.subject}</p>
+                                                </Link>
+                                            );
+                                        })}
                                     </div>
                                 </section>
                             )}
