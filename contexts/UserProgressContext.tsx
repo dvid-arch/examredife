@@ -41,12 +41,42 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (isAuthenticated) {
             try {
                 const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
+
                 setStreak(data.streak);
                 setStreakHistory(data.streakHistory || []);
-                setRecentActivity(data.recentActivity || []);
+
+                // Merge Logic: Keep local activities that might be newer than what's on the server
+                // This prevents the "briefly appearing then vanishing" issue during race conditions
+                setRecentActivity(prevLocal => {
+                    const serverActivities = data.recentActivity || [];
+                    const merged = [...prevLocal];
+
+                    serverActivities.forEach(serverAct => {
+                        const localIndex = merged.findIndex(a => a.id === serverAct.id);
+                        if (localIndex !== -1) {
+                            // If server version is newer or has status 'completed', prefer it
+                            // Otherwise keep local (which might be a fresh 'in_progress' start)
+                            const localTime = merged[localIndex].timestamp;
+                            const serverTime = new Date(serverAct.timestamp).getTime();
+
+                            if (serverTime > localTime || serverAct.status === 'completed') {
+                                merged[localIndex] = { ...serverAct, timestamp: serverTime };
+                            }
+                        } else {
+                            merged.push({ ...serverAct, timestamp: new Date(serverAct.timestamp).getTime() });
+                        }
+                    });
+
+                    const final = merged
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, 20);
+
+                    localStorage.setItem('examRediRecentActivity', JSON.stringify(final));
+                    return final;
+                });
+
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
-                localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
             } catch (error) {
                 console.error("Failed to sync progress with backend:", error);
                 loadFromLocal();
@@ -70,7 +100,11 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
         if (savedActivity) {
             try {
-                setRecentActivity(JSON.parse(savedActivity));
+                const parsed = JSON.parse(savedActivity);
+                setRecentActivity(parsed.map((a: any) => ({
+                    ...a,
+                    timestamp: typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp
+                })));
             } catch (e) {
                 setRecentActivity([]);
             }
@@ -88,13 +122,14 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         };
 
         // Local dynamic update for responsiveness
-        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 20);
-        setRecentActivity(updatedActivity);
+        setRecentActivity(prev => {
+            const updated = [newActivity, ...prev.filter(a => a.id !== activity.id)].slice(0, 20);
+            localStorage.setItem('examRediRecentActivity', JSON.stringify(updated));
+            return updated;
+        });
 
         if (isAuthenticated) {
             try {
-                // Backend now handles streak logic on progress update
-                // We send the new activity item to be merged
                 const response = await apiService<{ streak: number, streakHistory: string[], recentActivity: RecentActivity[] }>('/user/progress', {
                     method: 'PUT',
                     body: { recentActivity: [newActivity] }
@@ -103,17 +138,27 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (response) {
                     setStreak(response.streak);
                     setStreakHistory(response.streakHistory);
-                    setRecentActivity(response.recentActivity);
+
+                    // Don't just overwrite, ensure local timestamps are respected if newer
+                    setRecentActivity(prev => {
+                        const serverActs = response.recentActivity.map(a => ({
+                            ...a,
+                            timestamp: new Date(a.timestamp).getTime()
+                        }));
+
+                        // Overwrite with server data but keep local for a smoother transition if needed
+                        localStorage.setItem('examRediRecentActivity', JSON.stringify(serverActs));
+                        return serverActs;
+                    });
+
                     localStorage.setItem('examRediStreak', response.streak.toString());
                     localStorage.setItem('examRediStreakHistory', JSON.stringify(response.streakHistory));
-                    localStorage.setItem('examRediRecentActivity', JSON.stringify(response.recentActivity));
                 }
             } catch (error) {
                 console.error("Failed to save progress to backend:", error);
             }
         }
 
-        localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
