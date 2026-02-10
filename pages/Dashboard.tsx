@@ -96,8 +96,24 @@ const WelcomeBanner = () => {
 
 const Dashboard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
-    const { recentActivity } = useUserProgress();
+    const { recentActivity, dismissActivity, trackEngagement } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
+    const [maxItems, setMaxItems] = useState(() => {
+        if (window.innerWidth < 640) return 3;  // Mobile
+        if (window.innerWidth < 1024) return 4; // Tablet
+        return 6; // Desktop
+    });
+
+    // Update max items on window resize
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 640) setMaxItems(3);
+            else if (window.innerWidth < 1024) setMaxItems(4);
+            else setMaxItems(6);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Close tour when navigating away
     useEffect(() => {
@@ -172,69 +188,143 @@ const Dashboard: React.FC = () => {
             <VerificationBanner />
             <WelcomeBanner />
 
-            {isAuthenticated && recentActivity.length > 0 && (
-                <section>
-                    <div className="flex justify-between items-end mb-4">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
-                        <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All Guides</Link>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {recentActivity.map((activity) => (
-                            <div key={activity.id} className="flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
-                                <Link
-                                    to={activity.type === 'quiz' && activity.path.includes('performance')
-                                        ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
-                                        : activity.path
-                                    }
-                                    state={activity.state}
-                                    className="flex items-center gap-4 flex-1 min-w-0 mb-3"
-                                >
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
-                                        activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
-                                        }`}>
-                                        {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
-                                        <div className="flex justify-between items-center mt-0.5">
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
-                                        </div>
-                                    </div>
-                                </Link>
-                                <div className="flex items-center space-x-3">
-                                    {activity.type === 'quiz' ? (
-                                        <div className="flex w-full gap-2">
-                                            <Link
-                                                to={activity.path.includes('performance') || activity.path === '/practice'
-                                                    ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
-                                                    : activity.path
-                                                }
-                                                className="flex-1 bg-primary text-white text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
-                                            >
-                                                Practice Again
-                                            </Link>
-                                            <Link
-                                                to="/performance"
-                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
-                                            >
-                                                Analysis
-                                            </Link>
-                                        </div>
-                                    ) : (
-                                        <Link
-                                            to={activity.path}
-                                            state={activity.state}
-                                            className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
-                                        >
-                                            Resume Session
-                                        </Link>
+            {isAuthenticated && recentActivity.length > 0 && (() => {
+                // Filter out dismissed activities
+                const activeActivities = recentActivity.filter(a => !a.dismissedAt);
+                const displayedActivities = activeActivities.slice(0, maxItems);
+                const hiddenCount = activeActivities.length - displayedActivities.length;
+
+                if (displayedActivities.length === 0) return null;
+
+                const handleDismiss = async (activityId: string, e: React.MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await dismissActivity(activityId);
+                };
+
+                const handleActivityClick = async (activityId: string) => {
+                    await trackEngagement(activityId);
+                };
+
+                const formatTimeAgo = (timestamp: number) => {
+                    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+                    if (seconds < 60) return 'Just now';
+                    const minutes = Math.floor(seconds / 60);
+                    if (minutes < 60) return `${minutes} min ago`;
+                    const hours = Math.floor(minutes / 60);
+                    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                    const days = Math.floor(hours / 24);
+                    return `${days} day${days > 1 ? 's' : ''} ago`;
+                };
+
+                return (
+                    <section>
+                        <div className="flex justify-between items-end mb-4">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
+                            <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All Guides</Link>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {displayedActivities.map((activity) => (
+                                <div key={activity.id} className="relative flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
+                                    {/* Dismiss Button */}
+                                    <button
+                                        onClick={(e) => handleDismiss(activity.id, e)}
+                                        className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors z-10"
+                                        aria-label="Dismiss"
+                                    >
+                                        ×
+                                    </button>
+
+                                    {/* Status Badge */}
+                                    {activity.status === 'in_progress' && (
+                                        <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                                            In Progress
+                                        </span>
                                     )}
+
+                                    <Link
+                                        to={activity.type === 'quiz' && activity.path.includes('performance')
+                                            ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
+                                            : activity.path
+                                        }
+                                        state={activity.state}
+                                        className="flex items-center gap-4 flex-1 min-w-0 mb-3 mt-6"
+                                        onClick={() => handleActivityClick(activity.id)}
+                                    >
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
+                                                activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
+                                            }`}>
+                                            {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
+                                            <div className="flex justify-between items-center mt-0.5">
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
+                                                {activity.score !== undefined && (
+                                                    <span className="text-xs font-semibold text-primary">{activity.score}%</span>
+                                                )}
+                                            </div>
+                                            {/* Progress Bar */}
+                                            {activity.progress !== undefined && activity.progress > 0 && (
+                                                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mt-2">
+                                                    <div
+                                                        className="bg-primary h-1.5 rounded-full transition-all"
+                                                        style={{ width: `${activity.progress}%` }}
+                                                    />
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                                                {formatTimeAgo(activity.timestamp)}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                    <div className="flex items-center space-x-3">
+                                        {activity.type === 'quiz' ? (
+                                            <div className="flex w-full gap-2">
+                                                <Link
+                                                    to={activity.path.includes('performance') || activity.path === '/practice'
+                                                        ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
+                                                        : activity.path
+                                                    }
+                                                    onClick={() => handleActivityClick(activity.id)}
+                                                    className="flex-1 bg-primary text-white text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
+                                                >
+                                                    Practice Again
+                                                </Link>
+                                                <Link
+                                                    to="/performance"
+                                                    className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                                                >
+                                                    Analysis
+                                                </Link>
+                                            </div>
+                                        ) : (
+                                            <Link
+                                                to={activity.path}
+                                                state={activity.state}
+                                                onClick={() => handleActivityClick(activity.id)}
+                                                className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
+                                            >
+                                                Resume Session
+                                            </Link>
+                                        )}
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                        {hiddenCount > 0 && (
+                            <div className="mt-4 text-center">
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    📚 Showing {displayedActivities.length} most recent activities
+                                    <span className="block mt-1 text-xs text-slate-500 dark:text-slate-500">
+                                        {hiddenCount} more available in your history
+                                    </span>
+                                </p>
                             </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+                        )}
+                    </section>
+                );
+            })()}
 
             <section>
                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Study Tools</h2>
