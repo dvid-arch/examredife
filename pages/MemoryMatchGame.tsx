@@ -7,6 +7,7 @@ import { memoryMatchConcepts } from '../data/gameData.ts';
 import { MemoryCardType } from '../types.ts';
 import apiService from '../services/apiService.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 
 // Helper function to shuffle an array
 const shuffleArray = (array: any[]) => {
@@ -38,6 +39,7 @@ const initializeBoard = (): MemoryCardType[] => {
 
 const MemoryMatchGame: React.FC = () => {
     const { user } = useAuth();
+    const { addActivity } = useUserProgress();
     const [searchParams, setSearchParams] = useSearchParams();
     const [cards, setCards] = useState<MemoryCardType[]>(initializeBoard());
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -45,6 +47,19 @@ const MemoryMatchGame: React.FC = () => {
     const [moves, setMoves] = useState(0);
     const [isGameComplete, setIsGameComplete] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
+
+    // Track activity start
+    useEffect(() => {
+        if (moves === 1 && !isGameComplete) {
+            addActivity({
+                id: 'game-memory-match',
+                title: 'Memory Match',
+                path: '/games/memory-match',
+                type: 'game',
+                status: 'in_progress'
+            });
+        }
+    }, [moves, isGameComplete]);
 
     // Sync game state with URL for back button support
     useEffect(() => {
@@ -75,6 +90,16 @@ const MemoryMatchGame: React.FC = () => {
         setIsGameComplete(true);
         // Score calculation for memory match: (1000 - moves * 10). Minimum 50.
         const finalScore = Math.max(50, 1000 - moves * 10);
+
+        // Track activity completion
+        addActivity({
+            id: 'game-memory-match',
+            title: 'Memory Match (Complete)',
+            path: '/games/memory-match',
+            type: 'game',
+            status: 'completed',
+            score: finalScore
+        });
 
         try {
             await apiService('/data/leaderboard', {

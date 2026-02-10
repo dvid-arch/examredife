@@ -1,11 +1,11 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { usePrompt } from '../hooks/usePrompt.ts';
 import { useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { Flashcard as FlashcardType, FlashcardDeck } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import apiService from '../services/apiService.ts';
 
 // --- ICONS ---
@@ -116,6 +116,33 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
 
     // Unified navigation guard
     usePrompt(!isComplete, 'Are you sure you want to leave this study session? Your progress will be lost.');
+
+    const { addActivity } = useUserProgress();
+
+    useEffect(() => {
+        // Track session start
+        addActivity({
+            id: `flashcards-${deck.id}`,
+            title: `Studying: ${deck.name}`,
+            path: `/flashcards?deck=${deck.id}&study=true`,
+            type: 'guide',
+            status: 'in_progress',
+            progress: Math.round((currentIndex / deck.cards.length) * 100)
+        });
+    }, [deck.id]);
+
+    useEffect(() => {
+        if (isComplete) {
+            addActivity({
+                id: `flashcards-${deck.id}`,
+                title: `Completed: ${deck.name}`,
+                path: `/flashcards?deck=${deck.id}`,
+                type: 'guide',
+                status: 'completed',
+                progress: 100
+            });
+        }
+    }, [isComplete, deck.id]);
 
     if (isComplete) {
         return (

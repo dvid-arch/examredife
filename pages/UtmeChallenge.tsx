@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 
 import apiService from '../services/apiService.ts';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 
 
 // --- ICONS ---
@@ -50,6 +51,7 @@ const UtmeChallenge: React.FC = () => {
     type GameState = 'lobby' | 'selecting' | 'playing' | 'results' | 'reviewing';
 
     const { isAuthenticated, user, requestLogin, requestUpgrade } = useAuth();
+    const { addActivity } = useUserProgress();
     const navigate = useNavigate();
     const { papers: allPapers, isLoading: isLoadingPapers, fetchPapers } = usePastQuestions();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -132,11 +134,21 @@ const UtmeChallenge: React.FC = () => {
         setFinalScore(score);
         setGameState('results');
 
+        // Track activity completion
+        addActivity({
+            id: 'game-utme-challenge',
+            title: `UTME Challenge: ${score}/${TOTAL_QUESTIONS}`,
+            path: '/utme-challenge?step=results',
+            type: 'exam',
+            status: 'completed',
+            score: score
+        });
+
         // Auto-save for pro users
         if (isAuthenticated && user?.subscription === 'pro') {
             saveScoreToLeaderboard(score, userAnswers);
         }
-    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard]);
+    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard, addActivity]);
 
     // Timestamp-based Timer Logic
     const [endTime, setEndTime] = useState<number | null>(null);
@@ -203,6 +215,15 @@ const UtmeChallenge: React.FC = () => {
         setScoreSaved(false);
         setSearchParams({ step: 'playing' }, { replace: true });
         setGameState('playing');
+
+        // Track activity start
+        addActivity({
+            id: 'game-utme-challenge',
+            title: 'UTME Challenge',
+            path: '/utme-challenge?step=playing',
+            type: 'exam',
+            status: 'in_progress'
+        });
     };
 
     const handleSelectOption = (questionId: string, optionKey: string) => {

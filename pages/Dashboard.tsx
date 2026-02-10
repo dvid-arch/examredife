@@ -192,6 +192,7 @@ const Dashboard: React.FC = () => {
             <VerificationBanner />
             <WelcomeBanner />
 
+            {/* Continue Studying Section - Only visible if logged in and has activity */}
             {isAuthenticated && recentActivity.length > 0 && (() => {
                 // Filter out dismissed activities
                 const activeActivities = recentActivity.filter(a => !a.dismissedAt);
