@@ -24,7 +24,6 @@ interface UserProgressContextType {
     recentActivity: RecentActivity[];
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     dismissActivity: (activityId: string) => Promise<void>;
-    restoreActivity: (activityId: string) => Promise<void>;
     trackEngagement: (activityId: string) => Promise<void>;
     syncProgress: () => Promise<void>;
 }
@@ -32,7 +31,7 @@ interface UserProgressContextType {
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
 
 export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { isAuthenticated } = useAuth();
     const [streak, setStreak] = useState(0);
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -41,42 +40,18 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (isAuthenticated) {
             try {
                 const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
-
                 setStreak(data.streak);
                 setStreakHistory(data.streakHistory || []);
-
-                // Merge Logic: Keep local activities that might be newer than what's on the server
-                setRecentActivity(prevLocal => {
-                    const merged = [...prevLocal];
-                    const serverActivities = data.recentActivity || [];
-
-                    serverActivities.forEach(serverAct => {
-                        const localIndex = merged.findIndex(a => a.id === serverAct.id);
-                        const serverTime = new Date(serverAct.timestamp).getTime();
-
-                        if (localIndex !== -1) {
-                            const localTime = merged[localIndex].timestamp;
-                            if (serverTime > localTime || serverAct.status === 'completed') {
-                                merged[localIndex] = { ...serverAct, timestamp: serverTime };
-                            }
-                        } else {
-                            merged.push({ ...serverAct, timestamp: serverTime });
-                        }
-                    });
-
-                    const final = merged
-                        .sort((a, b) => b.timestamp - a.timestamp)
-                        .slice(0, 20);
-
-                    localStorage.setItem('examRediRecentActivity', JSON.stringify(final));
-                    return final;
-                });
-
+                setRecentActivity(data.recentActivity || []);
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
+                localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
             } catch (error) {
                 console.error("Failed to sync progress with backend:", error);
+                loadFromLocal();
             }
+        } else {
+            loadFromLocal();
         }
     };
 
@@ -86,61 +61,39 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const savedActivity = localStorage.getItem('examRediRecentActivity');
         if (savedStreak) setStreak(parseInt(savedStreak));
         if (savedStreakHistory) {
-            try { setStreakHistory(JSON.parse(savedStreakHistory)); } catch (e) { }
+            try {
+                setStreakHistory(JSON.parse(savedStreakHistory));
+            } catch (e) {
+                setStreakHistory([]);
+            }
         }
         if (savedActivity) {
             try {
-                const parsed = JSON.parse(savedActivity);
-                setRecentActivity(parsed.map((a: any) => ({
-                    ...a,
-                    timestamp: typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp
-                })));
-            } catch (e) { }
+                setRecentActivity(JSON.parse(savedActivity));
+            } catch (e) {
+                setRecentActivity([]);
+            }
         }
     };
 
     useEffect(() => {
-        console.log(`UserProgress: Auth State - isAuthenticated: ${isAuthenticated}, isAuthLoading: ${isAuthLoading}`);
-        if (isAuthLoading) return;
-
-        if (isAuthenticated) {
-            console.log("UserProgress: User is authenticated. Loading local and syncing...");
-            loadFromLocal();
-            syncProgress();
-        } else {
-            console.log("UserProgress: User is guest. Clearing state.");
-            // Guest users should not have activity tracking
-            setRecentActivity([]);
-            setStreak(0);
-            setStreakHistory([]);
-            localStorage.removeItem('examRediRecentActivity');
-            localStorage.removeItem('examRediStreak');
-            localStorage.removeItem('examRediStreakHistory');
-        }
-    }, [isAuthenticated, isAuthLoading]);
+        syncProgress();
+    }, [isAuthenticated]);
 
     const addActivity = async (activity: Omit<RecentActivity, 'timestamp'>) => {
-        console.log(`UserProgress: addActivity called for ${activity.title} (${activity.type})`);
-        if (!isAuthenticated && !isAuthLoading) {
-            console.log("UserProgress: Dropping activity tracking for guest.");
-            return;
-        }
-
         const newActivity: RecentActivity = {
             ...activity,
             timestamp: Date.now()
         };
 
         // Local dynamic update for responsiveness
-        setRecentActivity(prev => {
-            const updated = [newActivity, ...prev.filter(a => a.id !== activity.id)].slice(0, 20);
-            localStorage.setItem('examRediRecentActivity', JSON.stringify(updated));
-            return updated;
-        });
+        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 20);
+        setRecentActivity(updatedActivity);
 
         if (isAuthenticated) {
-            console.log("UserProgress: Syncing activity to server...");
             try {
+                // Backend now handles streak logic on progress update
+                // We send the new activity item to be merged
                 const response = await apiService<{ streak: number, streakHistory: string[], recentActivity: RecentActivity[] }>('/user/progress', {
                     method: 'PUT',
                     body: { recentActivity: [newActivity] }
@@ -149,25 +102,17 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (response) {
                     setStreak(response.streak);
                     setStreakHistory(response.streakHistory);
-
-                    setRecentActivity(prev => {
-                        const serverActs = response.recentActivity.map(a => ({
-                            ...a,
-                            timestamp: new Date(a.timestamp).getTime()
-                        }));
-
-                        localStorage.setItem('examRediRecentActivity', JSON.stringify(serverActs));
-                        return serverActs;
-                    });
-
+                    setRecentActivity(response.recentActivity);
                     localStorage.setItem('examRediStreak', response.streak.toString());
                     localStorage.setItem('examRediStreakHistory', JSON.stringify(response.streakHistory));
+                    localStorage.setItem('examRediRecentActivity', JSON.stringify(response.recentActivity));
                 }
             } catch (error) {
                 console.error("Failed to save progress to backend:", error);
             }
         }
 
+        localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
@@ -189,23 +134,6 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     };
 
-    const restoreActivity = async (activityId: string) => {
-        if (isAuthenticated) {
-            try {
-                await apiService(`/user/progress/activity/${activityId}/restore`, {
-                    method: 'PUT'
-                });
-                const updatedActivity = recentActivity.map(a =>
-                    a.id === activityId ? { ...a, dismissedAt: undefined } : a
-                );
-                setRecentActivity(updatedActivity);
-                localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
-            } catch (error) {
-                console.error('Error restoring activity:', error);
-            }
-        }
-    };
-
     const trackEngagement = async (activityId: string) => {
         if (isAuthenticated) {
             try {
@@ -219,7 +147,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
 
     return (
-        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, dismissActivity, restoreActivity, trackEngagement, syncProgress }}>
+        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, dismissActivity, trackEngagement, syncProgress }}>
             {children}
         </UserProgressContext.Provider>
     );
