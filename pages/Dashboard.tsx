@@ -8,6 +8,8 @@ import OnboardingTour from '../components/OnboardingTour.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import VerificationBanner from '../components/VerificationBanner.tsx';
 import { DashboardSkeleton } from '../components/Skeletons.tsx';
+import ViewAllActivitiesModal from '../components/ViewAllActivitiesModal.tsx';
+import { useToasts } from '../contexts/ToastContext.tsx';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
 const PracticeIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
@@ -96,8 +98,10 @@ const WelcomeBanner = () => {
 
 const Dashboard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
-    const { recentActivity, dismissActivity, trackEngagement } = useUserProgress();
+    const { recentActivity, dismissActivity, restoreActivity, trackEngagement } = useUserProgress();
+    const { info } = useToasts();
     const [showTour, setShowTour] = useState(false);
+    const [showAllModal, setShowAllModal] = useState(false);
     const [maxItems, setMaxItems] = useState(() => {
         if (window.innerWidth < 640) return 3;  // Mobile
         if (window.innerWidth < 1024) return 4; // Tablet
@@ -200,6 +204,12 @@ const Dashboard: React.FC = () => {
                     e.preventDefault();
                     e.stopPropagation();
                     await dismissActivity(activityId);
+
+                    // Show undo toast
+                    info("Activity dismissed", {
+                        label: "Undo",
+                        onClick: () => restoreActivity(activityId)
+                    });
                 };
 
                 const handleActivityClick = async (activityId: string) => {
@@ -252,7 +262,7 @@ const Dashboard: React.FC = () => {
                                         onClick={() => handleActivityClick(activity.id)}
                                     >
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
-                                                activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
+                                            activity.type === 'guide' ? 'bg-pink-100 text-pink-600' : 'bg-yellow-100 text-yellow-600'
                                             }`}>
                                             {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
                                         </div>
@@ -316,12 +326,32 @@ const Dashboard: React.FC = () => {
                             <div className="mt-4 text-center">
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
                                     📚 Showing {displayedActivities.length} most recent activities
-                                    <span className="block mt-1 text-xs text-slate-500 dark:text-slate-500">
-                                        {hiddenCount} more available in your history
-                                    </span>
                                 </p>
+                                <button
+                                    onClick={() => setShowAllModal(true)}
+                                    className="mt-2 text-primary text-sm font-bold hover:underline flex items-center gap-1 mx-auto"
+                                >
+                                    View All Activities ({activeActivities.length})
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
                             </div>
                         )}
+
+                        <ViewAllActivitiesModal
+                            isOpen={showAllModal}
+                            onClose={() => setShowAllModal(false)}
+                            recentActivity={recentActivity}
+                            dismissActivity={async (id) => {
+                                await dismissActivity(id);
+                                info("Activity dismissed", {
+                                    label: "Undo",
+                                    onClick: () => restoreActivity(id)
+                                });
+                            }}
+                            trackEngagement={trackEngagement}
+                        />
                     </section>
                 );
             })()}

@@ -24,6 +24,7 @@ interface UserProgressContextType {
     recentActivity: RecentActivity[];
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     dismissActivity: (activityId: string) => Promise<void>;
+    restoreActivity: (activityId: string) => Promise<void>;
     trackEngagement: (activityId: string) => Promise<void>;
     syncProgress: () => Promise<void>;
 }
@@ -134,6 +135,23 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     };
 
+    const restoreActivity = async (activityId: string) => {
+        if (isAuthenticated) {
+            try {
+                await apiService(`/user/progress/activity/${activityId}/restore`, {
+                    method: 'PUT'
+                });
+                const updatedActivity = recentActivity.map(a =>
+                    a.id === activityId ? { ...a, dismissedAt: undefined } : a
+                );
+                setRecentActivity(updatedActivity);
+                localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
+            } catch (error) {
+                console.error('Error restoring activity:', error);
+            }
+        }
+    };
+
     const trackEngagement = async (activityId: string) => {
         if (isAuthenticated) {
             try {
@@ -147,7 +165,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
 
     return (
-        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, dismissActivity, trackEngagement, syncProgress }}>
+        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, dismissActivity, restoreActivity, trackEngagement, syncProgress }}>
             {children}
         </UserProgressContext.Provider>
     );
