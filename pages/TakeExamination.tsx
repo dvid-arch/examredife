@@ -155,7 +155,7 @@ const TakeExamination: React.FC = () => {
         return null; // Redirect handled by effect
     }
 
-    // Check if practice was already completed
+    // Check if practice was already completed from sessionStorage
     useEffect(() => {
         if (sessionStorage.getItem('practiceCompleted') === 'true' && !isFinished) {
             navigate('/practice', { replace: true });
@@ -259,8 +259,12 @@ const TakeExamination: React.FC = () => {
         };
     }, [questions.length]); // Only re-run if questions change, but primarily for unmount cleanup
 
+
     useEffect(() => {
         const fetchAndPrepare = async () => {
+            // If already have questions (e.g. from restoredState), skip fetching
+            if (questions.length > 0) return;
+
             // CRITICAL: Prevent re-initialization if practice was already exited or completed
             // This prevents timer reset when navigating forward after exit
             if (sessionStorage.getItem('practiceExited') === 'true' ||
@@ -326,8 +330,10 @@ const TakeExamination: React.FC = () => {
                 addActivity({
                     id: `practice-${examTitle || 'UTME'}`,
                     title: examTitle || 'Practice Session',
-                    path: isCustom ? '/practice/custom' : '/practice/standard',
-                    type: 'quiz'
+                    subtitle: `${preparedQuestions[0].subject} ${preparedQuestions.length > preparedQuestions.filter(q => q.subject === preparedQuestions[0].subject).length ? '+ More' : ''} • ${preparedQuestions.length} Questions`,
+                    path: location.pathname,
+                    type: 'quiz',
+                    state: { ...location.state } // Store original init state
                 });
 
                 sessionStorage.removeItem('practiceCompleted');

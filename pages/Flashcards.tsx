@@ -1,6 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import { usePrompt } from '../hooks/usePrompt.ts';
 import { useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
@@ -81,7 +82,24 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
     const [needsReviewCards, setNeedsReviewCards] = useState<string[]>([]);
     const [isComplete, setIsComplete] = useState(false);
 
+    const { addActivity } = useUserProgress();
     const currentCard = deck.cards[currentIndex];
+
+    // Track study progress
+    useEffect(() => {
+        if (currentIndex > 0 || isComplete) {
+            addActivity({
+                id: `flashcard-${deck.id}`,
+                title: deck.name,
+                subtitle: `${deck.subject} • Flashcards`,
+                path: `/flashcards?deck=${deck.id}&study=true`,
+                type: 'game',
+                progress: Math.round(((currentIndex + (isComplete ? 1 : 0)) / deck.cards.length) * 100),
+                score: knownCards.length,
+                maxScore: deck.cards.length
+            });
+        }
+    }, [currentIndex, isComplete, deck, knownCards.length, addActivity]);
 
     const handleFlip = () => setIsFlipped(!isFlipped);
 
@@ -300,6 +318,8 @@ const Flashcards: React.FC = () => {
     const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null);
     const [isStudying, setIsStudying] = useState(false);
 
+    const { addActivity } = useUserProgress();
+
     // Sync state with URL params
     useEffect(() => {
         if (decks.length > 0 && selectedDeckId) {
@@ -307,12 +327,22 @@ const Flashcards: React.FC = () => {
             if (deck) {
                 setSelectedDeck(deck);
                 setIsStudying(isStudyingParam);
+
+                // Track initial view of deck
+                addActivity({
+                    id: `flashcard-${deck.id}`,
+                    title: deck.name,
+                    subtitle: `${deck.subject} • Flashcards`,
+                    path: `/flashcards?deck=${deck.id}`,
+                    type: 'game', // Categorizing as game/interactive
+                    progress: 0
+                });
             }
         } else {
             setSelectedDeck(null);
             setIsStudying(false);
         }
-    }, [selectedDeckId, isStudyingParam, decks]);
+    }, [selectedDeckId, isStudyingParam, decks, addActivity]);
 
     const [isDeckFormVisible, setDeckFormVisible] = useState(false);
     const [isCardFormVisible, setCardFormVisible] = useState(false);
