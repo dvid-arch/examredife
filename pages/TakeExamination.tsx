@@ -120,31 +120,50 @@ const TakeExamination: React.FC = () => {
         return [...new Set(orderedSubjects)];
     }, [questions]);
 
+    // Session Management & Cleanup
+    useEffect(() => {
+        const storedSessionId = sessionStorage.getItem('activeSessionId');
+
+        // If this is a NEW session (ID mismatch), clear all legacy data
+        if (storedSessionId !== sessionId) {
+            console.log("New session detected. Clearing legacy storage.");
+            sessionStorage.removeItem('practiceAnswers');
+            sessionStorage.removeItem('practiceCompleted');
+            sessionStorage.removeItem('practiceExited');
+            sessionStorage.removeItem('practiceEndTime');
+            sessionStorage.removeItem('practiceStarted');
+            sessionStorage.setItem('activeSessionId', sessionId);
+        }
+    }, [sessionId]);
+
     // Load answers from sessionStorage or location state (resumption)
     useEffect(() => {
         // If we are retaking, do not load previous answers
         if (location.state?.isRetake) return;
 
-        const savedAnswers = sessionStorage.getItem('practiceAnswers');
+        const savedData = sessionStorage.getItem('practiceAnswers');
 
-        if (savedAnswers) {
+        if (savedData) {
             try {
-                const parsed = JSON.parse(savedAnswers);
-                setUserAnswers(prev => ({ ...prev, ...parsed }));
+                const { sessionId: savedSessionId, answers } = JSON.parse(savedData);
+                // Double check session ID match (redundant but safe)
+                if (savedSessionId === sessionId) {
+                    setUserAnswers(prev => ({ ...prev, ...answers }));
+                }
             } catch (e) {
                 console.error("Failed to parse saved answers", e);
             }
         } else if (location.state?.userAnswers && mode !== 'mock') {
             setUserAnswers(prev => ({ ...prev, ...location.state.userAnswers }));
         }
-    }, [mode, location.state?.userAnswers, location.state?.isRetake]); // Run once on mount or state change
+    }, [mode, location.state?.userAnswers, location.state?.isRetake, sessionId]); // Run once on mount or state change
 
     // Save answers to sessionStorage whenever they change
     useEffect(() => {
         if (Object.keys(userAnswers).length > 0) {
-            sessionStorage.setItem('practiceAnswers', JSON.stringify(userAnswers));
+            sessionStorage.setItem('practiceAnswers', JSON.stringify({ sessionId, answers: userAnswers }));
         }
-    }, [userAnswers]);
+    }, [userAnswers, sessionId]);
 
     // Sync answers to recentActivity for resumption support (debounced) - Practice only
     useEffect(() => {
@@ -306,7 +325,8 @@ const TakeExamination: React.FC = () => {
     // Auto-submit on departure/unmount - ONLY for Mock Exams
     useEffect(() => {
         return () => {
-            if (mode === 'mock' && !finishedRef.current && questions.length > 0 && Object.keys(userAnswersRef.current).length > 0) {
+            // For mock exams, we auto-submit even if no questions answered (Activity Feed requirement)
+            if (mode === 'mock' && !finishedRef.current && questions.length > 0) {
                 console.log("Auto-submitting mock exam due to navigation away...");
                 handleSubmitRef.current();
             }

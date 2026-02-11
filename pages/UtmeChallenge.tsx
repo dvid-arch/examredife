@@ -190,7 +190,8 @@ const UtmeChallenge: React.FC = () => {
     // Auto-submit on departure/unmount
     useEffect(() => {
         return () => {
-            if (gameStateRef.current === 'playing' && questionsRef.current.length > 0 && Object.keys(userAnswersRef.current).length > 0) {
+            // Auto-submit even if no questions answered (Activity Feed requirement)
+            if (gameStateRef.current === 'playing' && questionsRef.current.length > 0) {
                 console.log("Auto-submitting challenge due to navigation away...");
                 handleSubmitRef.current();
             }
