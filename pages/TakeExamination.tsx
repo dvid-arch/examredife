@@ -114,8 +114,17 @@ const TakeExamination: React.FC = () => {
 
     const mode = location.state?.mode || 'practice';
 
-    // Load answers from sessionStorage on mount
+    const subjects = useMemo(() => {
+        if (!questions.length) return [];
+        const orderedSubjects = questions.map(q => q.subject);
+        return [...new Set(orderedSubjects)];
+    }, [questions]);
+
+    // Load answers from sessionStorage or location state (resumption)
     useEffect(() => {
+        // If we are retaking, do not load previous answers
+        if (location.state?.isRetake) return;
+
         const savedAnswers = sessionStorage.getItem('practiceAnswers');
 
         if (savedAnswers) {
@@ -125,8 +134,10 @@ const TakeExamination: React.FC = () => {
             } catch (e) {
                 console.error("Failed to parse saved answers", e);
             }
+        } else if (location.state?.userAnswers && mode !== 'mock') {
+            setUserAnswers(prev => ({ ...prev, ...location.state.userAnswers }));
         }
-    }, []);
+    }, [mode, location.state?.userAnswers, location.state?.isRetake]); // Run once on mount or state change
 
     // Save answers to sessionStorage whenever they change
     useEffect(() => {
@@ -134,6 +145,28 @@ const TakeExamination: React.FC = () => {
             sessionStorage.setItem('practiceAnswers', JSON.stringify(userAnswers));
         }
     }, [userAnswers]);
+
+    // Sync answers to recentActivity for resumption support (debounced) - Practice only
+    useEffect(() => {
+        if (!isFinished && questions.length > 0 && Object.keys(userAnswers).length > 0 && mode !== 'mock') {
+            const timer = setTimeout(() => {
+                addActivity({
+                    id: sessionId,
+                    title: location.state?.examTitle || 'Practice Session',
+                    subtitle: `${subjects.join(', ')} • ${questions.length} Questions`,
+                    path: location.pathname,
+                    type: 'quiz',
+                    state: {
+                        ...location.state,
+                        sessionId,
+                        userAnswers // Save current answers for true resumption
+                    }
+                });
+            }, 2000); // 2 second debounce to prevent spamming PUT requests
+
+            return () => clearTimeout(timer);
+        }
+    }, [userAnswers, isFinished, questions.length, sessionId, subjects, location.pathname, location.state, addActivity, mode]);
 
     const examTitle = location.state?.examTitle;
 
@@ -182,11 +215,7 @@ const TakeExamination: React.FC = () => {
         }
     }, [navigate, isFinished]);
 
-    const subjects = useMemo(() => {
-        if (!questions.length) return [];
-        const orderedSubjects = questions.map(q => q.subject);
-        return [...new Set(orderedSubjects)];
-    }, [questions]);
+
 
     const handleSubmit = useCallback(async () => {
         if (isFinished) return;
@@ -234,7 +263,7 @@ const TakeExamination: React.FC = () => {
                 userAnswers,
                 topicBreakdown,
                 incorrectQuestions,
-                mode,
+                type: mode === 'mock' ? 'exam' : 'practice',
                 completedAt: Date.now(),
             };
             try {
@@ -274,17 +303,15 @@ const TakeExamination: React.FC = () => {
         finishedRef.current = isFinished;
     }, [handleSubmit, userAnswers, isFinished]);
 
-    // Auto-submit on departure/unmount
+    // Auto-submit on departure/unmount - ONLY for Mock Exams
     useEffect(() => {
         return () => {
-            // Use refs to check latest state during unmount
-            if (!finishedRef.current && questions.length > 0 && Object.keys(userAnswersRef.current).length > 0) {
-                console.log("Auto-submitting due to navigation away...");
+            if (mode === 'mock' && !finishedRef.current && questions.length > 0 && Object.keys(userAnswersRef.current).length > 0) {
+                console.log("Auto-submitting mock exam due to navigation away...");
                 handleSubmitRef.current();
             }
         };
-    }, [questions.length]); // Only re-run if questions change, but primarily for unmount cleanup
-
+    }, [mode, questions.length]);
 
     useEffect(() => {
         const fetchAndPrepare = async () => {
@@ -305,7 +332,7 @@ const TakeExamination: React.FC = () => {
                 questions: customQuestions,
                 questionsPerSubject,
                 selections
-            } = location.state || {};
+            } = (location.state as any) || {};
 
             let preparedQuestions: ChallengeQuestion[] = [];
 
@@ -352,7 +379,6 @@ const TakeExamination: React.FC = () => {
                 setActiveSubject(preparedQuestions[0].subject);
 
                 // Add to recent activity for "Practice Again"
-                const isCustom = examTitle?.includes('Custom');
                 addActivity({
                     id: sessionId,
                     title: examTitle || 'Practice Session',
@@ -372,7 +398,7 @@ const TakeExamination: React.FC = () => {
         } else {
             setIsLoading(false);
         }
-    }, [location.state]);
+    }, [location.state, sessionId, examTitle]);
 
 
     // Timer Logic using Timestamp

@@ -84,7 +84,7 @@ const UtmeChallenge: React.FC = () => {
                 path: '/challenge?step=playing',
                 type: 'quiz',
                 progress: Math.round((Object.keys(userAnswers).length / questions.length) * 100),
-                state: { sessionId, selectedSubjects, questions, userAnswers } // For resumption
+                state: { sessionId, selectedSubjects, questions, userAnswers, mode: 'mock' } // For resumption
             });
         }
     }, [gameState, questions.length, selectedSubjects, addActivity, userAnswers]);
@@ -170,9 +170,32 @@ const UtmeChallenge: React.FC = () => {
             score: score,
             maxScore: questions.length,
             progress: 100,
-            state: { sessionId, isRetake: true }
+            state: { sessionId, isRetake: true, mode: 'mock' }
         });
-    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard, addActivity, selectedSubjects]);
+    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard, addActivity, selectedSubjects, sessionId]);
+
+    // Refs for unmount auto-submission
+    const handleSubmitRef = React.useRef(handleSubmit);
+    const gameStateRef = React.useRef(gameState);
+    const questionsRef = React.useRef(questions);
+    const userAnswersRef = React.useRef(userAnswers);
+
+    useEffect(() => {
+        handleSubmitRef.current = handleSubmit;
+        gameStateRef.current = gameState;
+        questionsRef.current = questions;
+        userAnswersRef.current = userAnswers;
+    }, [handleSubmit, gameState, questions, userAnswers]);
+
+    // Auto-submit on departure/unmount
+    useEffect(() => {
+        return () => {
+            if (gameStateRef.current === 'playing' && questionsRef.current.length > 0 && Object.keys(userAnswersRef.current).length > 0) {
+                console.log("Auto-submitting challenge due to navigation away...");
+                handleSubmitRef.current();
+            }
+        };
+    }, []);
 
     // Timestamp-based Timer Logic
     const [endTime, setEndTime] = useState<number | null>(null);

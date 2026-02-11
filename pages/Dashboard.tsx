@@ -99,6 +99,16 @@ const Dashboard: React.FC = () => {
     const { recentActivity } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
 
+    // Filter and sort activities for "Continue Studying"
+    // Prioritize uncompleted (no score) and then by most recent
+    const continueStudyingActivities = React.useMemo(() => {
+        return [...recentActivity].sort((a, b) => {
+            if (a.score === undefined && b.score !== undefined) return -1;
+            if (a.score !== undefined && b.score === undefined) return 1;
+            return b.timestamp - a.timestamp;
+        });
+    }, [recentActivity]);
+
     // Close tour when navigating away
     useEffect(() => {
         const handleHashChange = () => {
@@ -172,7 +182,7 @@ const Dashboard: React.FC = () => {
             <VerificationBanner />
             <WelcomeBanner />
 
-            {isAuthenticated && recentActivity.length > 0 && (
+            {isAuthenticated && continueStudyingActivities.length > 0 && (
                 <section className="relative">
                     <div className="flex justify-between items-end mb-4 px-1">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
@@ -180,7 +190,7 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     <div className="flex overflow-x-auto pb-4 gap-4 snap-x no-scrollbar px-1 -mx-1">
-                        {recentActivity.slice(0, 3).map((activity) => (
+                        {continueStudyingActivities.slice(0, 3).map((activity) => (
                             <div key={activity.id} className="flex-none w-[280px] sm:w-[320px] snap-start flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
                                 <Link
                                     to={activity.path}
@@ -214,32 +224,49 @@ const Dashboard: React.FC = () => {
                                 </Link>
                                 <div className="flex items-center space-x-3 mt-auto">
                                     {activity.type === 'quiz' ? (
-                                        <div className="flex w-full gap-2">
+                                        activity.score !== undefined ? (
+                                            <div className="flex w-full gap-2">
+                                                <Link
+                                                    to={activity.path}
+                                                    state={{
+                                                        ...activity.state,
+                                                        isRetake: true,
+                                                        timestamp: Date.now()
+                                                    }}
+                                                    className="flex-1 bg-primary text-white text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-green-700 transition-colors"
+                                                >
+                                                    Practice Again
+                                                </Link>
+                                                <Link
+                                                    to="/performance"
+                                                    className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-slate-200 transition-colors"
+                                                >
+                                                    Analysis
+                                                </Link>
+                                            </div>
+                                        ) : (
                                             <Link
                                                 to={activity.path}
                                                 state={{
                                                     ...activity.state,
-                                                    isRetake: true,
+                                                    isRetake: false,
                                                     timestamp: Date.now()
                                                 }}
-                                                className="flex-1 bg-primary text-white text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-green-700 transition-colors"
+                                                className={`w-full text-center py-2 px-4 rounded-lg text-xs sm:text-sm font-bold transition-colors ${activity.state?.mode === 'mock'
+                                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed pointer-events-none'
+                                                    : 'bg-primary text-white hover:bg-green-700'
+                                                    }`}
                                             >
-                                                Practice Again
+                                                {activity.state?.mode === 'mock' ? 'Abandoned Exam' : 'Resume Session'}
                                             </Link>
-                                            <Link
-                                                to="/performance"
-                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-slate-200 transition-colors"
-                                            >
-                                                Analysis
-                                            </Link>
-                                        </div>
+                                        )
                                     ) : (
                                         <Link
                                             to={activity.path}
                                             state={activity.state}
                                             className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-xs sm:text-sm font-bold hover:bg-primary hover:text-white transition-colors"
                                         >
-                                            Resume Session
+                                            {activity.type === 'game' ? 'Play Again' : 'Resume Session'}
                                         </Link>
                                     )}
                                 </div>
