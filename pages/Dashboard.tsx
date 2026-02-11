@@ -173,14 +173,15 @@ const Dashboard: React.FC = () => {
             <WelcomeBanner />
 
             {isAuthenticated && recentActivity.length > 0 && (
-                <section>
-                    <div className="flex justify-between items-end mb-4">
+                <section className="relative">
+                    <div className="flex justify-between items-end mb-4 px-1">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
-                        <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All Guides</Link>
+                        <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All</Link>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {recentActivity.map((activity) => (
-                            <div key={activity.id} className="flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
+
+                    <div className="flex overflow-x-auto pb-4 gap-4 snap-x no-scrollbar px-1 -mx-1">
+                        {recentActivity.slice(0, 3).map((activity) => (
+                            <div key={activity.id} className="flex-none w-[280px] sm:w-[320px] snap-start flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
                                 <Link
                                     to={activity.type === 'quiz' && activity.path.includes('performance')
                                         ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
@@ -195,13 +196,13 @@ const Dashboard: React.FC = () => {
                                         {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
+                                        <h3 className="font-semibold text-slate-800 dark:text-white truncate text-sm sm:text-base">{activity.title}</h3>
                                         <div className="flex justify-between items-center mt-0.5">
                                             <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
                                         </div>
                                     </div>
                                 </Link>
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-3 mt-auto">
                                     {activity.type === 'quiz' ? (
                                         <div className="flex w-full gap-2">
                                             <Link
@@ -209,13 +210,13 @@ const Dashboard: React.FC = () => {
                                                     ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
                                                     : activity.path
                                                 }
-                                                className="flex-1 bg-primary text-white text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
+                                                className="flex-1 bg-primary text-white text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-green-700 transition-colors"
                                             >
                                                 Practice Again
                                             </Link>
                                             <Link
                                                 to="/performance"
-                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-slate-200 transition-colors"
                                             >
                                                 Analysis
                                             </Link>
@@ -224,7 +225,7 @@ const Dashboard: React.FC = () => {
                                         <Link
                                             to={activity.path}
                                             state={activity.state}
-                                            className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
+                                            className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-xs sm:text-sm font-bold hover:bg-primary hover:text-white transition-colors"
                                         >
                                             Resume Session
                                         </Link>
@@ -232,6 +233,19 @@ const Dashboard: React.FC = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {recentActivity.length > 3 && (
+                            <Link
+                                to="/study-guides"
+                                className="flex-none w-[140px] snap-start flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/30 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                    <span className="text-primary">➡️</span>
+                                </div>
+                                <span className="font-bold text-sm text-slate-600 dark:text-slate-400 group-hover:text-primary transition-colors">See All</span>
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wider">{recentActivity.length - 3} more</span>
+                            </Link>
+                        )}
                     </div>
                 </section>
             )}
