@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext.tsx';
 import apiService from '../services/apiService.ts';
 
 interface RecentActivity {
-    id: string;
+    id: string; // This should now be a unique sessionId for practice/challenges
     title: string;
     path: string;
     timestamp: number;
@@ -13,6 +13,7 @@ interface RecentActivity {
     maxScore?: number;
     progress?: number; // 0 to 100
     subtitle?: string;
+    mastered?: boolean;
 }
 
 interface UserProgressContextType {
@@ -76,19 +77,28 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     }, [isAuthenticated]);
 
     const addActivity = async (activity: Omit<RecentActivity, 'timestamp'>) => {
+        // Automatic Mastery Logic: If score is 100% and it's a quiz, mark as mastered
+        let mastered = activity.mastered;
+        if (activity.type === 'quiz' && activity.score !== undefined && activity.maxScore !== undefined) {
+            if (activity.score === activity.maxScore && activity.maxScore >= 5) {
+                mastered = true;
+            }
+        }
+
         const newActivity: RecentActivity = {
             ...activity,
+            mastered,
             timestamp: Date.now()
         };
 
         // Local dynamic update for responsiveness
+        // filter(a => a.id !== activity.id) ensures updates to the SAME session (e.g. while playing) don't duplicate
+        // but DIFFERENT sessions (new IDs) will accumulate.
         const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 50);
         setRecentActivity(updatedActivity);
 
         if (isAuthenticated) {
             try {
-                // Backend now handles streak logic on progress update
-                // We send the new activity item to be merged
                 const response = await apiService<{ streak: number, streakHistory: string[], recentActivity: RecentActivity[] }>('/user/progress', {
                     method: 'PUT',
                     body: { recentActivity: [newActivity] }

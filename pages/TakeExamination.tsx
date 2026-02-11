@@ -15,7 +15,7 @@ const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5
 
 const GUEST_QUESTION_LIMIT = 5;
 
-const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject: string, year: 'random' | number }[], questionsPerSubject: number): ChallengeQuestion[] => {
+const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject: string, year: 'random' | number }[], questionsPerSubject: number, keyword?: string): ChallengeQuestion[] => {
     if (!selections || selections.length === 0) return [];
 
     const sortedSelections = [...selections].sort((a, b) => {
@@ -38,9 +38,17 @@ const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject:
             }
         }
 
-        const questionsForSubject = papersForSubject
+        let questionsForSubject = papersForSubject
             .flatMap(paper => paper.questions)
             .map(q => ({ ...q, subject }));
+
+        if (keyword) {
+            const lowerKeyword = keyword.toLowerCase();
+            questionsForSubject = questionsForSubject.filter(q =>
+                q.question.toLowerCase().includes(lowerKeyword) ||
+                (q.options && Object.values(q.options).some(o => (o as any).text.toLowerCase().includes(lowerKeyword)))
+            );
+        }
 
         const shuffled = shuffleArray(questionsForSubject);
         allQuestions.push(...shuffled.slice(0, questionsPerSubject));
@@ -98,6 +106,11 @@ const TakeExamination: React.FC = () => {
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showAnswer, setShowAnswer] = useState(false);
+
+    const sessionId = useMemo(() => {
+        if (location.state?.isRetake) return Date.now().toString();
+        return location.state?.sessionId || Date.now().toString();
+    }, [location.state?.sessionId, location.state?.isRetake]);
 
     const mode = location.state?.mode || 'practice';
 
@@ -233,7 +246,7 @@ const TakeExamination: React.FC = () => {
 
         // Update recent activity to mark as finished (allow retake)
         addActivity({
-            id: `practice-${examTitle || 'UTME'}`,
+            id: sessionId,
             title: examTitle || 'Practice Session',
             subtitle: `${subjects.join(', ')} • ${questions.length} Questions`,
             path: location.pathname, // Keep same path for "Practice Again"
@@ -242,6 +255,7 @@ const TakeExamination: React.FC = () => {
             maxScore: questions.length,
             state: {
                 ...location.state,
+                sessionId, // Persist sessionId so "Continue" works if needed
                 isRetake: true,
                 timestamp: Date.now() // Refresh timestamp for validation
             }
@@ -323,7 +337,7 @@ const TakeExamination: React.FC = () => {
 
                     if (practiceSelections.length > 0) {
                         // Pass undefined for numQuestions to select ALL
-                        preparedQuestions = preparePracticeQuestions(papers, practiceSelections, numQuestions || 9999);
+                        preparedQuestions = preparePracticeQuestions(papers, practiceSelections, numQuestions || 9999, (location.state as any)?.query);
                     }
                 } catch (error) {
                     console.error("Failed to prepare questions:", error);
@@ -340,12 +354,12 @@ const TakeExamination: React.FC = () => {
                 // Add to recent activity for "Practice Again"
                 const isCustom = examTitle?.includes('Custom');
                 addActivity({
-                    id: `practice-${examTitle || 'UTME'}`,
+                    id: sessionId,
                     title: examTitle || 'Practice Session',
                     subtitle: `${preparedQuestions[0].subject} ${preparedQuestions.length > preparedQuestions.filter(q => q.subject === preparedQuestions[0].subject).length ? '+ More' : ''} • ${preparedQuestions.length} Questions`,
                     path: location.pathname,
                     type: 'quiz',
-                    state: { ...location.state } // Store original init state
+                    state: { ...location.state, sessionId } // Store original init state with sessionId
                 });
 
                 sessionStorage.removeItem('practiceCompleted');

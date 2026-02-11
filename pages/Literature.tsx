@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import apiService from '../services/apiService.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
@@ -13,6 +14,7 @@ interface LiteratureBook {
 }
 
 const Literature: React.FC = () => {
+    const navigate = useNavigate();
     const [books, setBooks] = useState<LiteratureBook[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedBook, setSelectedBook] = useState<LiteratureBook | null>(null);
@@ -95,7 +97,20 @@ const Literature: React.FC = () => {
                                 </div>
 
                                 <div className="pt-4 border-t dark:border-slate-700">
-                                    <button className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3 px-4 rounded-lg transition-colors">
+                                    <button
+                                        onClick={() => {
+                                            navigate('/quiz', {
+                                                state: {
+                                                    mode: 'practice',
+                                                    practiceSubjects: ['Literature'],
+                                                    questionsPerSubject: 20,
+                                                    examTitle: `Practice: ${selectedBook.title}`,
+                                                    query: selectedBook.title
+                                                }
+                                            });
+                                        }}
+                                        className="w-full bg-primary text-white hover:bg-green-700 font-bold py-3 px-4 rounded-lg transition-colors shadow-sm"
+                                    >
                                         Practice Questions for this Book
                                     </button>
                                 </div>

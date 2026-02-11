@@ -48,6 +48,9 @@ const MemoryMatchGame: React.FC = () => {
     const [isGameComplete, setIsGameComplete] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
 
+    // Stable sessionId for the duration of one game attempt
+    const [sessionId, setSessionId] = useState(`memory-match-${Date.now()}`);
+
     // Sync game state with URL for back button support
     useEffect(() => {
         if (moves > 0 && !isGameComplete) {
@@ -80,7 +83,7 @@ const MemoryMatchGame: React.FC = () => {
 
         try {
             addActivity({
-                id: 'game-memory-match',
+                id: sessionId,
                 title: 'Memory Match',
                 path: '/games/memory-match',
                 type: 'game',
@@ -164,6 +167,7 @@ const MemoryMatchGame: React.FC = () => {
 
     const restartGame = () => {
         // usePrompt handles blocking while game is in progress
+        setSessionId(`memory-match-${Date.now()}`);
         setCards(initializeBoard());
         setFlippedCards([]);
         setMatchedPairs(0);

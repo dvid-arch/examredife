@@ -68,16 +68,23 @@ const UtmeChallenge: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(CHALLENGE_DURATION_MINUTES * 60);
     const [scoreSaved, setScoreSaved] = useState(false);
 
+    const sessionId = useMemo(() => {
+        // Since challenge is always a fresh start from lobby, we can use a timestamp
+        // But if we are already 'playing', we should keep the same ID for updates
+        return `utme-challenge-${Date.now()}`;
+    }, [gameState === 'playing']); // Re-generate if we transition to playing from lobby/selecting
+
     // Track activity when playing starts
     useEffect(() => {
         if (gameState === 'playing' && questions.length > 0) {
             addActivity({
-                id: 'utme-challenge',
+                id: sessionId,
                 title: 'UTME Challenge',
                 subtitle: `${selectedSubjects.join(', ')} • 20 Questions`,
                 path: '/challenge?step=playing',
                 type: 'quiz',
-                progress: Math.round((Object.keys(userAnswers).length / questions.length) * 100)
+                progress: Math.round((Object.keys(userAnswers).length / questions.length) * 100),
+                state: { sessionId, selectedSubjects, questions, userAnswers } // For resumption
             });
         }
     }, [gameState, questions.length, selectedSubjects, addActivity, userAnswers]);
@@ -155,14 +162,15 @@ const UtmeChallenge: React.FC = () => {
 
         // Final journey update
         addActivity({
-            id: 'utme-challenge',
+            id: sessionId,
             title: 'UTME Challenge',
             subtitle: `${selectedSubjects.join(', ')} • 20 Questions`,
             path: '/challenge',
             type: 'quiz',
             score: score,
             maxScore: questions.length,
-            progress: 100
+            progress: 100,
+            state: { sessionId, isRetake: true }
         });
     }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard, addActivity, selectedSubjects]);
 

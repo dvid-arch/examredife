@@ -30,6 +30,8 @@ const SubjectSprintGame: React.FC = () => {
     const [gameState, setGameState] = useState<'selection' | 'playing' | 'results'>('selection');
     const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
+    const [sessionId, setSessionId] = useState(`subject-sprint-${Date.now()}`);
+
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [score, setScore] = useState(0);
@@ -49,7 +51,7 @@ const SubjectSprintGame: React.FC = () => {
         setGameState('results');
         try {
             addActivity({
-                id: 'game-subject-sprint',
+                id: sessionId,
                 title: 'Subject Sprint',
                 path: '/games/subject-sprint',
                 type: 'game',
@@ -169,6 +171,7 @@ const SubjectSprintGame: React.FC = () => {
 
     const restartGame = () => {
         // usePrompt handles blocking during 'playing' state
+        setSessionId(`subject-sprint-${Date.now()}`);
         setGameState('selection');
         setSearchParams({}, { replace: true });
     };

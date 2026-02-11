@@ -121,6 +121,11 @@ const Journey: React.FC = () => {
                                                                 Score: {activity.score}
                                                             </span>
                                                         )}
+                                                        {activity.mastered && (
+                                                            <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                ⭐ Mastered
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <h4 className="font-bold text-slate-800 dark:text-white truncate">
                                                         {activity.title}
@@ -150,12 +155,13 @@ const Journey: React.FC = () => {
                                                     }}
                                                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all text-center whitespace-nowrap ${activity.type === 'guide'
                                                         ? 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
-                                                        : 'bg-primary text-white hover:bg-green-700 shadow-sm hover:shadow-primary/20'
+                                                        : activity.mastered ? 'bg-green-600 text-white hover:bg-green-700 shadow-sm' : 'bg-primary text-white hover:bg-green-700 shadow-sm'
                                                         }`}
                                                 >
                                                     {(() => {
                                                         if (activity.type === 'guide') return 'Read Guide';
                                                         if (activity.type === 'game') return 'Play Again';
+                                                        if (activity.mastered) return 'Review';
                                                         return 'Practice Again';
                                                     })()}
                                                 </Link>
