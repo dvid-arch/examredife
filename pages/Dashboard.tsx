@@ -96,7 +96,7 @@ const WelcomeBanner = () => {
 
 const Dashboard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
-    const { recentActivity } = useUserProgress();
+    const { recentActivity, getFilteredActivity, dismissActivity } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
 
     // Close tour when navigating away
@@ -172,15 +172,33 @@ const Dashboard: React.FC = () => {
             <VerificationBanner />
             <WelcomeBanner />
 
-            {isAuthenticated && recentActivity.length > 0 && (
+            {isAuthenticated && getFilteredActivity().length > 0 && (
                 <section>
                     <div className="flex justify-between items-end mb-4">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
+                            <span className="hidden sm:inline-block px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider">Smart Picks</span>
+                        </div>
                         <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All Guides</Link>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {recentActivity.map((activity) => (
-                            <div key={activity.id} className="flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
+                        {getFilteredActivity().slice(0, 6).map((activity) => (
+                            <div key={activity.id} className="group relative flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-all border border-slate-100 dark:border-slate-700">
+                                {/* Dismiss Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        dismissActivity(activity.id);
+                                    }}
+                                    className="absolute top-2 right-2 p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                    title="Dismiss"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+
                                 <Link
                                     to={activity.type === 'quiz' && activity.path.includes('performance')
                                         ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
@@ -195,13 +213,43 @@ const Dashboard: React.FC = () => {
                                         {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-slate-800 dark:text-white truncate">{activity.title}</h3>
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="font-semibold text-slate-800 dark:text-white pr-4 text-sm line-clamp-1">{activity.title}</h3>
+                                        </div>
                                         <div className="flex justify-between items-center mt-0.5">
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize flex items-center gap-1">
+                                                <span>{activity.type}</span>
+                                                <span>•</span>
+                                                <span>{new Date(activity.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                            </p>
                                         </div>
                                     </div>
                                 </Link>
-                                <div className="flex items-center space-x-3">
+
+                                {/* Progress/Score Indicator */}
+                                {(activity.progress !== undefined || activity.score) && (
+                                    <div className="mb-4">
+                                        {activity.type === 'guide' && activity.progress !== undefined && (
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-[10px] text-slate-500">
+                                                    <span>Progress</span>
+                                                    <span>{activity.progress}%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
+                                                    <div className="bg-pink-500 h-full transition-all duration-500" style={{ width: `${activity.progress}%` }}></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {activity.type === 'quiz' && activity.score && (
+                                            <div className="flex items-center gap-2 text-[10px]">
+                                                <span className="text-slate-500">Last Score:</span>
+                                                <span className="font-bold text-blue-600 dark:text-blue-400">{activity.score}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex items-center space-x-3 mt-auto">
                                     {activity.type === 'quiz' ? (
                                         <div className="flex w-full gap-2">
                                             <Link
@@ -209,13 +257,13 @@ const Dashboard: React.FC = () => {
                                                     ? (activity.title.includes('Custom') ? '/practice/custom' : '/practice/standard')
                                                     : activity.path
                                                 }
-                                                className="flex-1 bg-primary text-white text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors"
+                                                className="flex-1 bg-primary text-white text-center py-2 px-2 rounded-lg text-xs font-bold hover:bg-green-700 transition-colors"
                                             >
-                                                Practice Again
+                                                Practice
                                             </Link>
                                             <Link
                                                 to="/performance"
-                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-slate-200 transition-colors"
+                                                className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-center py-2 px-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors"
                                             >
                                                 Analysis
                                             </Link>
@@ -224,9 +272,9 @@ const Dashboard: React.FC = () => {
                                         <Link
                                             to={activity.path}
                                             state={activity.state}
-                                            className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-colors"
+                                            className="w-full bg-primary/10 text-primary text-center py-2 px-4 rounded-lg text-xs font-bold hover:bg-primary hover:text-white transition-colors"
                                         >
-                                            Resume Session
+                                            {activity.status === 'in_progress' ? 'Resume Session' : 'Continue Learning'}
                                         </Link>
                                     )}
                                 </div>

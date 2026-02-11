@@ -9,6 +9,10 @@ interface RecentActivity {
     timestamp: number;
     type: 'quiz' | 'guide' | 'game';
     state?: any; // For "Continue Studying" resumption
+    status?: 'completed' | 'in_progress' | 'abandoned';
+    score?: string;          // For quizzes (e.g., "12/15")
+    progress?: number;       // For guides (0-100)
+    dismissedAt?: number;    // Timestamp when user dismissed
 }
 
 interface UserProgressContextType {
@@ -16,7 +20,9 @@ interface UserProgressContextType {
     streakHistory: string[];
     recentActivity: RecentActivity[];
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
+    dismissActivity: (id: string) => void;
     syncProgress: () => Promise<void>;
+    getFilteredActivity: () => RecentActivity[];
 }
 
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
@@ -83,8 +89,6 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
         if (isAuthenticated) {
             try {
-                // Backend now handles streak logic on progress update
-                // We send the new activity item to be merged
                 const response = await apiService<{ streak: number, streakHistory: string[], recentActivity: RecentActivity[] }>('/user/progress', {
                     method: 'PUT',
                     body: { recentActivity: [newActivity] }
@@ -107,8 +111,66 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
+    const dismissActivity = async (id: string) => {
+        const now = Date.now();
+        const updatedActivity = recentActivity.map(a =>
+            a.id === id ? { ...a, dismissedAt: now } : a
+        );
+        setRecentActivity(updatedActivity);
+        localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
+
+        if (isAuthenticated) {
+            try {
+                await apiService('/user/progress', {
+                    method: 'PUT',
+                    body: {
+                        recentActivity: updatedActivity.filter(a => a.id === id) // Send the dismissed one to backend
+                    }
+                });
+            } catch (error) {
+                console.error("Failed to dismiss activity on backend:", error);
+            }
+        }
+    };
+
+    const getFilteredActivity = () => {
+        const now = Date.now();
+        const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+        // 1. Filter out dismissed and old items
+        const relevant = recentActivity.filter(a =>
+            !a.dismissedAt &&
+            (now - a.timestamp) < THIRTY_DAYS
+        );
+
+        // 2. Simple but effective sorting: 
+        // In-progress items higher than completed, then by recency
+        return relevant.sort((a, b) => {
+            // Status priority: in_progress > undefined > completed
+            const getPriority = (status?: string) => {
+                if (status === 'in_progress') return 2;
+                if (!status) return 1;
+                return 0;
+            };
+
+            const priorityA = getPriority(a.status);
+            const priorityB = getPriority(b.status);
+
+            if (priorityA !== priorityB) return priorityB - priorityA;
+            return b.timestamp - a.timestamp;
+        });
+    };
+
     return (
-        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, syncProgress }}>
+        <UserProgressContext.Provider value={{
+            streak,
+            streakHistory,
+            recentActivity,
+            addActivity,
+            dismissActivity,
+            syncProgress,
+            getFilteredActivity
+        }}>
             {children}
         </UserProgressContext.Provider>
     );
