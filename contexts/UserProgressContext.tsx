@@ -47,11 +47,32 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
                 setStreak(data.streak);
                 setStreakHistory(data.streakHistory || []);
-                const normalized = (data.recentActivity || []).map(normalizeActivity);
-                setRecentActivity(normalized);
+
+                const serverActivity = (data.recentActivity || []).map(normalizeActivity);
+
+                setRecentActivity(prev => {
+                    // Smart Merge: Combine server data with local data
+                    // If an item exists in both, prefer the one with the more recent timestamp
+                    const merged = [...prev];
+                    serverActivity.forEach(serverItem => {
+                        const localIndex = merged.findIndex(m => m.id === serverItem.id);
+                        if (localIndex === -1) {
+                            merged.push(serverItem);
+                        } else {
+                            const localItem = merged[localIndex];
+                            if (serverItem.timestamp > localItem.timestamp) {
+                                merged[localIndex] = serverItem;
+                            }
+                        }
+                    });
+
+                    const sorted = merged.sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
+                    localStorage.setItem('examRediRecentActivity', JSON.stringify(sorted));
+                    return sorted;
+                });
+
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
-                localStorage.setItem('examRediRecentActivity', JSON.stringify(normalized));
             } catch (error) {
                 console.error("Failed to sync progress with backend:", error);
                 loadFromLocal();
@@ -93,9 +114,12 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             timestamp: Date.now()
         } as RecentActivity);
 
-        // Local dynamic update for responsiveness
-        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 30);
-        setRecentActivity(updatedActivity);
+        // Functional update to avoid closure staleness
+        setRecentActivity(prev => {
+            const updated = [newActivity, ...prev.filter(a => a.id !== activity.id)].slice(0, 30);
+            localStorage.setItem('examRediRecentActivity', JSON.stringify(updated));
+            return updated;
+        });
 
         if (isAuthenticated) {
             try {
@@ -107,35 +131,43 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (response) {
                     setStreak(response.streak);
                     setStreakHistory(response.streakHistory);
-                    const normalized = response.recentActivity.map(normalizeActivity);
-                    setRecentActivity(normalized);
-                    localStorage.setItem('examRediStreak', response.streak.toString());
-                    localStorage.setItem('examRediStreakHistory', JSON.stringify(response.streakHistory));
-                    localStorage.setItem('examRediRecentActivity', JSON.stringify(normalized));
+                    const serverNormalized = response.recentActivity.map(normalizeActivity);
+
+                    setRecentActivity(prev => {
+                        // Merge server response back to ensure consistency
+                        const merged = [...prev];
+                        serverNormalized.forEach(serverItem => {
+                            const index = merged.findIndex(m => m.id === serverItem.id);
+                            if (index === -1) merged.push(serverItem);
+                            else if (serverItem.timestamp >= merged[index].timestamp) merged[index] = serverItem;
+                        });
+                        const sorted = merged.sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
+                        localStorage.setItem('examRediRecentActivity', JSON.stringify(sorted));
+                        return sorted;
+                    });
                 }
             } catch (error) {
                 console.error("Failed to save progress to backend:", error);
             }
         }
 
-        localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
     const dismissActivity = async (id: string) => {
         const now = Date.now();
-        const updatedActivity = recentActivity.map(a =>
-            a.id === id ? { ...a, dismissedAt: now } : a
-        );
-        setRecentActivity(updatedActivity);
-        localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
+        setRecentActivity(prev => {
+            const updated = prev.map(a => a.id === id ? { ...a, dismissedAt: now } : a);
+            localStorage.setItem('examRediRecentActivity', JSON.stringify(updated));
+            return updated;
+        });
 
         if (isAuthenticated) {
             try {
                 await apiService('/user/progress', {
                     method: 'PUT',
                     body: {
-                        recentActivity: updatedActivity.filter(a => a.id === id) // Send the dismissed one to backend
+                        recentActivity: [{ id, dismissedAt: now } as any] // Minimal update
                     }
                 });
             } catch (error) {
@@ -148,33 +180,34 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const now = Date.now();
         const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
-        // 1. Filter out dismissed and old items (robust handling of any mixed data types)
+        // 1. Filter out dismissed and old items
         const relevant = recentActivity.filter(a => {
-            const timestamp = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
-            const dismissedAt = a.dismissedAt && typeof a.dismissedAt === 'string'
+            const ts = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+            const ds = a.dismissedAt && typeof a.dismissedAt === 'string'
                 ? new Date(a.dismissedAt).getTime()
                 : a.dismissedAt;
 
-            return !dismissedAt && (now - timestamp) < THIRTY_DAYS;
+            // Safety check for invalid dates
+            if (isNaN(ts)) return false;
+
+            return !ds && (Math.abs(now - ts) < THIRTY_DAYS); // Use Math.abs to handle small clock skews
         });
 
-        // 2. Simple but effective sorting: 
-        // In-progress items higher than completed, then by recency
+        // 2. Sorting: In-progress > undefined > completed, then by recency
         return relevant.sort((a, b) => {
             const tsA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
             const tsB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
 
-            // Status priority: in_progress > undefined > completed
             const getPriority = (status?: string) => {
                 if (status === 'in_progress') return 2;
                 if (!status) return 1;
                 return 0;
             };
 
-            const priorityA = getPriority(a.status);
-            const priorityB = getPriority(b.status);
+            const pA = getPriority(a.status);
+            const pB = getPriority(b.status);
 
-            if (priorityA !== priorityB) return priorityB - priorityA;
+            if (pA !== pB) return pB - pA;
             return tsB - tsA;
         });
     };
