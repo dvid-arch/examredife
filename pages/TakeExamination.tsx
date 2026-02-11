@@ -126,11 +126,17 @@ const TakeExamination: React.FC = () => {
         // If we are finished, we are allowed to stay (to view results)
         if (isFinished) return;
 
+        // Check for "isRetake" flag from Study Journey to allow a fresh start
+        if (location.state?.isRetake) {
+            sessionStorage.removeItem('practiceCompleted');
+            sessionStorage.removeItem('practiceExited');
+            sessionStorage.removeItem('practiceEndTime');
+            sessionStorage.removeItem('practiceAnswers');
+        }
+
         const currentIsValid =
-            sessionStorage.getItem('practiceStarted') === 'true' &&
-            validatePracticeState(location.state) &&
-            sessionStorage.getItem('practiceExited') !== 'true' &&
-            sessionStorage.getItem('practiceCompleted') !== 'true';
+            sessionStorage.getItem('practiceStarted') === 'true' ||
+            validatePracticeState(location.state);
 
         if (!currentIsValid) {
             navigate('/practice', { replace: true });
@@ -224,15 +230,20 @@ const TakeExamination: React.FC = () => {
             }
         }
 
-        // Update recent activity to mark as finished (remove resume state)
+        // Update recent activity to mark as finished (allow retake)
         addActivity({
             id: `practice-${examTitle || 'UTME'}`,
             title: examTitle || 'Practice Session',
             subtitle: `${subjects.join(', ')} • ${questions.length} Questions`,
-            path: '/performance',
+            path: location.pathname, // Keep same path for "Practice Again"
             type: 'quiz',
             score: score,
-            maxScore: questions.length
+            maxScore: questions.length,
+            state: {
+                ...location.state,
+                isRetake: true,
+                timestamp: Date.now() // Refresh timestamp for validation
+            }
         });
 
     }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);

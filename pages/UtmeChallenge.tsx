@@ -7,6 +7,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 
 import apiService from '../services/apiService.ts';
 
@@ -53,6 +54,7 @@ const UtmeChallenge: React.FC = () => {
     const navigate = useNavigate();
     const { papers: allPapers, isLoading: isLoadingPapers, fetchPapers } = usePastQuestions();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { addActivity } = useUserProgress();
     const [gameState, setGameState] = useState<GameState>(
         (searchParams.get('step') as GameState) || 'lobby'
     );
@@ -65,6 +67,20 @@ const UtmeChallenge: React.FC = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(CHALLENGE_DURATION_MINUTES * 60);
     const [scoreSaved, setScoreSaved] = useState(false);
+
+    // Track activity when playing starts
+    useEffect(() => {
+        if (gameState === 'playing' && questions.length > 0) {
+            addActivity({
+                id: 'utme-challenge',
+                title: 'UTME Challenge',
+                subtitle: `${selectedSubjects.join(', ')} • 20 Questions`,
+                path: '/challenge?step=playing',
+                type: 'quiz',
+                progress: Math.round((Object.keys(userAnswers).length / questions.length) * 100)
+            });
+        }
+    }, [gameState, questions.length, selectedSubjects, addActivity, userAnswers]);
 
     const fetchLeaderboard = useCallback(async () => {
         setIsLoadingLeaderboard(true);
@@ -136,7 +152,19 @@ const UtmeChallenge: React.FC = () => {
         if (isAuthenticated && user?.subscription === 'pro') {
             saveScoreToLeaderboard(score, userAnswers);
         }
-    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard]);
+
+        // Final journey update
+        addActivity({
+            id: 'utme-challenge',
+            title: 'UTME Challenge',
+            subtitle: `${selectedSubjects.join(', ')} • 20 Questions`,
+            path: '/challenge',
+            type: 'quiz',
+            score: score,
+            maxScore: questions.length,
+            progress: 100
+        });
+    }, [gameState, questions, userAnswers, isAuthenticated, user, saveScoreToLeaderboard, addActivity, selectedSubjects]);
 
     // Timestamp-based Timer Logic
     const [endTime, setEndTime] = useState<number | null>(null);
