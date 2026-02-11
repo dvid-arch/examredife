@@ -64,10 +64,13 @@ const TakeExamination: React.FC = () => {
     const { addActivity } = useUserProgress();
 
     // Validate that the route was accessed properly with required state
-    const validatePracticeState = (state: any) => {
+    const validatePracticeState = useCallback((state: any) => {
         if (!state) return false;
 
-        // Check if state is too old
+        // Check for "isRetake" - if it's a retake, we don't care about the timestamp
+        if (state.isRetake) return true;
+
+        // Check if state is too old (only for fresh session transitions)
         const now = Date.now();
         const stateTimestamp = state.timestamp || 0;
         if (now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
@@ -83,7 +86,7 @@ const TakeExamination: React.FC = () => {
         }
 
         return false;
-    };
+    }, []);
 
     const [questions, setQuestions] = useState<ChallengeQuestion[]>([]);
     const [activeSubject, setActiveSubject] = useState<string>('');
@@ -132,6 +135,7 @@ const TakeExamination: React.FC = () => {
             sessionStorage.removeItem('practiceExited');
             sessionStorage.removeItem('practiceEndTime');
             sessionStorage.removeItem('practiceAnswers');
+            sessionStorage.setItem('practiceStarted', 'true'); // Set this to pass the validState check
         }
 
         const currentIsValid =
@@ -141,21 +145,18 @@ const TakeExamination: React.FC = () => {
         if (!currentIsValid) {
             navigate('/practice', { replace: true });
         }
-    }, [location.state, navigate, isFinished]);
+    }, [location.state, navigate, isFinished, validatePracticeState]);
 
     // Check if access is valid for rendering content
-    // We re-calculate this here to gate the UI, but we allow 'isFinished' to override 'practiceCompleted' check
     const isAccessIllegal = useMemo(() => {
         if (isFinished) return false; // Authorized if finished (viewing results)
+        if (location.state?.isRetake) return false; // Always legal if retaking
 
-        const validState =
-            sessionStorage.getItem('practiceStarted') === 'true' &&
-            validatePracticeState(location.state) &&
-            sessionStorage.getItem('practiceExited') !== 'true' &&
-            sessionStorage.getItem('practiceCompleted') !== 'true';
-
-        return !validState;
-    }, [isFinished, location.state]);
+        return !(
+            sessionStorage.getItem('practiceStarted') === 'true' ||
+            validatePracticeState(location.state)
+        );
+    }, [isFinished, location.state, validatePracticeState]);
 
     if (isAccessIllegal) {
         return null; // Redirect handled by effect

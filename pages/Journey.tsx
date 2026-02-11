@@ -125,7 +125,7 @@ const Journey: React.FC = () => {
                                                     <h4 className="font-bold text-slate-800 dark:text-white truncate">
                                                         {activity.title}
                                                     </h4>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                                                         {activity.subtitle || new Date(activity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                 </div>
@@ -143,7 +143,11 @@ const Journey: React.FC = () => {
 
                                                 <Link
                                                     to={activity.path}
-                                                    state={activity.state}
+                                                    state={{
+                                                        ...activity.state,
+                                                        isRetake: true,
+                                                        timestamp: Date.now()
+                                                    }}
                                                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all text-center whitespace-nowrap ${activity.type === 'guide'
                                                         ? 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
                                                         : 'bg-primary text-white hover:bg-green-700 shadow-sm hover:shadow-primary/20'

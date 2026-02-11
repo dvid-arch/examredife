@@ -184,7 +184,11 @@ const Dashboard: React.FC = () => {
                             <div key={activity.id} className="flex-none w-[280px] sm:w-[320px] snap-start flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
                                 <Link
                                     to={activity.path}
-                                    state={activity.state}
+                                    state={{
+                                        ...activity.state,
+                                        isRetake: true,
+                                        timestamp: Date.now()
+                                    }}
                                     className="flex items-center gap-4 flex-1 min-w-0 mb-3"
                                 >
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'quiz' ? 'bg-blue-100 text-blue-600' :
@@ -202,7 +206,9 @@ const Dashboard: React.FC = () => {
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-wider">{activity.subtitle || activity.type}</p>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider line-clamp-2 leading-relaxed">
+                                                {activity.subtitle || activity.type}
+                                            </p>
                                         </div>
                                     </div>
                                 </Link>
@@ -211,7 +217,11 @@ const Dashboard: React.FC = () => {
                                         <div className="flex w-full gap-2">
                                             <Link
                                                 to={activity.path}
-                                                state={activity.state}
+                                                state={{
+                                                    ...activity.state,
+                                                    isRetake: true,
+                                                    timestamp: Date.now()
+                                                }}
                                                 className="flex-1 bg-primary text-white text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-bold hover:bg-green-700 transition-colors"
                                             >
                                                 Practice Again
@@ -239,7 +249,7 @@ const Dashboard: React.FC = () => {
                         {recentActivity.length > 3 && (
                             <Link
                                 to="/journey"
-                                className="flex-none w-[140px] snap-start flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/30 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                className="flex-none w-[140px] snap-start flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/30 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5 transition-all group p-4"
                             >
                                 <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                                     <span className="text-primary">➡️</span>
