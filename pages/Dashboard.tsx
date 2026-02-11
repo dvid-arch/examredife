@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
                 <section className="relative">
                     <div className="flex justify-between items-end mb-4 px-1">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
-                        <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All</Link>
+                        <Link to="/journey" className="text-primary text-sm font-semibold hover:underline">View All</Link>
                     </div>
 
                     <div className="flex overflow-x-auto pb-4 gap-4 snap-x no-scrollbar px-1 -mx-1">
@@ -196,9 +196,16 @@ const Dashboard: React.FC = () => {
                                         {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-slate-800 dark:text-white truncate text-sm sm:text-base">{activity.title}</h3>
-                                        <div className="flex justify-between items-center mt-0.5">
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{activity.type}</p>
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <h3 className="font-semibold text-slate-800 dark:text-white truncate text-sm sm:text-base">{activity.title}</h3>
+                                            {activity.score !== undefined && (
+                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                    {activity.score}{activity.maxScore ? `/${activity.maxScore}` : ''}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate uppercase tracking-wider">{activity.subtitle || activity.type}</p>
                                         </div>
                                     </div>
                                 </Link>
@@ -236,7 +243,7 @@ const Dashboard: React.FC = () => {
 
                         {recentActivity.length > 3 && (
                             <Link
-                                to="/study-guides"
+                                to="/journey"
                                 className="flex-none w-[140px] snap-start flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/30 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-primary/5 transition-all group"
                             >
                                 <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">

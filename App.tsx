@@ -19,6 +19,7 @@ import { PastQuestionsProvider } from './contexts/PastQuestionsContext.tsx';
 
 // Pages - Lazy load all pages for faster initial load
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
+const Journey = lazy(() => import('./pages/Journey.tsx'));
 const Flashcards = lazy(() => import('./pages/Flashcards.tsx'));
 const Quizzes = lazy(() => import('./pages/Quizzes.tsx'));
 const ExamWithAI = lazy(() => import('./pages/ExamWithAI.tsx'));
@@ -163,6 +164,7 @@ const router = createHashRouter(
       <Route element={<MainLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
+        <Route path="/journey" element={<Suspense fallback={<PageLoader />}><Journey /></Suspense>} />
         <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
         <Route path="/practice" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
         <Route path="/practice/:tab" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />

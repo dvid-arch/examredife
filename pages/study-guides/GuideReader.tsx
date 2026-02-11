@@ -44,8 +44,10 @@ const GuideReader: React.FC = () => {
         addActivity({
             id: g.id,
             title: g.title,
+            subtitle: `${g.subject} • Official Guide`,
             path: `/study-guides/${category}/${slug}`,
-            type: 'guide'
+            type: 'guide',
+            progress: 100 // Marking as read for now
         });
     };
 

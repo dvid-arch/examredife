@@ -7,6 +7,7 @@ import { memoryMatchConcepts } from '../data/gameData.ts';
 import { MemoryCardType } from '../types.ts';
 import apiService from '../services/apiService.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 
 // Helper function to shuffle an array
 const shuffleArray = (array: any[]) => {
@@ -38,6 +39,7 @@ const initializeBoard = (): MemoryCardType[] => {
 
 const MemoryMatchGame: React.FC = () => {
     const { user } = useAuth();
+    const { addActivity } = useUserProgress();
     const [searchParams, setSearchParams] = useSearchParams();
     const [cards, setCards] = useState<MemoryCardType[]>(initializeBoard());
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -77,6 +79,14 @@ const MemoryMatchGame: React.FC = () => {
         const finalScore = Math.max(50, 1000 - moves * 10);
 
         try {
+            addActivity({
+                id: 'game-memory-match',
+                title: 'Memory Match',
+                path: '/games/memory-match',
+                type: 'game',
+                score: finalScore,
+                subtitle: `Completed in ${moves} moves`
+            });
             await apiService('/data/leaderboard', {
                 method: 'POST',
                 body: {

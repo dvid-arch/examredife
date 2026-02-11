@@ -9,6 +9,10 @@ interface RecentActivity {
     timestamp: number;
     type: 'quiz' | 'guide' | 'game';
     state?: any; // For "Continue Studying" resumption
+    score?: number;
+    maxScore?: number;
+    progress?: number; // 0 to 100
+    subtitle?: string;
 }
 
 interface UserProgressContextType {
@@ -78,7 +82,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         };
 
         // Local dynamic update for responsiveness
-        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 20);
+        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 50);
         setRecentActivity(updatedActivity);
 
         if (isAuthenticated) {

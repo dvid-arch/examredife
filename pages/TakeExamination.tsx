@@ -227,9 +227,12 @@ const TakeExamination: React.FC = () => {
         // Update recent activity to mark as finished (remove resume state)
         addActivity({
             id: `practice-${examTitle || 'UTME'}`,
-            title: `Completed: ${examTitle || 'Practice Session'}`,
-            path: '/performance', // Redirect to performance on click after completion
-            type: 'quiz'
+            title: examTitle || 'Practice Session',
+            subtitle: `${subjects.join(', ')} • ${questions.length} Questions`,
+            path: '/performance',
+            type: 'quiz',
+            score: score,
+            maxScore: questions.length
         });
 
     }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);
