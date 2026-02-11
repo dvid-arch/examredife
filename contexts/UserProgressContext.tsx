@@ -51,22 +51,23 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 const serverActivity = (data.recentActivity || []).map(normalizeActivity);
 
                 setRecentActivity(prev => {
-                    // Smart Merge: Combine server data with local data
-                    // If an item exists in both, prefer the one with the more recent timestamp
-                    const merged = [...prev];
-                    serverActivity.forEach(serverItem => {
-                        const localIndex = merged.findIndex(m => m.id === serverItem.id);
-                        if (localIndex === -1) {
-                            merged.push(serverItem);
-                        } else {
-                            const localItem = merged[localIndex];
-                            if (serverItem.timestamp > localItem.timestamp) {
-                                merged[localIndex] = serverItem;
-                            }
+                    const activityMap = new Map<string, RecentActivity>();
+
+                    // Add server items first
+                    serverActivity.forEach(item => activityMap.set(item.id, item));
+
+                    // Overlay local items if they are newer OR don't exist in server list yet
+                    prev.forEach(localItem => {
+                        const serverItem = activityMap.get(localItem.id);
+                        if (!serverItem || localItem.timestamp > serverItem.timestamp) {
+                            activityMap.set(localItem.id, localItem);
                         }
                     });
 
-                    const sorted = merged.sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
+                    const sorted = Array.from(activityMap.values())
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, 50);
+
                     localStorage.setItem('examRediRecentActivity', JSON.stringify(sorted));
                     return sorted;
                 });
@@ -116,7 +117,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
         // Functional update to avoid closure staleness
         setRecentActivity(prev => {
-            const updated = [newActivity, ...prev.filter(a => a.id !== activity.id)].slice(0, 30);
+            const updated = [newActivity, ...prev.filter(a => a.id !== activity.id)].slice(0, 50);
             localStorage.setItem('examRediRecentActivity', JSON.stringify(updated));
             return updated;
         });
@@ -134,14 +135,17 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     const serverNormalized = response.recentActivity.map(normalizeActivity);
 
                     setRecentActivity(prev => {
-                        // Merge server response back to ensure consistency
-                        const merged = [...prev];
+                        const activityMap = new Map<string, RecentActivity>();
+                        prev.forEach(item => activityMap.set(item.id, item));
                         serverNormalized.forEach(serverItem => {
-                            const index = merged.findIndex(m => m.id === serverItem.id);
-                            if (index === -1) merged.push(serverItem);
-                            else if (serverItem.timestamp >= merged[index].timestamp) merged[index] = serverItem;
+                            const localItem = activityMap.get(serverItem.id);
+                            if (!localItem || serverItem.timestamp >= localItem.timestamp) {
+                                activityMap.set(serverItem.id, serverItem);
+                            }
                         });
-                        const sorted = merged.sort((a, b) => b.timestamp - a.timestamp).slice(0, 30);
+                        const sorted = Array.from(activityMap.values())
+                            .sort((a, b) => b.timestamp - a.timestamp)
+                            .slice(0, 50);
                         localStorage.setItem('examRediRecentActivity', JSON.stringify(sorted));
                         return sorted;
                     });
@@ -200,8 +204,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
             const getPriority = (status?: string) => {
                 if (status === 'in_progress') return 2;
-                if (!status) return 1;
-                return 0;
+                if (status === 'abandoned') return 0;
+                return 1; // Default for completed or undefined (legacy)
             };
 
             const pA = getPriority(a.status);

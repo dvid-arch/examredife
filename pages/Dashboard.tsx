@@ -172,12 +172,11 @@ const Dashboard: React.FC = () => {
             <VerificationBanner />
             <WelcomeBanner />
 
-            {isAuthenticated && getFilteredActivity().length > 0 && (
+            {getFilteredActivity().length > 0 && (
                 <section>
                     <div className="flex justify-between items-end mb-4">
                         <div className="flex items-center gap-2">
                             <h2 className="text-xl font-bold text-slate-800 dark:text-white">Continue Studying</h2>
-                            <span className="hidden sm:inline-block px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase tracking-wider">Smart Picks</span>
                         </div>
                         <Link to="/study-guides" className="text-primary text-sm font-semibold hover:underline">View All Guides</Link>
                     </div>
