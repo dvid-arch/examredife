@@ -29,10 +29,6 @@ const UserProgressContext = createContext<UserProgressContextType | undefined>(u
 
 export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuth();
-    const [streak, setStreak] = useState(0);
-    const [streakHistory, setStreakHistory] = useState<string[]>([]);
-    const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-
     const normalizeActivity = (activity: RecentActivity): RecentActivity => ({
         ...activity,
         timestamp: typeof activity.timestamp === 'string' ? new Date(activity.timestamp).getTime() : activity.timestamp,
@@ -41,67 +37,55 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             : activity.dismissedAt
     });
 
+    const [streak, setStreak] = useState(() => {
+        const saved = localStorage.getItem('examRediStreak');
+        return saved ? parseInt(saved) : 0;
+    });
+
+    const [streakHistory, setStreakHistory] = useState<string[]>(() => {
+        const saved = localStorage.getItem('examRediStreakHistory');
+        try { return saved ? JSON.parse(saved) : []; } catch { return []; }
+    });
+
+    const [recentActivity, setRecentActivity] = useState<RecentActivity[]>(() => {
+        const saved = localStorage.getItem('examRediRecentActivity');
+        try {
+            return saved ? JSON.parse(saved).map(normalizeActivity) : [];
+        } catch { return []; }
+    });
+
     const syncProgress = async () => {
-        if (isAuthenticated) {
-            try {
-                const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
-                setStreak(data.streak);
-                setStreakHistory(data.streakHistory || []);
+        if (!isAuthenticated) return;
 
-                const serverActivity = (data.recentActivity || []).map(normalizeActivity);
+        try {
+            const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
 
-                setRecentActivity(prev => {
-                    const activityMap = new Map<string, RecentActivity>();
+            setStreak(data.streak);
+            setStreakHistory(data.streakHistory || []);
+            localStorage.setItem('examRediStreak', data.streak.toString());
+            localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
 
-                    // Add server items first
-                    serverActivity.forEach(item => activityMap.set(item.id, item));
+            const serverActivity = (data.recentActivity || []).map(normalizeActivity);
 
-                    // Overlay local items if they are newer OR don't exist in server list yet
-                    prev.forEach(localItem => {
-                        const serverItem = activityMap.get(localItem.id);
-                        if (!serverItem || localItem.timestamp > serverItem.timestamp) {
-                            activityMap.set(localItem.id, localItem);
-                        }
-                    });
-
-                    const sorted = Array.from(activityMap.values())
-                        .sort((a, b) => b.timestamp - a.timestamp)
-                        .slice(0, 50);
-
-                    localStorage.setItem('examRediRecentActivity', JSON.stringify(sorted));
-                    return sorted;
+            setRecentActivity(prev => {
+                const activityMap = new Map<string, RecentActivity>();
+                serverActivity.forEach(item => activityMap.set(item.id, item));
+                prev.forEach(localItem => {
+                    const serverItem = activityMap.get(localItem.id);
+                    if (!serverItem || localItem.timestamp > serverItem.timestamp) {
+                        activityMap.set(localItem.id, localItem);
+                    }
                 });
 
-                localStorage.setItem('examRediStreak', data.streak.toString());
-                localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
-            } catch (error) {
-                console.error("Failed to sync progress with backend:", error);
-                loadFromLocal();
-            }
-        } else {
-            loadFromLocal();
-        }
-    };
+                const sorted = Array.from(activityMap.values())
+                    .sort((a, b) => b.timestamp - a.timestamp)
+                    .slice(0, 50);
 
-    const loadFromLocal = () => {
-        const savedStreak = localStorage.getItem('examRediStreak');
-        const savedStreakHistory = localStorage.getItem('examRediStreakHistory');
-        const savedActivity = localStorage.getItem('examRediRecentActivity');
-        if (savedStreak) setStreak(parseInt(savedStreak));
-        if (savedStreakHistory) {
-            try {
-                setStreakHistory(JSON.parse(savedStreakHistory));
-            } catch (e) {
-                setStreakHistory([]);
-            }
-        }
-        if (savedActivity) {
-            try {
-                const normalized = JSON.parse(savedActivity).map(normalizeActivity);
-                setRecentActivity(normalized);
-            } catch (e) {
-                setRecentActivity([]);
-            }
+                localStorage.setItem('examRediRecentActivity', JSON.stringify(sorted));
+                return sorted;
+            });
+        } catch (error) {
+            console.error("Failed to sync progress with backend:", error);
         }
     };
 
@@ -184,36 +168,19 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const now = Date.now();
         const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
-        // 1. Filter out dismissed and old items
-        const relevant = recentActivity.filter(a => {
-            const ts = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
-            const ds = a.dismissedAt && typeof a.dismissedAt === 'string'
-                ? new Date(a.dismissedAt).getTime()
-                : a.dismissedAt;
-
-            // Safety check for invalid dates
-            if (isNaN(ts)) return false;
-
-            return !ds && (Math.abs(now - ts) < THIRTY_DAYS); // Use Math.abs to handle small clock skews
-        });
-
-        // 2. Sorting: In-progress > undefined > completed, then by recency
-        return relevant.sort((a, b) => {
-            const tsA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
-            const tsB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
-
-            const getPriority = (status?: string) => {
-                if (status === 'in_progress') return 2;
-                if (status === 'abandoned') return 0;
-                return 1; // Default for completed or undefined (legacy)
-            };
-
-            const pA = getPriority(a.status);
-            const pB = getPriority(b.status);
-
-            if (pA !== pB) return pB - pA;
-            return tsB - tsA;
-        });
+        return recentActivity
+            .filter(a => {
+                if (a.dismissedAt) return false;
+                const ts = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+                if (isNaN(ts)) return false;
+                return (now - ts) < THIRTY_DAYS;
+            })
+            .sort((a, b) => {
+                // In-progress items always at top, then recency
+                if (a.status === 'in_progress' && b.status !== 'in_progress') return -1;
+                if (b.status === 'in_progress' && a.status !== 'in_progress') return 1;
+                return b.timestamp - a.timestamp;
+            });
     };
 
     return (

@@ -63,12 +63,6 @@ const TakeExamination: React.FC = () => {
     const { showInstallBanner } = usePwaInstall();
     const { addActivity } = useUserProgress();
 
-    // Stable session ID for activity tracking to prevent duplicates and ensure state transitions
-    const sessionId = useMemo(() => {
-        const title = location.state?.examTitle || 'UTME';
-        return `practice-${title}-${Date.now()}`;
-    }, []);
-
     // Validate that the route was accessed properly with required state
     const validatePracticeState = (state: any) => {
         if (!state) return false;
@@ -232,7 +226,7 @@ const TakeExamination: React.FC = () => {
 
         // Update recent activity to mark as finished (remove resume state)
         addActivity({
-            id: sessionId,
+            id: `practice-${examTitle || 'UTME'}`,
             title: `Completed: ${examTitle || 'Practice Session'}`,
             path: '/performance', // Redirect to performance on click after completion
             type: 'quiz',
@@ -240,7 +234,7 @@ const TakeExamination: React.FC = () => {
             score: `${score}/${questions.length}`
         });
 
-    }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state, sessionId]);
+    }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);
 
     // Track latest values in refs for unmount auto-submission
     const handleSubmitRef = React.useRef(handleSubmit);
@@ -329,7 +323,7 @@ const TakeExamination: React.FC = () => {
                 // Add to recent activity for "Practice Again"
                 const isCustom = examTitle?.includes('Custom');
                 addActivity({
-                    id: sessionId,
+                    id: `practice-${examTitle || 'UTME'}`,
                     title: examTitle || 'Practice Session',
                     path: isCustom ? '/practice/custom' : '/practice/standard',
                     type: 'quiz',
