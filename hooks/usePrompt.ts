@@ -14,7 +14,7 @@ export const usePrompt = (shouldBlock: boolean, message: string = 'Are you sure 
     const blocker = useBlocker(
         useCallback(
             ({ currentLocation, nextLocation }) =>
-                shouldBlock && currentLocation.pathname + currentLocation.search !== nextLocation.pathname + nextLocation.search,
+                shouldBlock && currentLocation.pathname !== nextLocation.pathname,
             [shouldBlock]
         )
     );
