@@ -229,7 +229,9 @@ const TakeExamination: React.FC = () => {
             id: `practice-${examTitle || 'UTME'}`,
             title: `Completed: ${examTitle || 'Practice Session'}`,
             path: '/performance', // Redirect to performance on click after completion
-            type: 'quiz'
+            type: 'quiz',
+            status: 'completed',
+            score: `${score}/${questions.length}`
         });
 
     }, [isFinished, questions, userAnswers, subjects, examTitle, isAuthenticated, user, showInstallBanner, addActivity, location.state]);
@@ -324,7 +326,8 @@ const TakeExamination: React.FC = () => {
                     id: `practice-${examTitle || 'UTME'}`,
                     title: examTitle || 'Practice Session',
                     path: isCustom ? '/practice/custom' : '/practice/standard',
-                    type: 'quiz'
+                    type: 'quiz',
+                    status: 'in_progress'
                 });
 
                 sessionStorage.removeItem('practiceCompleted');

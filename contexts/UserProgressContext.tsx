@@ -33,16 +33,25 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 
+    const normalizeActivity = (activity: RecentActivity): RecentActivity => ({
+        ...activity,
+        timestamp: typeof activity.timestamp === 'string' ? new Date(activity.timestamp).getTime() : activity.timestamp,
+        dismissedAt: activity.dismissedAt && typeof activity.dismissedAt === 'string'
+            ? new Date(activity.dismissedAt).getTime()
+            : activity.dismissedAt
+    });
+
     const syncProgress = async () => {
         if (isAuthenticated) {
             try {
                 const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
                 setStreak(data.streak);
                 setStreakHistory(data.streakHistory || []);
-                setRecentActivity(data.recentActivity || []);
+                const normalized = (data.recentActivity || []).map(normalizeActivity);
+                setRecentActivity(normalized);
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
-                localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
+                localStorage.setItem('examRediRecentActivity', JSON.stringify(normalized));
             } catch (error) {
                 console.error("Failed to sync progress with backend:", error);
                 loadFromLocal();
@@ -66,7 +75,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
         if (savedActivity) {
             try {
-                setRecentActivity(JSON.parse(savedActivity));
+                const normalized = JSON.parse(savedActivity).map(normalizeActivity);
+                setRecentActivity(normalized);
             } catch (e) {
                 setRecentActivity([]);
             }
@@ -78,13 +88,13 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     }, [isAuthenticated]);
 
     const addActivity = async (activity: Omit<RecentActivity, 'timestamp'>) => {
-        const newActivity: RecentActivity = {
+        const newActivity = normalizeActivity({
             ...activity,
             timestamp: Date.now()
-        };
+        } as RecentActivity);
 
         // Local dynamic update for responsiveness
-        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 20);
+        const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 30);
         setRecentActivity(updatedActivity);
 
         if (isAuthenticated) {
@@ -97,10 +107,11 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (response) {
                     setStreak(response.streak);
                     setStreakHistory(response.streakHistory);
-                    setRecentActivity(response.recentActivity);
+                    const normalized = response.recentActivity.map(normalizeActivity);
+                    setRecentActivity(normalized);
                     localStorage.setItem('examRediStreak', response.streak.toString());
                     localStorage.setItem('examRediStreakHistory', JSON.stringify(response.streakHistory));
-                    localStorage.setItem('examRediRecentActivity', JSON.stringify(response.recentActivity));
+                    localStorage.setItem('examRediRecentActivity', JSON.stringify(normalized));
                 }
             } catch (error) {
                 console.error("Failed to save progress to backend:", error);
@@ -137,15 +148,22 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const now = Date.now();
         const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
-        // 1. Filter out dismissed and old items
-        const relevant = recentActivity.filter(a =>
-            !a.dismissedAt &&
-            (now - a.timestamp) < THIRTY_DAYS
-        );
+        // 1. Filter out dismissed and old items (robust handling of any mixed data types)
+        const relevant = recentActivity.filter(a => {
+            const timestamp = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+            const dismissedAt = a.dismissedAt && typeof a.dismissedAt === 'string'
+                ? new Date(a.dismissedAt).getTime()
+                : a.dismissedAt;
+
+            return !dismissedAt && (now - timestamp) < THIRTY_DAYS;
+        });
 
         // 2. Simple but effective sorting: 
         // In-progress items higher than completed, then by recency
         return relevant.sort((a, b) => {
+            const tsA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+            const tsB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
+
             // Status priority: in_progress > undefined > completed
             const getPriority = (status?: string) => {
                 if (status === 'in_progress') return 2;
@@ -157,7 +175,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             const priorityB = getPriority(b.status);
 
             if (priorityA !== priorityB) return priorityB - priorityA;
-            return b.timestamp - a.timestamp;
+            return tsB - tsA;
         });
     };
 

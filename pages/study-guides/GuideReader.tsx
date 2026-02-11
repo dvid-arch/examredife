@@ -45,7 +45,9 @@ const GuideReader: React.FC = () => {
             id: g.id,
             title: g.title,
             path: `/study-guides/${category}/${slug}`,
-            type: 'guide'
+            type: 'guide',
+            status: 'in_progress',
+            progress: 50 // Default for now, could be tracked via scroll
         });
     };
 
