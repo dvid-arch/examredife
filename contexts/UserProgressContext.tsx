@@ -9,13 +9,6 @@ interface RecentActivity {
     timestamp: number;
     type: 'quiz' | 'guide' | 'game';
     state?: any; // For "Continue Studying" resumption
-    // Smart filtering and management fields
-    status?: 'completed' | 'in_progress' | 'abandoned';
-    score?: number;  // For quizzes
-    progress?: number;  // For guides/games (0-100)
-    dismissedAt?: number;
-    engagementCount?: number;
-    lastEngaged?: number;
 }
 
 interface UserProgressContextType {
@@ -23,8 +16,6 @@ interface UserProgressContextType {
     streakHistory: string[];
     recentActivity: RecentActivity[];
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
-    dismissActivity: (activityId: string) => Promise<void>;
-    trackEngagement: (activityId: string) => Promise<void>;
     syncProgress: () => Promise<void>;
 }
 
@@ -116,38 +107,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
-    const dismissActivity = async (activityId: string) => {
-        if (isAuthenticated) {
-            try {
-                await apiService(`/user/progress/activity/${activityId}`, {
-                    method: 'DELETE'
-                });
-                // Update local state
-                const updatedActivity = recentActivity.map(a =>
-                    a.id === activityId ? { ...a, dismissedAt: Date.now() } : a
-                );
-                setRecentActivity(updatedActivity);
-                localStorage.setItem('examRediRecentActivity', JSON.stringify(updatedActivity));
-            } catch (error) {
-                console.error("Failed to dismiss activity:", error);
-            }
-        }
-    };
-
-    const trackEngagement = async (activityId: string) => {
-        if (isAuthenticated) {
-            try {
-                await apiService(`/user/progress/activity/${activityId}/engage`, {
-                    method: 'POST'
-                });
-            } catch (error) {
-                console.error("Failed to track engagement:", error);
-            }
-        }
-    };
-
     return (
-        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, dismissActivity, trackEngagement, syncProgress }}>
+        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, syncProgress }}>
             {children}
         </UserProgressContext.Provider>
     );
