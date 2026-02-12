@@ -36,19 +36,32 @@ const tiles = [
 // FIX: Changed icon prop type to be more specific, allowing React.cloneElement to pass a className without a type error.
 const DashboardTile: React.FC<{ title: string; description: string; colorClass: string; path: string; icon: React.ReactElement<{ className?: string }>; tourId?: string; }> = ({ title, description, colorClass, path, icon, tourId }) => (
     <Link to={path} className="block group" data-tour-id={tourId}>
-        <div className="relative p-5 h-48 flex flex-col justify-between bg-slate-800 dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-primary/30 transition-all duration-300 overflow-hidden group-hover:-translate-y-1">
-            {/* Watermark Icon */}
-            <div className="absolute -right-5 -bottom-5 text-slate-700/50 dark:text-gray-700/50">
-                {React.cloneElement(icon, { className: "h-24 w-24" })}
+        <div className="relative p-6 h-48 flex flex-col justify-between bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 group-hover:-translate-y-1">
+            {/* Watermark Icon - Softer in light mode */}
+            <div className="absolute -right-6 -bottom-6 text-gray-50/50 dark:text-gray-700/30 group-hover:text-gray-100/50 dark:group-hover:text-gray-600/30 transition-colors">
+                {React.cloneElement(icon, { className: "h-32 w-32" })}
             </div>
-            <div className="relative z-10">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${colorClass}`}>
-                    {React.cloneElement(icon, { className: "h-6 w-6 text-white" })}
+            <div className="relative z-10 hidden sm:block"> {/* Hide icon on very small screens if needed, but usually keep */}
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass.replace('bg-', 'text-').replace('500', '600')} bg-opacity-10 bg-${colorClass.split('-')[1]}-50`}>
+                    {/* We need to restructure how colorClass is used or pass a lighter bg class. 
+                        For now, let's just make the icon generic primary or parse the color.
+                        Simpler approach: Use the passed colorClass for the ICON COLOR, not background.
+                     */}
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-${colorClass.split('-')[1]}-200`}>
+                        {React.cloneElement(icon, { className: "h-6 w-6" })}
+                    </div>
                 </div>
             </div>
+            {/* Mobile layout adjustment: Icon and Text inline? No, keep stacked for cards. */}
+            <div className="relative z-10 sm:hidden">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md`}>
+                    {React.cloneElement(icon, { className: "h-5 w-5" })}
+                </div>
+            </div>
+
             <div className="relative z-10 mt-auto">
-                <h3 className="font-bold text-xl text-white">{title}</h3>
-                <p className="text-sm text-slate-400">{description}</p>
+                <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 leading-tight mb-1 group-hover:text-primary transition-colors">{title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium line-clamp-2">{description}</p>
             </div>
         </div>
     </Link>
@@ -59,33 +72,39 @@ const WelcomeBanner = () => {
     const { streak } = useUserProgress();
 
     return (
-        <div data-tour-id="welcome-banner" className="bg-primary text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-            <div className="absolute -right-8 -top-8 w-40 h-40 bg-green-600 rounded-full opacity-30"></div>
-            <div className="absolute -left-12 bottom-4 w-40 h-40 bg-green-600 rounded-full opacity-20 transform rotate-45"></div>
+        <div data-tour-id="welcome-banner" className="bg-primary text-white p-8 rounded-3xl shadow-lg shadow-primary/20 relative overflow-hidden mb-8">
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
+
             <div className="relative z-10">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold">
-                            {isAuthenticated && user ? `Welcome back, ${user.name}!` : "Welcome to ExamRedi!"}
+                        <h1 className="text-3xl font-bold mb-2 tracking-tight">
+                            {isAuthenticated && user ? `Hello, ${user.name} 👋` : "Welcome to ExamRedi!"}
                         </h1>
-                        <p className="mt-2 text-green-100 max-w-2xl">
+                        <p className="text-blue-50 text-lg max-w-xl font-medium leading-relaxed">
                             {isAuthenticated
-                                ? "Ready to ace your exams? Let's dive into some practice questions or review your study guides."
-                                : "The best way to prepare for your exams. Dive into practice questions, AI-powered guides, and more."
+                                ? "Your AI study assistant is ready. What would you like to learn today?"
+                                : "The smartest way to prepare for your exams. Join thousands of students acing their tests."
                             }
                         </p>
                     </div>
                     {isAuthenticated && (
-                        <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl text-center min-w-[80px]">
-                            <span className="block text-2xl font-bold">🔥 {streak}</span>
-                            <span className="text-xs uppercase font-semibold">Streak</span>
+                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/20">
+                            <span className="text-2xl">🔥</span>
+                            <div>
+                                <span className="block text-xl font-bold leading-none">{streak}</span>
+                                <span className="text-[10px] uppercase tracking-wider font-bold text-blue-100">Day Streak</span>
+                            </div>
                         </div>
                     )}
                 </div>
-                <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                    <Link to="/practice" className="bg-white text-primary font-bold py-3 px-6 rounded-lg hover:bg-green-100 transition-colors duration-200 text-center">Start Practice Session</Link>
-                    <Link to="/challenge" className="bg-transparent border-2 border-white font-semibold py-3 px-6 rounded-lg hover:bg-white hover:text-primary transition-colors duration-200 text-center">
-                        Take the Challenge
+                <div className="mt-8 flex flex-wrap gap-3">
+                    <Link to="/practice" className="bg-white text-primary font-bold py-3 px-8 rounded-full hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-md">
+                        Start Practice
+                    </Link>
+                    <Link to="/challenge" className="bg-primary-dark/30 text-white border border-white/20 font-semibold py-3 px-8 rounded-full hover:bg-primary-dark/50 transition-all duration-200">
+                        Daily Challenge
                     </Link>
                 </div>
             </div>
@@ -189,9 +208,9 @@ const Dashboard: React.FC = () => {
                         <Link to="/journey" className="text-primary text-sm font-semibold hover:underline">View All</Link>
                     </div>
 
-                    <div className="flex overflow-x-auto pb-4 gap-4 snap-x no-scrollbar px-1 -mx-1">
+                    <div className="flex overflow-x-auto pb-6 gap-5 snap-x no-scrollbar px-1 -mx-1">
                         {continueStudyingActivities.slice(0, 3).map((activity) => (
-                            <div key={activity.id} className="flex-none w-[280px] sm:w-[320px] snap-start flex flex-col bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
+                            <div key={activity.id} className="flex-none w-[300px] snap-start flex flex-col bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 group">
                                 <Link
                                     to={activity.path}
                                     state={{
@@ -207,16 +226,17 @@ const Dashboard: React.FC = () => {
                                         {activity.type === 'quiz' ? '📝' : activity.type === 'guide' ? '📖' : '🎮'}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <h3 className="font-semibold text-slate-800 dark:text-white truncate text-sm sm:text-base">{activity.title}</h3>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="font-bold text-gray-800 dark:text-white truncate text-base">{activity.title}</h3>
                                             {activity.score !== undefined && (
-                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                    {activity.score}{activity.maxScore ? `/${activity.maxScore}` : ''}
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${(activity.score / (activity.maxScore || 1)) >= 0.7 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                                    }`}>
+                                                    {Math.round((activity.score / (activity.maxScore || 1)) * 100)}%
                                                 </span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider line-clamp-2 leading-relaxed">
+                                            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
                                                 {activity.subtitle || activity.type}
                                             </p>
                                         </div>

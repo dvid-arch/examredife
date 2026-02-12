@@ -41,9 +41,9 @@ const NavItem: React.FC<{ item: NavItemType; onClick?: () => void }> = ({ item, 
             {...navLinkProps}
             onClick={onClick}
             className={({ isActive }) =>
-                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${isActive
-                    ? 'bg-primary-light dark:bg-primary/20 text-primary font-semibold'
-                    : 'text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700'
+                `flex items-center space-x-3 px-4 py-3 rounded-full transition-all duration-200 mx-2 ${isActive
+                    ? 'bg-primary-light dark:bg-primary/20 text-primary font-bold shadow-sm'
+                    : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50'
                 }`
             }
         >
@@ -81,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate }) => {
             ></div>
 
             <aside
-                className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col p-4 transform transition-transform duration-300 ease-in-out z-40 h-full max-h-screen max-h-[100dvh]
+                className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 flex flex-col py-4 transform transition-transform duration-300 ease-in-out z-40 h-full max-h-screen max-h-[100dvh]
             ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             md:relative md:translate-x-0 md:z-auto`}
             >

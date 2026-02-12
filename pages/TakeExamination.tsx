@@ -690,45 +690,55 @@ const TakeExamination: React.FC = () => {
     }
 
     return (
-        <div className="relative flex flex-col h-screen bg-white font-sans light">
-            <header className="bg-primary text-white p-3 flex justify-between items-center shadow-md flex-shrink-0">
-                <div className="font-bold text-xl">{examTitle || 'ExamRedi Practice'}</div>
-                {mode !== 'study' ? (
-                    <div className="bg-orange-500 text-white font-bold text-lg tracking-wider px-4 py-1 rounded-full w-32 text-center">
+        <div className="relative flex flex-col h-screen bg-gray-50 font-sans text-gray-900">
+            <header className="bg-white text-gray-800 px-6 py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold">
+                        {examTitle ? examTitle.charAt(0) : 'E'}
+                    </div>
+                    <div>
+                        <div className="font-bold text-lg leading-tight">{examTitle || 'Practice Session'}</div>
+                        <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{mode === 'study' ? 'Study Mode' : 'Timed Mode'}</div>
+                    </div>
+                </div>
+
+                {mode !== 'study' && (
+                    <div className="bg-orange-50 text-orange-700 font-bold text-xl font-mono tracking-widest px-6 py-2 rounded-full border border-orange-100 shadow-sm">
                         {formatTime(timeLeft)}
                     </div>
-                ) : (
-                    <div className="bg-blue-500 text-white font-bold px-4 py-1 rounded-full text-sm uppercase tracking-widest">
-                        Study Mode
-                    </div>
                 )}
+
                 <div className="relative group">
                     <button
                         onClick={() => { if (window.confirm('Are you sure you want to submit?')) handleSubmit(); }}
                         disabled={!canSubmit}
-                        className="bg-red-600 hover:bg-red-700 font-bold py-2 px-6 rounded-lg transition-colors text-sm disabled:bg-red-400 disabled:cursor-not-allowed"
+                        className="bg-primary hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-full transition-all shadow-md shadow-blue-200 hover:shadow-lg disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
                         aria-describedby="submit-tooltip"
                     >
-                        Submit
+                        Finish & Submit
                     </button>
                     {!canSubmit && (
-                        <div id="submit-tooltip" role="tooltip" className="absolute bottom-full right-0 mb-2 w-max px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                            Please answer at least one question to submit.
+                        <div id="submit-tooltip" role="tooltip" className="absolute top-full right-0 mt-3 w-max px-4 py-2 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
+                            Answer at least one question to submit.
+                            <div className="absolute -top-1 right-6 w-2 h-2 bg-gray-900 rotate-45"></div>
                         </div>
                     )}
                 </div>
             </header>
 
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+                <main className="flex-1 flex flex-col overflow-y-auto w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
                     {subjects.length > 1 && (
-                        <div className="border-b border-gray-200 bg-white flex-shrink-0 sticky top-0 z-10">
-                            <div className="flex items-center -mb-px px-4 overflow-x-auto">
+                        <div className="mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+                            <div className="flex items-center gap-2">
                                 {subjects.map(subject => (
                                     <button
                                         key={subject}
                                         onClick={() => handleSubjectChange(subject)}
-                                        className={`py-3 px-4 font-semibold text-sm transition-colors whitespace-nowrap ${activeSubject === subject ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`py-2 px-5 rounded-full font-bold text-sm transition-all whitespace-nowrap shadow-sm border ${activeSubject === subject
+                                            ? 'bg-primary text-white border-primary shadow-md'
+                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                            }`}
                                     >
                                         {subject}
                                     </button>
@@ -736,15 +746,22 @@ const TakeExamination: React.FC = () => {
                             </div>
                         </div>
                     )}
-                    <div className="flex-1 p-4">
-                        <div className="max-w-4xl mx-auto">
+
+                    <div className="flex-1 flex flex-col">
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-10 flex-1 flex flex-col">
                             {currentQuestion ? (
                                 <>
-                                    <div className="flex items-center gap-4">
-                                        <p className="font-semibold text-slate-700 mb-2">
-                                            {activeSubject}: Question {localQuestionIndex + 1}
-                                            <span className="text-sm text-slate-500"> of {totalQuestionsInSubject}</span>
-                                        </p>
+                                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                                        <div>
+                                            <span className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-1 block">{activeSubject}</span>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-2xl font-bold text-gray-800">Question {localQuestionIndex + 1}</span>
+                                                <span className="text-gray-400 font-medium">/ {totalQuestionsInSubject}</span>
+                                            </div>
+                                        </div>
+                                        <div className="hidden sm:block text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1 rounded-lg">
+                                            ID: {currentQuestion.id}
+                                        </div>
                                     </div>
                                     {(() => {
                                         if (currentQuestion) {
@@ -789,27 +806,42 @@ const TakeExamination: React.FC = () => {
                                         </div>
                                     )}
 
-                                    <div className="space-y-4">
+                                    <div className="grid grid-cols-1 gap-3">
                                         {currentQuestion.options ? (
                                             Object.keys(currentQuestion.options).map((key) => {
                                                 const value = currentQuestion.options[key];
                                                 const isCorrect = key === currentQuestion.answer;
                                                 const isSelected = userAnswers[currentQuestion.id] === key;
 
-                                                let borderClass = 'border-gray-200 bg-white hover:border-primary-light';
+                                                let containerClass = 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50';
+                                                let indicatorClass = 'border-gray-300 text-gray-400 group-hover:border-gray-400';
 
                                                 if (mode === 'study' && showAnswer) {
-                                                    if (isCorrect) borderClass = 'border-green-500 bg-green-50 ring-2 ring-green-500/20';
-                                                    else if (isSelected) borderClass = 'border-red-400 bg-red-50';
+                                                    if (isCorrect) {
+                                                        containerClass = 'border-green-500 bg-green-50/50 ring-1 ring-green-500';
+                                                        indicatorClass = 'border-green-500 bg-green-500 text-white';
+                                                    } else if (isSelected) {
+                                                        containerClass = 'border-red-300 bg-red-50/50';
+                                                        indicatorClass = 'border-red-400 text-red-500';
+                                                    }
                                                 } else if (isFinished && mode !== 'mock') {
-                                                    if (isCorrect) borderClass = 'border-green-500 bg-green-50';
-                                                    else if (isSelected) borderClass = 'border-red-400 bg-red-50';
+                                                    if (isCorrect) {
+                                                        containerClass = 'border-green-500 bg-green-50/50';
+                                                        indicatorClass = 'border-green-500 bg-green-500 text-white';
+                                                    } else if (isSelected) {
+                                                        containerClass = 'border-red-300 bg-red-50/50';
+                                                        indicatorClass = 'border-red-400 text-red-500';
+                                                    }
                                                 } else if (isSelected) {
-                                                    borderClass = 'border-primary bg-primary-light';
+                                                    containerClass = 'border-primary bg-blue-50/50 ring-1 ring-primary';
+                                                    indicatorClass = 'border-primary bg-primary text-white';
                                                 }
 
                                                 return (
-                                                    <label key={key} className={`p-3 rounded-lg border-2 flex items-start gap-4 transition-all ${!isFinished ? 'cursor-pointer' : ''} ${borderClass}`}>
+                                                    <label
+                                                        key={key}
+                                                        className={`group relative p-4 rounded-2xl border-2 flex items-start gap-4 transition-all duration-200 ${!isFinished ? 'cursor-pointer' : ''} ${containerClass}`}
+                                                    >
                                                         <input
                                                             type="radio"
                                                             name={currentQuestion.id}
@@ -817,45 +849,57 @@ const TakeExamination: React.FC = () => {
                                                             disabled={isFinished}
                                                             checked={isSelected}
                                                             onChange={() => handleSelectOption(currentQuestion.id, key)}
-                                                            className="mt-1 h-5 w-5 text-primary focus:ring-primary border-gray-300 flex-shrink-0"
+                                                            className="sr-only" // Hide default radio
                                                         />
-                                                        <div className="flex-1">
-                                                            <div className="flex items-start gap-2">
-                                                                <span className="font-bold text-slate-800">{key}.</span>
-                                                                <div className="text-slate-700"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
-                                                            </div>
+                                                        {/* Custom Radio Indicator */}
+                                                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 font-bold text-sm transition-all ${indicatorClass}`}>
+                                                            {key}
+                                                        </div>
+
+                                                        <div className="flex-1 pt-1">
+                                                            <div className="text-gray-800 text-base leading-relaxed"><MarkdownRenderer content={value.text} forceLightMode={true} /></div>
                                                             {value.diagram && (
-                                                                <div className="mt-3">
-                                                                    <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-md border bg-white" />
+                                                                <div className="mt-4">
+                                                                    <img src={value.diagram} alt={`Option ${key} diagram`} className="max-w-xs h-auto rounded-xl border border-gray-100 bg-white shadow-sm" />
                                                                 </div>
                                                             )}
                                                         </div>
+
+                                                        {/* Selection Checkmark (Optional, for extra polish) */}
+                                                        {isSelected && (
+                                                            <div className="absolute top-4 right-4 text-primary opacity-0 scale-50 transition-all sm:opacity-100 sm:scale-100">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
                                                     </label>
                                                 )
                                             })
                                         ) : (
-                                            <div className="p-4 bg-yellow-50 text-yellow-800 rounded-md">
-                                                Options data not available for this question.
+                                            <div className="p-6 bg-yellow-50 text-yellow-800 rounded-2xl border border-yellow-100 flex items-center gap-3">
+                                                <span className="text-2xl">⚠️</span>
+                                                <span className="font-medium">Options data not available for this question.</span>
                                             </div>
                                         )}
                                     </div>
                                 </>
-                            ) : <p>Loading question...</p>}
+                            ) : <div className="p-12 text-center text-gray-400">Loading question...</div>}
 
 
-                            <div className="mt-8 flex justify-between items-center">
+                            <div className="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
                                 <button
                                     onClick={handlePrevQuestion}
                                     disabled={currentQuestionIndex === 0}
-                                    className="font-semibold text-white bg-blue-600 py-2 px-5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:bg-gray-400 transition-colors flex items-center gap-2"
+                                    className="group font-bold text-gray-500 py-3 px-6 rounded-full hover:bg-gray-100 hover:text-gray-800 disabled:opacity-30 disabled:hover:bg-transparent transition-all flex items-center gap-2"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                                     Previous
                                 </button>
                                 <button
                                     onClick={handleNextQuestion}
                                     disabled={currentQuestionIndex === questions.length - 1}
-                                    className="font-semibold text-white bg-green-500 py-2 px-5 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:bg-gray-400 transition-colors flex items-center gap-2"
+                                    className="font-bold text-white bg-primary py-3 px-8 rounded-full shadow-md shadow-blue-200 hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:shadow-none disabled:hover:translate-y-0 transition-all flex items-center gap-3"
                                 >
                                     Next
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>

@@ -1,107 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ExamRedi AI Study Platform</title>
-    <meta name="theme-color" content="#1E8449">
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
-    <script>
-      // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
 
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                DEFAULT: '#1E8449', // Darker, more vibrant green for better contrast
-                light: '#E8F5E9',   // Light Green for backgrounds/hovers
-              },
-              secondary: {
-                DEFAULT: '#1565C0', // Deeper blue for better contrast
-                light: '#E3F2FD',
-              },
-              accent: '#239B56', // A brighter accent green
-              'tile-blue': '#E3F2FD',
-              'tile-pink': '#FCE4EC',
-              'tile-green': '#E8F5E9',
-              'tile-purple': '#F3E5F5',
-              'tile-orange': '#FFF3E0',
-              'tile-yellow': '#FFFDE7',
-            }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExamRedi AI Study Platform</title>
+  <meta name="theme-color" content="#1a73e8">
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+  <script>
+    // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#1a73e8', // Google Blue
+              light: '#e8f0fe',   // Lightest Blue (Surface)
+              dark: '#1557b0',    // Darker Blue (Hover)
+            },
+            secondary: {
+              DEFAULT: '#ea4335', // Google Red (Accents/Errors)
+              light: '#fce8e6',
+            },
+            accent: {
+              DEFAULT: '#34a853', // Google Green (Success)
+              light: '#e6f4ea',
+            },
+            surface: {
+              DEFAULT: '#ffffff',
+              subtle: '#f1f3f4',  // Google Gray 100
+              hover: '#f8f9fa',
+            },
+            text: {
+              primary: '#202124', // Google Gray 900
+              secondary: '#5f6368', // Google Gray 700
+            },
+            'tile-blue': '#e8f0fe',
+            'tile-pink': '#fce8e6',
+            'tile-green': '#e6f4ea',
+            'tile-purple': '#f3e8fd',
+            'tile-orange': '#fef7e0',
+            'tile-yellow': '#fef7e0',
+          },
+          fontFamily: {
+            sans: ['"Google Sans"', 'Roboto', 'Arial', 'sans-serif'],
+          },
+          borderRadius: {
+            '4xl': '2rem',
           }
         }
       }
-    </script>
+    }
+  </script>
   <style>
-      @keyframes pulse-success {
-        0% {
-          transform: rotateY(180deg) scale(1);
-          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-        }
-        70% {
-          transform: rotateY(180deg) scale(1.05);
-          box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
-        }
-        100% {
-          transform: rotateY(180deg) scale(1);
-        }
-      }
-      .animate-pulse-success {
-        animation: pulse-success 0.8s ease-in-out;
+    @keyframes pulse-success {
+      0% {
+        transform: rotateY(180deg) scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
       }
 
-      /* Onboarding Tour Styles */
-      .tour-highlight {
-        position: relative;
-        z-index: 1000;
-        box-shadow: 0 0 0 4px white, 0 0 0 9999px rgba(0, 0, 0, 0.5);
-        border-radius: 8px;
-        transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+      70% {
+        transform: rotateY(180deg) scale(1.05);
+        box-shadow: 0 0 0 12px rgba(34, 197, 94, 0);
       }
-      .dark .tour-highlight {
-        box-shadow: 0 0 0 4px #1f2937, 0 0 0 9999px rgba(0, 0, 0, 0.6); /* Use a dark color for highlight */
+
+      100% {
+        transform: rotateY(180deg) scale(1);
       }
-      .tour-tooltip {
-        position: fixed;
-        z-index: 1001;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        max-width: 320px;
-        width: 100%;
-        transition: top 0.3s ease-in-out, left 0.3s ease-in-out;
-        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .animate-pulse-success {
+      animation: pulse-success 0.8s ease-in-out;
+    }
+
+    /* Onboarding Tour Styles */
+    .tour-highlight {
+      position: relative;
+      z-index: 1000;
+      box-shadow: 0 0 0 4px white, 0 0 0 9999px rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+    }
+
+    .dark .tour-highlight {
+      box-shadow: 0 0 0 4px #1f2937, 0 0 0 9999px rgba(0, 0, 0, 0.6);
+      /* Use a dark color for highlight */
+    }
+
+    .tour-tooltip {
+      position: fixed;
+      z-index: 1001;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      max-width: 320px;
+      width: 100%;
+      transition: top 0.3s ease-in-out, left 0.3s ease-in-out;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .tour-modal {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
       }
-      .tour-modal {
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+
+      to {
+        opacity: 1;
       }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
       }
-      @keyframes slideInRight {
-        from {
-          transform: translateX(100%);
-          opacity: 0;
-        }
-        to {
-          transform: translateX(0);
-          opacity: 1;
-        }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
       }
-      .animate-slide-in-right {
-        animation: slideInRight 0.3s ease-out forwards;
-      }
-    </style>
+    }
+
+    .animate-slide-in-right {
+      animation: slideInRight 0.3s ease-out forwards;
+    }
+  </style>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script type="importmap">
 {
@@ -127,10 +164,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-slate-100 dark:bg-gray-950 text-slate-800 dark:text-slate-100">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+
+<body class="bg-slate-100 dark:bg-gray-950 text-slate-800 dark:text-slate-100">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
