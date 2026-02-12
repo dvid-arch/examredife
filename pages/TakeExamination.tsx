@@ -690,8 +690,8 @@ const TakeExamination: React.FC = () => {
     }
 
     return (
-        <div className="relative flex flex-col h-screen bg-gray-50 font-sans text-gray-900">
-            <header className="bg-white text-gray-800 px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20 gap-2">
+        <div className="relative flex flex-col h-screen h-[100dvh] bg-gray-50 font-sans text-gray-900 overflow-hidden">
+            <header className="bg-white text-gray-800 px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20 gap-2 h-16 sm:h-20">
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-light flex-shrink-0 flex items-center justify-center text-primary font-bold text-sm sm:text-base">
                         {examTitle ? examTitle.charAt(0) : 'E'}
@@ -727,11 +727,11 @@ const TakeExamination: React.FC = () => {
                 </div>
             </header>
 
-            <div className="flex-1 flex flex-col overflow-hidden relative">
-                <main className="flex-1 flex flex-col overflow-y-auto w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+            <div className="flex-1 flex flex-col overflow-hidden relative w-full">
+                <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     {subjects.length > 1 && (
-                        <div className="mb-4 sm:mb-6 overflow-x-auto py-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
-                            <div className="flex items-center gap-2 min-w-max">
+                        <div className="flex-shrink-0 mb-4 sm:mb-6 overflow-x-auto py-3 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar w-[calc(100%+2rem)] sm:w-full">
+                            <div className="flex items-center gap-2 min-w-max h-12">
                                 {subjects.map(subject => (
                                     <button
                                         key={subject}
