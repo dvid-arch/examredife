@@ -691,31 +691,32 @@ const TakeExamination: React.FC = () => {
 
     return (
         <div className="relative flex flex-col h-screen bg-gray-50 font-sans text-gray-900">
-            <header className="bg-white text-gray-800 px-6 py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold">
+            <header className="bg-white text-gray-800 px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20 gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-light flex-shrink-0 flex items-center justify-center text-primary font-bold text-sm sm:text-base">
                         {examTitle ? examTitle.charAt(0) : 'E'}
                     </div>
-                    <div>
-                        <div className="font-bold text-lg leading-tight">{examTitle || 'Practice Session'}</div>
-                        <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{mode === 'study' ? 'Study Mode' : 'Timed Mode'}</div>
+                    <div className="min-w-0">
+                        <div className="font-bold text-sm sm:text-lg leading-tight truncate">{examTitle || 'Practice Session'}</div>
+                        <div className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider hidden sm:block">{mode === 'study' ? 'Study Mode' : 'Timed Mode'}</div>
                     </div>
                 </div>
 
                 {mode !== 'study' && (
-                    <div className="bg-orange-50 text-orange-700 font-bold text-xl font-mono tracking-widest px-6 py-2 rounded-full border border-orange-100 shadow-sm">
+                    <div className="bg-orange-50 text-orange-700 font-bold text-sm sm:text-xl font-mono tracking-widest px-3 py-1 sm:px-6 sm:py-2 rounded-full border border-orange-100 shadow-sm whitespace-nowrap">
                         {formatTime(timeLeft)}
                     </div>
                 )}
 
-                <div className="relative group">
+                <div className="relative group shrink-0">
                     <button
                         onClick={() => { if (window.confirm('Are you sure you want to submit?')) handleSubmit(); }}
                         disabled={!canSubmit}
-                        className="bg-primary hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-full transition-all shadow-md shadow-blue-200 hover:shadow-lg disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed"
+                        className="bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 sm:py-2.5 sm:px-6 rounded-full transition-all shadow-md shadow-blue-200 hover:shadow-lg disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed text-xs sm:text-base whitespace-nowrap flex items-center justify-center"
                         aria-describedby="submit-tooltip"
                     >
-                        Finish & Submit
+                        <span className="sm:inline hidden">Finish & Submit</span>
+                        <span className="sm:hidden inline">Submit</span>
                     </button>
                     {!canSubmit && (
                         <div id="submit-tooltip" role="tooltip" className="absolute top-full right-0 mt-3 w-max px-4 py-2 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl">
@@ -729,15 +730,15 @@ const TakeExamination: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden relative">
                 <main className="flex-1 flex flex-col overflow-y-auto w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
                     {subjects.length > 1 && (
-                        <div className="mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-                            <div className="flex items-center gap-2">
+                        <div className="mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+                            <div className="flex items-center gap-2 min-w-max">
                                 {subjects.map(subject => (
                                     <button
                                         key={subject}
                                         onClick={() => handleSubjectChange(subject)}
-                                        className={`py-2 px-5 rounded-full font-bold text-sm transition-all whitespace-nowrap shadow-sm border ${activeSubject === subject
-                                            ? 'bg-primary text-white border-primary shadow-md'
-                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                        className={`py-2 px-4 sm:px-5 rounded-full font-bold text-xs sm:text-sm transition-all whitespace-nowrap shadow-sm border mb-1 ${activeSubject === subject
+                                                ? 'bg-primary text-white border-primary shadow-md transform scale-105'
+                                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                             }`}
                                     >
                                         {subject}
