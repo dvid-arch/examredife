@@ -730,13 +730,13 @@ const TakeExamination: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden relative">
                 <main className="flex-1 flex flex-col overflow-y-auto w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
                     {subjects.length > 1 && (
-                        <div className="mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+                        <div className="mb-4 sm:mb-6 overflow-x-auto py-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm">
                             <div className="flex items-center gap-2 min-w-max">
                                 {subjects.map(subject => (
                                     <button
                                         key={subject}
                                         onClick={() => handleSubjectChange(subject)}
-                                        className={`py-2 px-4 sm:px-5 rounded-full font-bold text-xs sm:text-sm transition-all whitespace-nowrap shadow-sm border mb-1 ${activeSubject === subject
+                                        className={`py-2 px-4 sm:px-5 rounded-full font-bold text-xs sm:text-sm transition-all whitespace-nowrap shadow-sm border ${activeSubject === subject
                                                 ? 'bg-primary text-white border-primary shadow-md transform scale-105'
                                                 : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                                             }`}
