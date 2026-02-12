@@ -156,7 +156,28 @@ const TakeExamination: React.FC = () => {
         } else if (location.state?.userAnswers && mode !== 'mock') {
             setUserAnswers(prev => ({ ...prev, ...location.state.userAnswers }));
         }
-    }, [mode, location.state?.userAnswers, location.state?.isRetake, sessionId]); // Run once on mount or state change
+    }, [mode, location.state?.userAnswers, location.state?.isRetake, sessionId]);
+
+    // Scrub userAnswers against current questions to remove ghosts
+    useEffect(() => {
+        if (questions.length > 0) {
+            setUserAnswers(prev => {
+                const validIds = new Set(questions.map(q => q.id));
+                const filtered: { [key: string]: string } = {};
+                let hasChanges = false;
+
+                Object.entries(prev).forEach(([key, value]) => {
+                    if (validIds.has(key)) {
+                        filtered[key] = value;
+                    } else {
+                        hasChanges = true;
+                    }
+                });
+
+                return hasChanges ? filtered : prev;
+            });
+        }
+    }, [questions]);
 
     // Save answers to sessionStorage whenever they change
     useEffect(() => {
@@ -178,6 +199,7 @@ const TakeExamination: React.FC = () => {
                     state: {
                         ...location.state,
                         sessionId,
+                        questions, // Persist exact questions for deterministic resumption
                         userAnswers // Save current answers for true resumption
                     }
                 });
@@ -185,7 +207,7 @@ const TakeExamination: React.FC = () => {
 
             return () => clearTimeout(timer);
         }
-    }, [userAnswers, isFinished, questions.length, sessionId, subjects, location.pathname, location.state, addActivity, mode]);
+    }, [userAnswers, isFinished, questions, sessionId, subjects, location.pathname, location.state, addActivity, mode]);
 
     const examTitle = location.state?.examTitle;
 
@@ -405,7 +427,11 @@ const TakeExamination: React.FC = () => {
                     subtitle: `${preparedQuestions[0].subject} ${preparedQuestions.length > preparedQuestions.filter(q => q.subject === preparedQuestions[0].subject).length ? '+ More' : ''} • ${preparedQuestions.length} Questions`,
                     path: location.pathname,
                     type: 'quiz',
-                    state: { ...location.state, sessionId } // Store original init state with sessionId
+                    state: {
+                        ...location.state,
+                        sessionId,
+                        questions: preparedQuestions // Persist questions immediately
+                    }
                 });
 
                 sessionStorage.removeItem('practiceCompleted');
