@@ -27,9 +27,12 @@ const TopicPracticeSetup: React.FC = () => {
                 });
 
                 // 2. Perform batch search with these keywords
+                const searchQueries = (keywords && keywords.length > 0) ? keywords : [topicName];
+                console.log("Searching for questions with keywords:", searchQueries);
+
                 const results = await apiService<ChallengeQuestion[]>('/data/search-batch', {
                     method: 'POST',
-                    body: { keywords: keywords || [topicName], subject }
+                    body: { keywords: searchQueries, subject }
                 });
 
                 setAvailableQuestions(results);
@@ -156,8 +159,8 @@ const TopicPracticeSetup: React.FC = () => {
                                             key={m.id}
                                             onClick={() => setMode(m.id)}
                                             className={`flex flex-col p-4 rounded-2xl border-2 transition-all text-left space-y-2 ${mode === m.id
-                                                    ? 'border-primary bg-primary/5 ring-4 ring-primary/10'
-                                                    : 'border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                                                ? 'border-primary bg-primary/5 ring-4 ring-primary/10'
+                                                : 'border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                                                 }`}
                                         >
                                             <div className="flex items-center justify-between">
