@@ -24,7 +24,7 @@ const GuideReader: React.FC = () => {
                     const data: StudyGuide[] = await apiService('/data/guides');
                     const match = data.find(g =>
                         g.subject.toLowerCase().replace(/\s+/g, '-') === category &&
-                        g.title.toLowerCase().replace(/\s+/g, '-') === slug
+                        g.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') === slug
                     );
                     if (match) {
                         setGuide(match);
@@ -173,7 +173,7 @@ const GuideReader: React.FC = () => {
                             <div className="flex-1 flex justify-center">
                                 {isLastSlide ? (
                                     <Link
-                                        to={`/practice/topic/${guide.subject.toLowerCase()}/${guide.title.toLowerCase().replace(/\s+/g, '-')}`}
+                                        to={`/practice/topic/${guide.subject.toLowerCase()}/${guide.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
                                         className="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-emerald-500 text-white font-black py-4 px-10 rounded-2xl text-lg hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-200 dark:shadow-none hover:scale-105 active:scale-95"
                                     >
                                         <span className="text-2xl">⚡</span>
@@ -210,7 +210,7 @@ const GuideReader: React.FC = () => {
                     <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-3">Ready to master this?</h3>
                     <p className="text-slate-600 dark:text-slate-400 mb-8 font-bold text-lg">Test your knowledge with official past questions.</p>
                     <Link
-                        to={`/practice/topic/${guide.subject.toLowerCase()}/${guide.title.toLowerCase().replace(/\s+/g, '-')}`}
+                        to={`/practice/topic/${guide.subject.toLowerCase()}/${guide.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
                         className="inline-flex items-center gap-3 bg-primary text-white font-black py-5 px-10 rounded-2xl hover:bg-accent transition-all duration-300 shadow-2xl hover:scale-105 active:scale-95 text-xl"
                     >
                         ⚡ Start Practice Test
