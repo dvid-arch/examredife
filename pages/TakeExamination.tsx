@@ -83,6 +83,11 @@ const TakeExamination: React.FC = () => {
         const stateTimestamp = state.timestamp || 0;
         if (now - stateTimestamp > 5 * 60 * 1000) return false; // 5 minutes
 
+        // Check for topic test state (questions passed directly)
+        if (state.questions && Array.isArray(state.questions) && state.questions.length > 0) {
+            return typeof state.examTitle === 'string';
+        }
+
         // Check for standard mode state
         if (state.subjects && Array.isArray(state.subjects) && state.subjects.length > 0) {
             return typeof state.year !== 'undefined' && typeof state.examTitle === 'string';
