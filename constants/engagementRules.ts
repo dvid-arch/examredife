@@ -15,7 +15,7 @@ export const NUDGE_REGISTRY: Record<string, EngagementNudge> = {
         id: 'pro-success-stat',
         title: 'Unlock Your Success',
         message: '90% of Pro users gain admission into their first choice course. Unlock the features that turn luck into mastery.',
-        type: 'BOTTOM_SHEET',
+        type: 'MODAL',
         icon: 'rocket',
         actionLabel: 'Go Pro Today',
         actionPath: '/profile',
