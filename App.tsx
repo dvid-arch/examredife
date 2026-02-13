@@ -16,6 +16,8 @@ import { ThemeProvider } from './contexts/ThemeContext.tsx';
 import { UserProgressProvider } from './contexts/UserProgressContext.tsx';
 import { ToastProvider } from './contexts/ToastContext.tsx';
 import { PastQuestionsProvider } from './contexts/PastQuestionsContext.tsx';
+import { EngagementProvider } from './contexts/EngagementContext.tsx';
+import SmartNudge from './components/SmartNudge.tsx';
 
 // Pages - Lazy load all pages for faster initial load
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
@@ -71,10 +73,12 @@ const RootLayout: React.FC = () => {
         <AuthProvider>
           <PastQuestionsProvider>
             <UserProgressProvider>
-              <PwaInstallProvider>
-                <Outlet />
-                <PwaInstallBanner />
-              </PwaInstallProvider>
+              <EngagementProvider>
+                <PwaInstallProvider>
+                  <Outlet />
+                  <PwaInstallBanner />
+                </PwaInstallProvider>
+              </EngagementProvider>
             </UserProgressProvider>
           </PastQuestionsProvider>
         </AuthProvider>
@@ -151,6 +155,7 @@ const MainLayout: React.FC = () => {
             </Suspense>
           </div>
         </main>
+        <SmartNudge />
       </div>
     </div>
   );

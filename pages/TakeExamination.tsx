@@ -7,6 +7,9 @@ import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
+import { useEngagement } from '../contexts/EngagementContext.tsx';
+import { evaluateNudgeTrigger, NUDGE_REGISTRY } from '../constants/engagementRules.ts';
+import QuizResults from '../components/QuizResults.tsx';
 
 import apiService from '../services/apiService.ts';
 
@@ -111,6 +114,9 @@ const TakeExamination: React.FC = () => {
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [showAnswer, setShowAnswer] = useState(false);
+    const [topicBreakdown, setTopicBreakdown] = useState<Record<string, { correct: number, total: number }>>({});
+
+    const { activeNudge, triggerNudge } = useEngagement();
 
     const sessionId = useMemo(() => {
         if (location.state?.isRetake) return Date.now().toString();
@@ -289,7 +295,25 @@ const TakeExamination: React.FC = () => {
         });
 
         setFinalScore(score);
+        setTopicBreakdown(topicBreakdown);
         setIsFinished(true);
+
+        // Engagement Logic: Trigger nudges based on performance & usage
+        if (isAuthenticated) {
+            if (score / questions.length >= 0.85) {
+                // High performer - 100k Challenge
+                setTimeout(() => {
+                    triggerNudge('utme-challenge-100k');
+                }, 2000);
+            }
+
+            // Universal Pro Trigger for all free users
+            if (user?.subscription === 'free') {
+                setTimeout(() => {
+                    triggerNudge('pro-success-stat');
+                }, 4000); // Slight delay after the performance nudge if applicable
+            }
+        }
         sessionStorage.setItem('practiceCompleted', 'true');
         sessionStorage.removeItem('practiceStarted');
         sessionStorage.removeItem('practiceEndTime');
@@ -668,29 +692,13 @@ const TakeExamination: React.FC = () => {
 
     if (isFinished) {
         return (
-            <div className="flex items-center justify-center h-full bg-slate-100 dark:bg-gray-900 p-4">
-                <div className="text-center bg-white dark:bg-gray-800 p-8 sm:p-12 rounded-lg shadow-xl max-w-lg w-full transition-colors duration-200">
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Session Complete!</h1>
-                    <p className="text-slate-600 dark:text-gray-300 mt-2">Here is your score:</p>
-                    <p className="text-7xl font-extrabold text-primary my-6 dark:text-green-400">{finalScore} <span className="text-5xl text-slate-500 dark:text-gray-500">/ {totalQuestionsForSession}</span></p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link to="/practice" replace className="font-semibold text-primary py-3 px-6 rounded-lg border-2 border-primary hover:bg-primary-light dark:hover:bg-gray-700 transition-colors">
-                            New Practice
-                        </Link>
-                        <Link to="/performance" replace className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
-                            View Performance
-                        </Link>
-                    </div>
-                    {!isAuthenticated && (
-                        <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
-                            <p className="text-slate-600 dark:text-gray-300 mb-3">Want to save this result and track your progress?</p>
-                            <button onClick={requestLogin} className="bg-secondary text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors">
-                                Login to Save Score
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <QuizResults
+                finalScore={finalScore}
+                totalQuestions={totalQuestionsForSession}
+                topicBreakdown={topicBreakdown}
+                isAuthenticated={isAuthenticated}
+                requestLogin={requestLogin}
+            />
         );
     }
 

@@ -20,8 +20,10 @@ interface UserProgressContextType {
     streak: number;
     streakHistory: string[];
     recentActivity: RecentActivity[];
+    engagement: { dismissedNudges: string[], unlockedNudges: string[] };
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     syncProgress: () => Promise<void>;
+    updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
 }
 
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
@@ -31,11 +33,14 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [streak, setStreak] = useState(0);
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+    const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[] }>({ dismissedNudges: [], unlockedNudges: [] });
 
     const loadFromLocal = useCallback(() => {
         const savedStreak = localStorage.getItem('examRediStreak');
         const savedStreakHistory = localStorage.getItem('examRediStreakHistory');
         const savedActivity = localStorage.getItem('examRediRecentActivity');
+        const savedEngagement = localStorage.getItem('examRediEngagement');
+
         if (savedStreak) setStreak(parseInt(savedStreak));
         if (savedStreakHistory) {
             try {
@@ -51,15 +56,33 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 setRecentActivity([]);
             }
         }
+        if (savedEngagement) {
+            try {
+                setEngagement(JSON.parse(savedEngagement));
+            } catch (e) {
+                setEngagement({ dismissedNudges: [], unlockedNudges: [] });
+            }
+        }
     }, []);
 
     const syncProgress = useCallback(async () => {
         if (isAuthenticated) {
             try {
-                const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
+                const data = await apiService<{
+                    streak: number,
+                    streakHistory?: string[],
+                    recentActivity: RecentActivity[],
+                    engagement?: { dismissedNudges: string[], unlockedNudges: string[] }
+                }>('/user/progress');
+
                 setStreak(data.streak);
                 setStreakHistory(data.streakHistory || []);
                 setRecentActivity(data.recentActivity || []);
+                if (data.engagement) {
+                    setEngagement(data.engagement);
+                    localStorage.setItem('examRediEngagement', JSON.stringify(data.engagement));
+                }
+
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
                 localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
@@ -99,7 +122,12 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
         if (isAuthenticated) {
             try {
-                const response = await apiService<{ streak: number, streakHistory: string[], recentActivity: RecentActivity[] }>('/user/progress', {
+                const response = await apiService<{
+                    streak: number,
+                    streakHistory: string[],
+                    recentActivity: RecentActivity[],
+                    engagement: { dismissedNudges: string[], unlockedNudges: string[] }
+                }>('/user/progress', {
                     method: 'PUT',
                     body: { recentActivity: [newActivity] }
                 });
@@ -108,9 +136,11 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     setStreak(response.streak);
                     setStreakHistory(response.streakHistory);
                     setRecentActivity(response.recentActivity);
+                    setEngagement(response.engagement);
                     localStorage.setItem('examRediStreak', response.streak.toString());
                     localStorage.setItem('examRediStreakHistory', JSON.stringify(response.streakHistory));
                     localStorage.setItem('examRediRecentActivity', JSON.stringify(response.recentActivity));
+                    localStorage.setItem('examRediEngagement', JSON.stringify(response.engagement));
                 }
             } catch (error) {
                 console.error("Failed to save progress to backend:", error);
@@ -121,8 +151,13 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
+    const updateEngagementState = (newEngagement: { dismissedNudges: string[], unlockedNudges: string[] }) => {
+        setEngagement(newEngagement);
+        localStorage.setItem('examRediEngagement', JSON.stringify(newEngagement));
+    };
+
     return (
-        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, addActivity, syncProgress }}>
+        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, engagement, addActivity, syncProgress, updateEngagementState }}>
             {children}
         </UserProgressContext.Provider>
     );

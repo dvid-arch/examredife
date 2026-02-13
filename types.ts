@@ -101,3 +101,16 @@ export interface User {
   role: 'user' | 'admin';
   preferredSubjects?: string[];
 }
+
+export type NudgeType = 'HERO_CARD' | 'BOTTOM_SHEET' | 'MODAL';
+
+export interface EngagementNudge {
+  id: string;
+  title: string;
+  message: string;
+  type: NudgeType;
+  icon?: string;
+  actionLabel?: string;
+  actionPath?: string;
+  ctaColor?: string;
+}
