@@ -14,11 +14,27 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export type SlideType = 'content' | 'question' | 'summary';
+
+export interface GuideSlide {
+  type: SlideType;
+  title?: string;
+  content?: string; // Markdown
+  image?: string;
+  // For question slides
+  question?: string;
+  options?: string[];
+  answer?: string;
+  explanation?: string;
+}
+
 export interface StudyGuide {
   id: string;
   title: string;
   subject: string;
-  content: string;
+  content: string; // Fallback or summary
+  slides?: GuideSlide[];
+  version?: string;
   createdAt: string;
 }
 
