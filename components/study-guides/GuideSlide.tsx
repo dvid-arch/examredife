@@ -38,7 +38,7 @@ const GuideSlide: React.FC<GuideSlideProps> = ({ slide, onComplete, isCompleted 
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-8 border-2 border-slate-100 dark:border-slate-700/50 shadow-sm"
+                className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl sm:rounded-3xl p-5 sm:p-8 border-2 border-slate-100 dark:border-slate-700/50 shadow-sm"
             >
                 <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-4 leading-tight">
                     {slide.question}
@@ -67,7 +67,7 @@ const GuideSlide: React.FC<GuideSlideProps> = ({ slide, onComplete, isCompleted 
                             whileTap={!showFeedback ? { scale: 0.98 } : {}}
                             onClick={() => handleOptionSelect(option)}
                             disabled={showFeedback}
-                            className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all duration-300 text-left font-bold text-lg shadow-sm ${bgClass}`}
+                            className={`flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 text-left font-bold text-base sm:text-lg shadow-sm ${bgClass}`}
                         >
                             <span className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm border-2 ${isSelected ? 'bg-primary text-white border-primary' : 'border-slate-200 dark:border-slate-700 text-slate-400'
                                 }`}>
@@ -91,7 +91,7 @@ const GuideSlide: React.FC<GuideSlideProps> = ({ slide, onComplete, isCompleted 
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="bg-primary/5 dark:bg-primary/10 rounded-2xl p-6 border-l-4 border-primary"
+                        className="bg-primary/5 dark:bg-primary/10 rounded-2xl p-4 sm:p-6 border-l-4 border-primary"
                     >
                         <h4 className="text-primary font-black uppercase tracking-widest text-xs mb-2">Explanation</h4>
                         <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
@@ -104,7 +104,7 @@ const GuideSlide: React.FC<GuideSlideProps> = ({ slide, onComplete, isCompleted 
     );
 
     const renderSummary = () => (
-        <div className="text-center space-y-8 py-12">
+        <div className="text-center space-y-6 sm:space-y-8 py-6 sm:py-12">
             <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1, rotate: 360 }}

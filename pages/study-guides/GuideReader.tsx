@@ -90,9 +90,9 @@ const GuideReader: React.FC = () => {
     const canGoNext = !hasSlides || currentSlide?.type === 'content' || currentSlide?.type === 'summary' || completedSlides.includes(currentSlideIndex);
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
+        <div className="max-w-4xl mx-auto px-0 py-4 sm:py-10">
             {/* Header / Nav */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-5 sm:mb-8 px-4 sm:px-0">
                 <button
                     onClick={() => navigate(`/study-guides/${category}`)}
                     className="group flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors font-bold"
@@ -140,7 +140,7 @@ const GuideReader: React.FC = () => {
                         className="flex-1"
                     >
                         {hasSlides ? (
-                            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-8 sm:p-12 mb-24">
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[2.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-5 sm:p-12 mb-24">
                                 <GuideSlide
                                     slide={currentSlide!}
                                     onComplete={handleSlideComplete}
@@ -148,7 +148,7 @@ const GuideReader: React.FC = () => {
                                 />
                             </div>
                         ) : (
-                            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 p-8 sm:p-12">
+                            <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 p-6 sm:p-12 mx-4 sm:mx-0">
                                 <h1 className="text-4xl font-black text-slate-800 dark:text-white mb-6 uppercase tracking-tighter">{guide.title}</h1>
                                 <MarkdownRenderer content={guide.content} />
                             </div>
@@ -158,7 +158,7 @@ const GuideReader: React.FC = () => {
 
                 {/* Fixed Bottom Navigation */}
                 {hasSlides && (
-                    <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 z-50">
+                    <div className="fixed bottom-0 left-0 right-0 p-4 sm:p-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800/50 z-50">
                         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
                             <button
                                 onClick={prevSlide}
