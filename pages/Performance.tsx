@@ -9,6 +9,7 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Cell, AreaChart, Area
 } from 'recharts';
+import { SUBJECTS, isSubject, getSubjectKey } from '../constants/subjects.ts';
 
 type TabType = 'overview' | 'mastery' | 'history';
 
@@ -64,8 +65,6 @@ const Performance: React.FC = () => {
             };
         }
 
-        const standardSubjects = ['Biology', 'Chemistry', 'Physics', 'Mathematics', 'English', 'Economics', 'Government', 'Literature', 'CRS', 'Geography', 'Commerce', 'Financial Accounting', 'Agricultural Science'];
-
         const totalScore = results.reduce((sum, r) => sum + r.score, 0);
         const totalQuestions = results.reduce((sum, r) => sum + r.totalQuestions, 0);
         const avg = totalQuestions > 0 ? (totalScore / totalQuestions) * 100 : 0;
@@ -87,16 +86,18 @@ const Performance: React.FC = () => {
         results.forEach(result => {
             if (result.topicBreakdown) {
                 Object.entries(result.topicBreakdown).forEach(([key, data]: [string, any]) => {
-                    const isStandard = standardSubjects.some(s => s.toLowerCase() === key.toLowerCase());
+                    const subjectKey = getSubjectKey(key);
 
-                    if (isStandard) {
-                        if (!subjectMap[key]) subjectMap[key] = { correct: 0, total: 0 };
-                        subjectMap[key].correct += data.correct;
-                        subjectMap[key].total += data.total;
+                    if (subjectKey) {
+                        const sName = SUBJECTS[subjectKey].name;
+                        if (!subjectMap[sName]) subjectMap[sName] = { correct: 0, total: 0 };
+                        subjectMap[sName].correct += data.correct;
+                        subjectMap[sName].total += data.total;
                     } else {
                         // It's a topic
-                        // Try to find which subject this topic belongs to (from result.subject or metadata)
-                        const topicSubject = result.subject.split(', ')[0] || 'General';
+                        const firstSubject = result.subject.split(', ')[0] || 'General';
+                        const parentSubjectKey = getSubjectKey(firstSubject);
+                        const topicSubject = parentSubjectKey ? SUBJECTS[parentSubjectKey].name : 'General';
                         if (!topicMap[key]) topicMap[key] = { correct: 0, total: 0, subject: topicSubject };
                         topicMap[key].correct += data.correct;
                         topicMap[key].total += data.total;
@@ -105,10 +106,11 @@ const Performance: React.FC = () => {
             } else {
                 const subjects = result.subject.split(', ');
                 subjects.forEach(subject => {
-                    const cleanSubject = subject.trim();
-                    if (!subjectMap[cleanSubject]) subjectMap[cleanSubject] = { correct: 0, total: 0 };
-                    subjectMap[cleanSubject].correct += result.score / subjects.length;
-                    subjectMap[cleanSubject].total += result.totalQuestions / subjects.length;
+                    const subjectKey = getSubjectKey(subject);
+                    const subjectName = subjectKey ? SUBJECTS[subjectKey].name : subject.trim();
+                    if (!subjectMap[subjectName]) subjectMap[subjectName] = { correct: 0, total: 0 };
+                    subjectMap[subjectName].correct += result.score / subjects.length;
+                    subjectMap[subjectName].total += result.totalQuestions / subjects.length;
                 });
             }
         });
@@ -167,6 +169,12 @@ const Performance: React.FC = () => {
         }
         return days;
     }, []);
+
+    // Helper to get color for a subject safely
+    const getSubjectColor = (subjectName: string, index: number) => {
+        const key = getSubjectKey(subjectName);
+        return key ? SUBJECTS[key].color : COLORS[index % COLORS.length];
+    };
 
     const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
 
@@ -264,8 +272,8 @@ const Performance: React.FC = () => {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === tab
-                                    ? 'bg-white dark:bg-slate-700 text-primary shadow-sm ring-1 ring-slate-200 dark:ring-slate-600'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                ? 'bg-white dark:bg-slate-700 text-primary shadow-sm ring-1 ring-slate-200 dark:ring-slate-600'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                         >
                             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -410,8 +418,8 @@ const Performance: React.FC = () => {
                                     key={entry.subject}
                                     onClick={() => setSelectedSubject(entry.subject)}
                                     className={`w-full text-left p-4 rounded-2xl transition-all border ${selectedSubject === entry.subject || (!selectedSubject && idx === 0)
-                                            ? 'bg-primary/10 border-primary ring-1 ring-primary/20'
-                                            : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-primary/50'
+                                        ? 'bg-primary/10 border-primary ring-1 ring-primary/20'
+                                        : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-primary/50'
                                         }`}
                                 >
                                     <div className="flex justify-between items-center mb-2">
@@ -421,7 +429,7 @@ const Performance: React.FC = () => {
                                     <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                                         <div
                                             className="h-full transition-all duration-1000"
-                                            style={{ width: `${entry.average}%`, backgroundColor: COLORS[idx % COLORS.length] }}
+                                            style={{ width: `${entry.average}%`, backgroundColor: getSubjectColor(entry.subject, idx) }}
                                         ></div>
                                     </div>
                                 </button>
@@ -443,7 +451,7 @@ const Performance: React.FC = () => {
                                                 <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{currentSubject} Mastery</h3>
                                                 <p className="text-slate-500 text-sm font-medium">Topic-level breakdown based on {topics.length} recorded concepts.</p>
                                             </div>
-                                            <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center font-bold text-lg`} style={{ backgroundColor: COLORS[performanceBySubject.findIndex(s => s.subject === currentSubject) % COLORS.length] }}>
+                                            <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center font-bold text-lg`} style={{ backgroundColor: getSubjectColor(currentSubject, performanceBySubject.findIndex(s => s.subject === currentSubject)) }}>
                                                 {Math.round(performanceBySubject.find(s => s.subject === currentSubject)?.average || 0)}%
                                             </div>
                                         </div>

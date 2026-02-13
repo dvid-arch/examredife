@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { useToasts } from '../contexts/ToastContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
+import { STANDARD_SUBJECTS } from '../constants/subjects.ts';
 
 // --- Icons ---
 const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536l12.232-12.232z" /></svg>;
@@ -47,11 +48,7 @@ const Profile: React.FC = () => {
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.preferredSubjects || []);
     const [biometricsEnabled, setBiometricsEnabled] = useState(localStorage.getItem('examRediBiometricsEnabled') === 'true');
 
-    const availableSubjects = [
-        "Mathematics", "English", "Biology", "Physics", "Chemistry", "Economics",
-        "Government", "Literature-in-English", "CRS", "IRS", "Commerce",
-        "Accounting", "Agricultural Science", "Geography", "History"
-    ].sort();
+    const availableSubjects = [...STANDARD_SUBJECTS].sort();
 
     useEffect(() => {
         if (user) {
@@ -307,8 +304,8 @@ const Profile: React.FC = () => {
                                     <button
                                         onClick={handleNotificationToggle}
                                         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${notificationStatus === 'granted'
-                                                ? 'bg-green-100 text-green-700 cursor-default'
-                                                : 'bg-primary text-white hover:bg-accent'
+                                            ? 'bg-green-100 text-green-700 cursor-default'
+                                            : 'bg-primary text-white hover:bg-accent'
                                             }`}
                                     >
                                         {notificationStatus === 'granted' ? 'Enabled' : 'Enable'}

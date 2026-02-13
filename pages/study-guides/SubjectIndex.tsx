@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
 import { StudyGuide } from '../../types.ts';
+import { SUBJECTS, getSubjectKey } from '../../constants/subjects.ts';
 
 const SubjectIndex: React.FC = () => {
     const { category } = useParams<{ category: string }>();
@@ -10,7 +11,9 @@ const SubjectIndex: React.FC = () => {
     const [guides, setGuides] = useState<StudyGuide[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const subjectName = category?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    const subjectKey = getSubjectKey(category || '');
+    const subjectMeta = subjectKey ? SUBJECTS[subjectKey] : null;
+    const subjectName = subjectMeta ? subjectMeta.name : (category?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '));
 
     useEffect(() => {
         const fetchGuides = async () => {
