@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext.tsx';
 import apiService from '../services/apiService.ts';
 
@@ -32,26 +32,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 
-    const syncProgress = async () => {
-        if (isAuthenticated) {
-            try {
-                const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
-                setStreak(data.streak);
-                setStreakHistory(data.streakHistory || []);
-                setRecentActivity(data.recentActivity || []);
-                localStorage.setItem('examRediStreak', data.streak.toString());
-                localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
-                localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
-            } catch (error) {
-                console.error("Failed to sync progress with backend:", error);
-                loadFromLocal();
-            }
-        } else {
-            loadFromLocal();
-        }
-    };
-
-    const loadFromLocal = () => {
+    const loadFromLocal = useCallback(() => {
         const savedStreak = localStorage.getItem('examRediStreak');
         const savedStreakHistory = localStorage.getItem('examRediStreakHistory');
         const savedActivity = localStorage.getItem('examRediRecentActivity');
@@ -70,11 +51,30 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 setRecentActivity([]);
             }
         }
-    };
+    }, []);
+
+    const syncProgress = useCallback(async () => {
+        if (isAuthenticated) {
+            try {
+                const data = await apiService<{ streak: number, streakHistory?: string[], recentActivity: RecentActivity[] }>('/user/progress');
+                setStreak(data.streak);
+                setStreakHistory(data.streakHistory || []);
+                setRecentActivity(data.recentActivity || []);
+                localStorage.setItem('examRediStreak', data.streak.toString());
+                localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
+                localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
+            } catch (error) {
+                console.error("Failed to sync progress with backend:", error);
+                loadFromLocal();
+            }
+        } else {
+            loadFromLocal();
+        }
+    }, [isAuthenticated, loadFromLocal]);
 
     useEffect(() => {
         syncProgress();
-    }, [isAuthenticated]);
+    }, [syncProgress]);
 
     const addActivity = async (activity: Omit<RecentActivity, 'timestamp'>) => {
         // Automatic Mastery Logic: If score is 100% and it's a quiz, mark as mastered
