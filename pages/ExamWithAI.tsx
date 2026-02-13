@@ -20,12 +20,16 @@ const PracticeIcon = () => (
 );
 
 const UserIcon = () => (
-    <img src="https://picsum.photos/40" alt="user" className="w-8 h-8 rounded-full object-cover" />
+    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-md">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+    </div>
 );
 
 const AiIcon = () => (
-    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
     </div>
@@ -40,28 +44,28 @@ const AiActions: React.FC<{ onAction: (prompt: string) => void }> = ({ onAction 
         setShowExplainMenu(false);
     };
 
-    const actionButtonClasses = "text-xs font-semibold text-primary hover:underline px-2 py-1 rounded";
-    const explainOptionClasses = "block w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-primary-light dark:hover:bg-primary/20";
+    const actionButtonClasses = "text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 px-3 py-1.5 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200";
+    const explainOptionClasses = "block w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 dark:hover:from-purple-900/30 dark:hover:to-blue-900/30 transition-all duration-200 first:rounded-t-lg last:rounded-b-lg";
 
     return (
-        <div className="flex items-center gap-2 mt-2 relative">
+        <div className="flex items-center gap-2 mt-3 relative">
             <button onClick={() => onAction("Can you give me a hint?")} className={actionButtonClasses}>
-                Need a hint?
+                💡 Need a hint?
             </button>
             <div className="relative">
                 <button onClick={() => setShowExplainMenu(prev => !prev)} className={actionButtonClasses}>
-                    Explain differently
+                    🔄 Explain differently
                 </button>
                 {showExplainMenu && (
-                    <div className="absolute bottom-full mb-1 w-40 bg-white dark:bg-slate-700 shadow-lg rounded-lg border dark:border-slate-600 z-10 py-1">
+                    <div className="absolute bottom-full mb-2 w-48 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl shadow-2xl rounded-xl border border-purple-200 dark:border-purple-800/50 z-10 overflow-hidden">
                         <button onClick={() => handleExplainClick('in a simpler way')} className={explainOptionClasses}>
-                            Simpler
+                            ✨ Simpler
                         </button>
                         <button onClick={() => handleExplainClick('in more detail')} className={explainOptionClasses}>
-                            More Detailed
+                            📚 More Detailed
                         </button>
                         <button onClick={() => handleExplainClick('with an analogy')} className={explainOptionClasses}>
-                            With an analogy
+                            🎯 With an analogy
                         </button>
                     </div>
                 )}
@@ -177,7 +181,7 @@ const ExamWithAI: React.FC = () => {
 
     const sendUserMessageToAI = async (messageText: string) => {
         if (!messageText.trim() || isLoading) return;
-        
+
         if (!isAuthenticated) {
             requestLogin();
             return;
@@ -199,8 +203,8 @@ const ExamWithAI: React.FC = () => {
                 });
                 setMessages(messages); // Revert messages
             } else {
-                 setMessages([...newMessages, { role: 'model', text: aiResponse, timestamp: Date.now() }]);
-                 await incrementMessageCount();
+                setMessages([...newMessages, { role: 'model', text: aiResponse, timestamp: Date.now() }]);
+                await incrementMessageCount();
             }
         } catch (error) {
             console.error(error);
@@ -213,12 +217,12 @@ const ExamWithAI: React.FC = () => {
             }
         }
     };
-    
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         await sendUserMessageToAI(userInput);
     };
-    
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -232,7 +236,7 @@ const ExamWithAI: React.FC = () => {
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     };
-    
+
     const handlePromptClick = (prompt: string) => {
         sendUserMessageToAI(prompt);
     };
@@ -295,60 +299,63 @@ const ExamWithAI: React.FC = () => {
             </Card>
         );
     }
-    
+
     return (
-        <div className="flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-sm h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)]">
-            <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center flex-shrink-0">
+        <div className="flex flex-col bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-2xl shadow-xl h-full max-h-[calc(100vh-200px)] md:max-h-[calc(100vh-160px)] overflow-hidden">
+            <div className="p-5 border-b border-purple-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm flex justify-between items-center flex-shrink-0">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-800 dark:text-white">Exam With AI-buddy</h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Your personal AI tutor for exam preparation.</p>
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Exam With AI-buddy</h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">Your personal AI tutor for exam preparation.</p>
                 </div>
-                <button onClick={handleNewSession} className="font-semibold text-primary py-2 px-4 rounded-lg border border-primary hover:bg-primary-light dark:hover:bg-primary/20 transition-colors duration-200 text-sm">New Session</button>
+                <button onClick={handleNewSession} className="font-semibold text-purple-600 dark:text-purple-400 py-2 px-4 rounded-lg border-2 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-200 text-sm shadow-sm hover:shadow-md">New Session</button>
             </div>
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-6">
+            <div className="flex-1 p-5 sm:p-8 overflow-y-auto space-y-8">
                 {messages.map((msg, index) => (
-                    <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
+                    <div key={index} className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : ''} animate-fadeIn`}>
                         {msg.role === 'model' && <AiIcon />}
-                        <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                           <div className={`max-w-xs sm:max-w-md lg:max-w-2xl p-4 rounded-2xl shadow-sm ${msg.role === 'user' ? 'bg-primary text-white rounded-br-lg' : 'bg-gray-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-bl-lg'}`}>
+                        <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[75%]`}>
+                            <div className={`p-5 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl ${msg.role === 'user'
+                                ? 'bg-gradient-to-br from-purple-600 to-blue-600 text-white rounded-br-md'
+                                : 'bg-gradient-to-br from-white via-purple-50/50 to-blue-50/50 dark:from-slate-800 dark:via-slate-700/80 dark:to-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-md border border-purple-200/30 dark:border-purple-800/30 backdrop-blur-sm'
+                                }`}>
                                 {msg.role === 'model' ? (
                                     <MarkdownRenderer content={msg.text} />
                                 ) : (
-                                    <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                                 )}
-                           </div>
-                           <span className="text-xs text-gray-400 mt-1.5 px-1">{formatTimestamp(msg.timestamp)}</span>
-                           {msg.role === 'model' && index === messages.length - 1 && !isLoading && (
+                            </div>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 mt-2 px-2 font-medium">{formatTimestamp(msg.timestamp)}</span>
+                            {msg.role === 'model' && index === messages.length - 1 && !isLoading && (
                                 <AiActions onAction={handleAiAction} />
                             )}
                         </div>
-                         {msg.role === 'user' && <UserIcon />}
+                        {msg.role === 'user' && <UserIcon />}
                     </div>
                 ))}
                 {isLoading && (
-                     <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-4 animate-fadeIn">
                         <AiIcon />
-                        <div className="p-4 rounded-2xl rounded-bl-lg bg-gray-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                           <div className="flex items-center space-x-2">
-                                <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                                <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                                <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce"></span>
-                           </div>
+                        <div className="p-5 rounded-2xl rounded-bl-md bg-gradient-to-br from-white via-purple-50/50 to-blue-50/50 dark:from-slate-800 dark:via-slate-700/80 dark:to-slate-800 border border-purple-200/30 dark:border-purple-800/30 backdrop-blur-sm shadow-lg">
+                            <div className="flex items-center space-x-2">
+                                <span className="h-2.5 w-2.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="h-2.5 w-2.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="h-2.5 w-2.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-bounce"></span>
+                            </div>
                         </div>
                     </div>
                 )}
                 <div ref={chatEndRef} />
             </div>
-            <div className="p-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 mt-auto flex-shrink-0">
-                 {showPrompts && !isLoading && messages.length <= 1 && (
-                    <div className="pb-3">
-                        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 px-1">Try one of these prompts:</p>
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <div className="p-4 border-t border-purple-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm mt-auto flex-shrink-0">
+                {showPrompts && !isLoading && messages.length <= 1 && (
+                    <div className="pb-4">
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-3 px-1">✨ Try one of these prompts:</p>
+                        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-purple-300 dark:scrollbar-thumb-purple-800">
                             {suggestivePrompts.map((prompt, index) => (
                                 <button
                                     key={index}
                                     onClick={() => handlePromptClick(prompt)}
-                                    className="bg-gray-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors whitespace-nowrap"
+                                    className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-700 dark:text-slate-200 text-sm font-medium px-4 py-2 rounded-xl hover:from-purple-100 hover:to-blue-100 dark:hover:from-slate-600 dark:hover:to-slate-500 transition-all duration-200 whitespace-nowrap border border-purple-200/50 dark:border-purple-800/30 shadow-sm hover:shadow-md hover:scale-105"
                                 >
                                     {prompt}
                                 </button>
@@ -357,32 +364,34 @@ const ExamWithAI: React.FC = () => {
                     </div>
                 )}
                 <form onSubmit={handleSendMessage} className="flex items-end gap-3">
-                    <textarea
-                        ref={textareaRef}
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        onInput={autoResizeTextarea}
-                        onKeyDown={handleKeyDown}
-                        rows={1}
-                        placeholder="Ask your AI-buddy anything..."
-                        className="flex-1 bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 rounded-xl py-2 px-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary max-h-40 overflow-y-auto"
-                        disabled={isLoading}
-                        aria-label="Chat input"
-                    />
+                    <div className="flex-1 relative group">
+                        <textarea
+                            ref={textareaRef}
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            onInput={autoResizeTextarea}
+                            onKeyDown={handleKeyDown}
+                            rows={1}
+                            placeholder="Ask your AI-buddy anything..."
+                            className="w-full bg-white dark:bg-slate-700 border-2 border-purple-200 dark:border-slate-600 rounded-xl py-3 px-4 resize-none focus:outline-none focus:border-purple-400 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-100 dark:focus:ring-purple-900/30 max-h-40 overflow-y-auto transition-all duration-200 shadow-sm"
+                            disabled={isLoading}
+                            aria-label="Chat input"
+                        />
+                    </div>
                     <button
                         type="submit"
                         disabled={isLoading || !userInput.trim()}
-                        className="bg-primary text-white font-bold p-3 rounded-lg hover:bg-accent transition-colors duration-200 disabled:bg-gray-300 dark:disabled:bg-slate-600 disabled:cursor-not-allowed flex-shrink-0"
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold p-3.5 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 disabled:from-gray-300 disabled:to-gray-400 dark:disabled:from-slate-600 dark:disabled:to-slate-700 disabled:cursor-not-allowed flex-shrink-0 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
                         aria-label="Send message"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
                     </button>
                 </form>
-                 {user?.subscription === 'free' && (
-                    <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">
-                        You have {Math.max(0, 5 - (user?.dailyMessageCount || 0))} free messages remaining today.
+                {user?.subscription === 'free' && (
+                    <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-3 font-medium">
+                        💬 {Math.max(0, 5 - (user?.dailyMessageCount || 0))} free messages remaining today
                     </p>
                 )}
             </div>
