@@ -60,7 +60,7 @@ const SubjectIndex: React.FC = () => {
                     guides.map(guide => (
                         <Link
                             key={guide.id}
-                            to={`${guide.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+                            to={`${guide.title.toLowerCase().replace(/\s+/g, '-')}`}
                             state={{ guide }} // Optional: Pass guide object to avoid double fetch
                         >
                             <Card className="hover:border-primary transition-colors group">

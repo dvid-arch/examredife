@@ -187,7 +187,7 @@ const QuestionSearch: React.FC = () => {
                                 <div key={paper.id} className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                                     <button
                                         onClick={() => handleTogglePaper(paper.id)}
-                                        className="w-full flex justify-between items-center p-2 sm:p-3 text-left bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700"
+                                        className="w-full flex justify-between items-center p-3 text-left bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700"
                                         aria-expanded={expandedPaperId === paper.id}
                                     >
                                         <span className="font-semibold text-lg text-slate-800 dark:text-slate-100">{paper.subject} - {paper.exam} {paper.year}</span>
@@ -196,9 +196,9 @@ const QuestionSearch: React.FC = () => {
                                         </span>
                                     </button>
                                     {expandedPaperId === paper.id && (
-                                        <div className="p-2 sm:p-3 bg-white dark:bg-slate-800/50 space-y-4">
+                                        <div className="p-3 bg-white dark:bg-slate-800/50 space-y-4">
                                             {paper.questions.map((q, index) => (
-                                                <div key={q.id} className="p-2 sm:p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
+                                                <div key={q.id} className="p-3 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
                                                     <p className="font-semibold text-slate-700 dark:text-slate-300 mb-2">Question {index + 1}</p>
                                                     <QuestionRenderer
                                                         question={q}
@@ -332,9 +332,9 @@ const QuestionSearch: React.FC = () => {
                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">📝</div>
                                         Past Questions ({questionResults.length})
                                     </h2>
-                                    <div className="space-y-4 sm:space-y-6">
+                                    <div className="space-y-6">
                                         {questionResults.map((q, index) => (
-                                            <div key={q.id} className="p-3 sm:p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                            <div key={q.id} className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
                                                 <div className="flex justify-between items-start text-sm text-slate-500 dark:text-slate-400 mb-2">
                                                     <span>Question {index + 1}</span>
                                                     <span className="font-semibold">{q.subject} - {q.exam} {q.year}</span>

@@ -228,8 +228,8 @@ const Quizzes: React.FC = () => {
     return (
         <div className="space-y-6">
             <Card>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white">Practice For UTME</h1>
-                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-2">Choose your practice mode. Take a standard exam simulation or create a custom quiz tailored to your needs.</p>
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Practice For UTME</h1>
+                <p className="text-slate-600 dark:text-slate-400 mt-2">Choose your practice mode. Take a standard exam simulation or create a custom quiz tailored to your needs.</p>
                 <div className="mt-4 flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 bg-gray-50 dark:bg-gray-800 max-w-sm">
                     <button
                         onClick={() => navigate('/practice/standard')}
@@ -268,12 +268,12 @@ const Quizzes: React.FC = () => {
                             </div>
 
                             <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">2. Choose Your Subjects ({selectedSubjects.length}/4)</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-4">English is compulsory. Please select 3 other subjects available for {standardSelectedYear}.</p>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4">
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects available for {standardSelectedYear}.</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                 {displayedSubjects.map(subject => (
                                     <label
                                         key={subject}
-                                        className={`flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 border rounded-lg transition-colors 
+                                        className={`flex items-center space-x-3 p-3 border rounded-lg transition-colors 
                                             ${subject === 'English' ? 'cursor-not-allowed bg-primary-light dark:bg-primary/20 border-primary' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 has-[:checked]:bg-primary-light has-[:checked]:border-primary dark:has-[:checked]:bg-primary/20'}
                                             ${selectedSubjects.length === 4 && !selectedSubjects.includes(subject) ? 'opacity-50 cursor-not-allowed' : ''}
 `}

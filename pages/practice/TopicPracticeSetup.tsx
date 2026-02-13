@@ -7,14 +7,7 @@ import { ChallengeQuestion } from '../../types.ts';
 const TopicPracticeSetup: React.FC = () => {
     const { subject, topicSlug } = useParams<{ subject: string, topicSlug: string }>();
     const navigate = useNavigate();
-    const topicName = topicSlug
-        ? topicSlug
-            .replace(/-/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase())
-            .replace(/\s*Interactive\s*$/i, '') // Remove "Interactive" suffix
-            .replace(/\s*\(.*\)\s*$/, '')       // Remove any parenthetical info
-            .trim()
-        : '';
+    const topicName = topicSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
     const [questionCount, setQuestionCount] = useState(10);
     const [mode, setMode] = useState<'study' | 'practice' | 'mock'>('practice');
