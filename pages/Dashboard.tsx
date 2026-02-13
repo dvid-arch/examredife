@@ -122,8 +122,14 @@ const Dashboard: React.FC = () => {
     // Prioritize uncompleted (no score) and then by most recent
     const continueStudyingActivities = React.useMemo(() => {
         return [...recentActivity].sort((a, b) => {
-            if (a.score === undefined && b.score !== undefined) return -1;
-            if (a.score !== undefined && b.score === undefined) return 1;
+            // Keep uncompleted sessions at the very top
+            const aUnfinished = a.type === 'quiz' && a.score === undefined;
+            const bUnfinished = b.type === 'quiz' && b.score === undefined;
+
+            if (aUnfinished && !bUnfinished) return -1;
+            if (!aUnfinished && bUnfinished) return 1;
+
+            // Otherwise sort by most recent
             return b.timestamp - a.timestamp;
         });
     }, [recentActivity]);
@@ -209,8 +215,13 @@ const Dashboard: React.FC = () => {
                     </div>
 
                     <div className="flex overflow-x-auto pb-6 gap-5 snap-x no-scrollbar px-1 -mx-1">
-                        {continueStudyingActivities.slice(0, 3).map((activity) => (
-                            <div key={activity.id} className="flex-none w-[300px] snap-start flex flex-col bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 group">
+                        {continueStudyingActivities.slice(0, 5).map((activity) => (
+                            <div key={activity.id} className="flex-none w-[300px] snap-start flex flex-col bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 group relative">
+                                {activity.mastered && (
+                                    <div className="absolute top-3 right-3 bg-yellow-400 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm z-10 animate-bounce-subtle">
+                                        MASTERED 🏆
+                                    </div>
+                                )}
                                 <Link
                                     to={activity.path}
                                     state={{
