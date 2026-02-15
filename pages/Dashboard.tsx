@@ -118,20 +118,9 @@ const Dashboard: React.FC = () => {
     const { recentActivity } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
 
-    // Filter and sort activities for "Continue Studying"
-    // Prioritize uncompleted (no score) and then by most recent
+    // Filter and sort activities for "Continue Studying" by most recent activity
     const continueStudyingActivities = React.useMemo(() => {
-        return [...recentActivity].sort((a, b) => {
-            // Keep uncompleted sessions at the very top
-            const aUnfinished = a.type === 'quiz' && a.score === undefined;
-            const bUnfinished = b.type === 'quiz' && b.score === undefined;
-
-            if (aUnfinished && !bUnfinished) return -1;
-            if (!aUnfinished && bUnfinished) return 1;
-
-            // Otherwise sort by most recent
-            return b.timestamp - a.timestamp;
-        });
+        return [...recentActivity].sort((a, b) => b.timestamp - a.timestamp);
     }, [recentActivity]);
 
     // Close tour when navigating away
