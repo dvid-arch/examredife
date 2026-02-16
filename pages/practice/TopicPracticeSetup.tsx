@@ -20,20 +20,21 @@ const TopicPracticeSetup: React.FC = () => {
             if (!topicName || !subject) return;
             setIsLoading(true);
             try {
-                // 1. Get semantic keywords from AI
-                const { keywords } = await apiService<{ keywords: string[] }>('/ai/topic-keywords', {
-                    method: 'POST',
-                    body: { topic: topicName, subject }
-                });
-
-                // 2. Perform batch search with these keywords
-                const searchQueries = (keywords && keywords.length > 0) ? keywords : [topicName];
-                console.log("Searching for questions with keywords:", searchQueries);
+                // Directly search by topic (backend handles topic-based filtering)
+                console.log("Searching for questions with topic:", topicName);
 
                 const results = await apiService<ChallengeQuestion[]>('/data/search-batch', {
                     method: 'POST',
-                    body: { keywords: searchQueries, subject }
+                    body: {
+                        keywords: [topicName], // Fallback if topic param isn't enough, but controller checks 'topic'
+                        subject,
+                        topic: topicName
+                    }
                 });
+
+                if (results.length === 0) {
+                    setError('No questions found for this topic yet. Try another topic!');
+                }
 
                 setAvailableQuestions(results);
             } catch (err) {
