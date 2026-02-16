@@ -14,12 +14,28 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export interface StudyGuide {
+export interface SubTopic {
   id: string;
   title: string;
-  subject: string;
   content: string;
-  createdAt: string;
+  keywords?: string[];
+  order?: number;
+}
+
+export interface Topic {
+  id: string;
+  title: string;
+  content?: string;
+  description?: string;
+  subTopics: SubTopic[];
+  order?: number;
+}
+
+export interface StudyGuide {
+  id: string; // subject key like 'biology'
+  subject: string;
+  topics: Topic[];
+  lastUpdated?: string;
 }
 
 export interface Flashcard {

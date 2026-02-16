@@ -28,15 +28,7 @@ const StudyGuideLibrary: React.FC = () => {
         fetchGuides();
     }, []);
 
-    const guidesBySubject = allStudyGuides.reduce((acc, guide) => {
-        if (!acc[guide.subject]) {
-            acc[guide.subject] = [];
-        }
-        acc[guide.subject].push(guide);
-        return acc;
-    }, {} as Record<string, StudyGuide[]>);
-
-    const subjects = Object.entries(guidesBySubject).sort(([a], [b]) => a.localeCompare(b));
+    const subjects = allStudyGuides.sort((a, b) => a.subject.localeCompare(b.subject));
 
     return (
         <div className="space-y-6">
@@ -63,10 +55,10 @@ const StudyGuideLibrary: React.FC = () => {
                         <div key={i} className="animate-pulse bg-slate-200 dark:bg-slate-800 h-40 rounded-2xl"></div>
                     ))
                 ) : (
-                    subjects.map(([subject, guides]) => (
+                    subjects.map((subjectGuide) => (
                         <Link
-                            key={subject}
-                            to={`${subject.toLowerCase().replace(/\s+/g, '-')}`}
+                            key={subjectGuide.id}
+                            to={`${subjectGuide.id}`}
                             className="group"
                         >
                             <Card className="h-full border-none bg-white dark:bg-slate-900 shadow-md hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 border-b-4 border-b-transparent hover:border-b-primary">
@@ -74,8 +66,8 @@ const StudyGuideLibrary: React.FC = () => {
                                     <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                                         <GuideIcon />
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{subject}</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">{guides.length} study guides available</p>
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-1">{subjectGuide.subject}</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{subjectGuide.topics.length} topics available</p>
 
                                     <div className="mt-4 flex items-center text-primary font-semibold text-sm">
                                         Explore Topics

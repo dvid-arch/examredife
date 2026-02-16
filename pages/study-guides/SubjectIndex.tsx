@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
-import { StudyGuide } from '../../types.ts';
+import { StudyGuide, Topic } from '../../types.ts';
 import { SUBJECTS, getSubjectKey } from '../../constants/subjects.ts';
 
 const SubjectIndex: React.FC = () => {
     const { category } = useParams<{ category: string }>();
     const navigate = useNavigate();
-    const [guides, setGuides] = useState<StudyGuide[]>([]);
+    const [topics, setTopics] = useState<Topic[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const subjectKey = getSubjectKey(category || '');
@@ -19,11 +19,11 @@ const SubjectIndex: React.FC = () => {
         const fetchGuides = async () => {
             try {
                 const data: StudyGuide[] = await apiService('/data/guides');
-                const filtered = data.filter(g => g.subject.toLowerCase().replace(/\s+/g, '-') === category);
-                setGuides(filtered);
+                // Find the subject guide that matches the category (id)
+                const subjectGuide = data.find(g => g.id === category);
 
-                if (filtered.length === 0 && !isLoading) {
-                    // navigate('/study-guides');
+                if (subjectGuide) {
+                    setTopics(subjectGuide.topics);
                 }
             } catch (error) {
                 console.error("Failed to fetch guides", error);
@@ -56,12 +56,12 @@ const SubjectIndex: React.FC = () => {
                     Array.from({ length: 4 }).map((_, i) => (
                         <div key={i} className="animate-pulse bg-slate-200 dark:bg-slate-800 h-20 rounded-xl"></div>
                     ))
-                ) : guides.length > 0 ? (
-                    guides.map(guide => (
+                ) : topics.length > 0 ? (
+                    topics.map(topic => (
                         <Link
-                            key={guide.id}
-                            to={`${guide.title.toLowerCase().replace(/\s+/g, '-')}`}
-                            state={{ guide }} // Optional: Pass guide object to avoid double fetch
+                            key={topic.id}
+                            to={`${topic.id}`}
+                            state={{ topic, subjectName }}
                         >
                             <Card className="hover:border-primary transition-colors group">
                                 <div className="p-4 flex items-center justify-between">
@@ -71,11 +71,17 @@ const SubjectIndex: React.FC = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                             </svg>
                                         </div>
-                                        <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors">{guide.title}</h3>
+                                        <div>
+                                            <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors">{topic.title}</h3>
+                                            {topic.description && <p className="text-xs text-slate-500 line-clamp-1">{topic.description}</p>}
+                                        </div>
                                     </div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500">{topic.subTopics.length} lessons</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
                                 </div>
                             </Card>
                         </Link>
