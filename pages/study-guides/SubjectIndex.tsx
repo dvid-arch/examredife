@@ -1,38 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
-import apiService from '../../services/apiService.ts';
-import { StudyGuide, Topic } from '../../types.ts';
+import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
 import { SUBJECTS, getSubjectKey } from '../../constants/subjects.ts';
 
 const SubjectIndex: React.FC = () => {
     const { category } = useParams<{ category: string }>();
     const navigate = useNavigate();
-    const [topics, setTopics] = useState<Topic[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { guides, isLoading, fetchGuides } = usePastQuestions();
 
     const subjectKey = getSubjectKey(category || '');
     const subjectMeta = subjectKey ? SUBJECTS[subjectKey] : null;
     const subjectName = subjectMeta ? subjectMeta.name : (category?.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '));
 
     useEffect(() => {
-        const fetchGuides = async () => {
-            try {
-                const data: StudyGuide[] = await apiService('/data/guides');
-                // Find the subject guide that matches the category (id)
-                const subjectGuide = data.find(g => g.id === category);
-
-                if (subjectGuide) {
-                    setTopics(subjectGuide.topics);
-                }
-            } catch (error) {
-                console.error("Failed to fetch guides", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchGuides();
-    }, [category]);
+    }, [fetchGuides]);
+
+    // Find the specific guide for this category
+    const subjectGuide = guides.find(g => g.id === category);
+    const topics = subjectGuide?.topics || [];
 
     return (
         <div className="space-y-6">

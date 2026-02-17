@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback, useRef } from 'react';
 import { PastPaper, StudyGuide } from '../types.ts';
 import apiService from '../services/apiService.ts';
 
@@ -16,19 +16,25 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
     const [papers, setPapers] = useState<PastPaper[]>([]);
     const [guides, setGuides] = useState<StudyGuide[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasFetchedPapers, setHasFetchedPapers] = useState(false);
-    const [hasFetchedGuides, setHasFetchedGuides] = useState(false);
+
+    // Use refs to track fetched status without triggering re-renders or changing function identities
+    const hasFetchedPapersRef = useRef(false);
+    const hasFetchedGuidesRef = useRef(false);
+    // Track papers/guides in refs for synchronous access in fetch functions if needed
+    const papersRef = useRef<PastPaper[]>([]);
+    const guidesRef = useRef<StudyGuide[]>([]);
 
     const fetchPapers = useCallback(async (forceRefresh = false) => {
-        if (!forceRefresh && hasFetchedPapers && papers.length > 0) {
-            return papers;
+        if (!forceRefresh && hasFetchedPapersRef.current && papersRef.current.length > 0) {
+            return papersRef.current;
         }
 
         setIsLoading(true);
         try {
             const data = await apiService<PastPaper[]>('/data/papers');
             setPapers(data);
-            setHasFetchedPapers(true);
+            papersRef.current = data;
+            hasFetchedPapersRef.current = true;
             return data;
         } catch (error) {
             console.error("Failed to fetch papers:", error);
@@ -36,18 +42,19 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
         } finally {
             setIsLoading(false);
         }
-    }, [hasFetchedPapers, papers]);
+    }, []); // Empty dependency array ensures stability
 
     const fetchGuides = useCallback(async (forceRefresh = false) => {
-        if (!forceRefresh && hasFetchedGuides && guides.length > 0) {
-            return guides;
+        if (!forceRefresh && hasFetchedGuidesRef.current && guidesRef.current.length > 0) {
+            return guidesRef.current;
         }
 
         setIsLoading(true);
         try {
             const data = await apiService<StudyGuide[]>('/data/guides');
             setGuides(data);
-            setHasFetchedGuides(true);
+            guidesRef.current = data;
+            hasFetchedGuidesRef.current = true;
             return data;
         } catch (error) {
             console.error("Failed to fetch guides:", error);
@@ -55,7 +62,7 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
         } finally {
             setIsLoading(false);
         }
-    }, [hasFetchedGuides, guides]);
+    }, []); // Empty dependency array ensures stability
 
     return (
         <PastQuestionsContext.Provider value={{ papers, guides, isLoading, fetchPapers, fetchGuides }}>

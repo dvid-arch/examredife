@@ -67,11 +67,13 @@ const QuestionSearch: React.FC = () => {
         if (saved) {
             try { setRecentSearches(JSON.parse(saved)); } catch (e) { }
         }
+        console.log("QuestionSearch mounted, fetching data...");
         fetchPapers();
         fetchGuides();
     }, [fetchPapers, fetchGuides]);
 
     const performSearch = useCallback(async (searchQuery: string) => {
+        console.log("Performing search for:", searchQuery);
         if (!searchQuery.trim()) {
             setResultsView('papers');
             setHasSearched(false);

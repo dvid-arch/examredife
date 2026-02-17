@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
-import apiService from '../../services/apiService.ts';
-import { StudyGuide } from '../../types.ts';
+import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
 
 const GuideIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -11,24 +10,13 @@ const GuideIcon = () => (
 );
 
 const StudyGuideLibrary: React.FC = () => {
-    const [allStudyGuides, setAllStudyGuides] = useState<StudyGuide[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { guides, isLoading, fetchGuides } = usePastQuestions();
 
     useEffect(() => {
-        const fetchGuides = async () => {
-            try {
-                const data: StudyGuide[] = await apiService('/data/guides');
-                setAllStudyGuides(data);
-            } catch (error) {
-                console.error("Failed to fetch study guides", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchGuides();
-    }, []);
+    }, [fetchGuides]);
 
-    const subjects = allStudyGuides.sort((a, b) => a.subject.localeCompare(b.subject));
+    const subjects = [...guides].sort((a, b) => a.subject.localeCompare(b.subject));
 
     return (
         <div className="space-y-6">
