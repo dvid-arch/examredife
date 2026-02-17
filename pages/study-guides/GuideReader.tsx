@@ -98,13 +98,17 @@ const GuideReader: React.FC = () => {
     if (!topic) return <div className="p-12 text-center text-red-500 font-bold">Topic not found.</div>;
 
     const isOverview = !subTopicId;
-    const currentContent = subTopic ? subTopic.content : (topic.content || `# ${topic.title}\n\n${topic.description || ''}`);
+    const contentToRender = subTopic
+        ? (subTopic.content || `*Content for "${subTopic.title}" is coming soon.*`)
+        : (topic.content || `# ${topic.title}\n\n${topic.description || '*No detailed description available yet.*'}`);
+
     const currentTitle = subTopic ? subTopic.title : `${topic.title} Overview`;
 
     // Determine next step
+    const currentIndex = subTopic ? topic.subTopics.findIndex(st => st.id === subTopic.id) : -1;
     const nextSubTopic = isOverview
         ? topic.subTopics[0]
-        : topic.subTopics[topic.subTopics.indexOf(subTopic!) + 1];
+        : (currentIndex !== -1 && currentIndex < topic.subTopics.length - 1 ? topic.subTopics[currentIndex + 1] : null);
 
     return (
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pb-20">
@@ -212,7 +216,7 @@ const GuideReader: React.FC = () => {
                     </div>
 
                     <div className="p-6 sm:p-12 prose dark:prose-invert max-w-none prose-slate prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary">
-                        <MarkdownRenderer content={currentContent.trim()} />
+                        <MarkdownRenderer content={contentToRender.trim()} />
                     </div>
 
                     <div className="m-6 sm:m-12 p-8 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row items-center justify-between gap-6">
