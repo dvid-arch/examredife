@@ -219,6 +219,21 @@ const GuideReader: React.FC = () => {
                         <MarkdownRenderer
                             content={contentToRender.trim()}
                             inlineQuestions={subTopic?.inlineQuestions}
+                            onCheckpointResult={(isCorrect) => {
+                                if (isCorrect) {
+                                    addActivity({
+                                        id: `checkpoint-${subTopic?.id || topic.id}-${Date.now()}`,
+                                        title: `Checkpoint: ${subTopic?.title || topic.title}`,
+                                        subtitle: 'Knowledge Check',
+                                        type: 'quiz',
+                                        path: location.pathname,
+                                        score: 1,
+                                        maxScore: 1,
+                                        progress: 100,
+                                        mastered: false
+                                    });
+                                }
+                            }}
                         />
                     </div>
 

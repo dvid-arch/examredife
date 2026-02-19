@@ -11,7 +11,8 @@ const MarkdownRenderer: React.FC<{
   content: string;
   forceLightMode?: boolean;
   inlineQuestions?: InlineQuestion[];
-}> = ({ content, forceLightMode = false, inlineQuestions = [] }) => {
+  onCheckpointResult?: (isCorrect: boolean) => void;
+}> = ({ content, forceLightMode = false, inlineQuestions = [], onCheckpointResult }) => {
 
   // Helper to extract text from React children
   const getHeaderText = (children: any): string => {
@@ -29,7 +30,7 @@ const MarkdownRenderer: React.FC<{
     return (
       <>
         <Level id={id} {...props}>{children}</Level>
-        {question && <CheckpointCard question={question} />}
+        {question && <CheckpointCard question={question} onResult={onCheckpointResult} />}
       </>
     );
   };

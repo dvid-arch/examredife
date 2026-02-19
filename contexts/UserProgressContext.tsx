@@ -28,6 +28,7 @@ interface UserProgressContextType {
     updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
     updateConfidence: (subTopicId: string, confidence: ConfidenceLevel) => Promise<void>;
     calculateTopicStatus: (subTopicId: string) => ConfidenceLevel | 'stale' | null;
+    estimatedScore: number;
 }
 
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
@@ -39,6 +40,34 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
     const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[] }>({ dismissedNudges: [], unlockedNudges: [] });
     const [studyProgress, setStudyProgress] = useState<{ [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }>({});
+    const [estimatedScore, setEstimatedScore] = useState(150); // Base score
+
+    // Calculate Estimated Score based on progress
+    const calculateScore = useCallback((progressMap: { [key: string]: { confidence: ConfidenceLevel } }) => {
+        let score = 150; // Base score
+        const entries = Object.values(progressMap);
+        const totalReviewed = entries.length;
+        if (totalReviewed === 0) return 150;
+
+        // 1. Mastery Impact (Confident = +2, Shaky = +1)
+        // Capped at 200 points max for mastery
+        const masteryPoints = entries.reduce((acc, curr) => {
+            if (curr.confidence === 'confident') return acc + 5;
+            if (curr.confidence === 'shaky') return acc + 2;
+            return acc;
+        }, 0);
+
+        // 2. Consistency Bonus (Streak) - Max 20 points
+        // We'll use the current streak from state, but inside this callback we might process it separately
+        // For simplicity, we'll just add masteryPoints to base
+
+        score += Math.min(masteryPoints, 200);
+
+        // 3. Activity Bonus (Mock Quiz scores would go here in a real app)
+        // For now, heuristic based purely on confidence volume
+
+        return Math.min(score, 400); // Cap at 400
+    }, []);
 
     const loadFromLocal = useCallback(() => {
         const savedStreak = localStorage.getItem('examRediStreak');
@@ -71,12 +100,14 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
         if (savedStudyProgress) {
             try {
-                setStudyProgress(JSON.parse(savedStudyProgress));
+                const parsed = JSON.parse(savedStudyProgress);
+                setStudyProgress(parsed);
+                setEstimatedScore(calculateScore(parsed));
             } catch (e) {
                 setStudyProgress({});
             }
         }
-    }, []);
+    }, [calculateScore]);
 
     const syncProgress = useCallback(async () => {
         if (isAuthenticated) {
@@ -86,7 +117,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     streakHistory?: string[],
                     recentActivity: RecentActivity[],
                     engagement?: { dismissedNudges: string[], unlockedNudges: string[] },
-                    studyProgress?: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }
+                    studyProgress?: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } },
+                    estimatedScore?: number
                 }>('/user/progress');
 
                 setStreak(data.streak);
@@ -98,8 +130,14 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 }
                 if (data.studyProgress) {
                     setStudyProgress(data.studyProgress);
+                    // If backend return score, use it, else calculate
+                    const score = data.estimatedScore || calculateScore(data.studyProgress);
+                    setEstimatedScore(score);
                     localStorage.setItem('examRediStudyProgress', JSON.stringify(data.studyProgress));
+                } else if (data.estimatedScore) {
+                    setEstimatedScore(data.estimatedScore);
                 }
+
 
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
@@ -111,7 +149,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         } else {
             loadFromLocal();
         }
-    }, [isAuthenticated, loadFromLocal]);
+    }, [isAuthenticated, loadFromLocal, calculateScore]);
 
     useEffect(() => {
         syncProgress();
@@ -138,16 +176,25 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 50);
         setRecentActivity(updatedActivity);
 
+        // Recalculate Score locally for instant feedback (if it depended on activity)
+        // Currently it depends on studyProgress (confidence), but if we added quiz scores to calculation:
+        // const newScore = calculateScore(...) 
+
         if (isAuthenticated) {
             try {
+                // Send current estimated score to be persisted
                 const response = await apiService<{
                     streak: number,
                     streakHistory: string[],
                     recentActivity: RecentActivity[],
-                    engagement: { dismissedNudges: string[], unlockedNudges: string[] }
+                    engagement: { dismissedNudges: string[], unlockedNudges: string[] },
+                    estimatedScore?: number
                 }>('/user/progress', {
                     method: 'PUT',
-                    body: { recentActivity: [newActivity] }
+                    body: {
+                        recentActivity: [newActivity],
+                        estimatedScore
+                    }
                 });
 
                 if (response) {
@@ -155,6 +202,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     setStreakHistory(response.streakHistory);
                     setRecentActivity(response.recentActivity);
                     setEngagement(response.engagement);
+                    if (response.estimatedScore) setEstimatedScore(response.estimatedScore);
+
                     localStorage.setItem('examRediStreak', response.streak.toString());
                     localStorage.setItem('examRediStreakHistory', JSON.stringify(response.streakHistory));
                     localStorage.setItem('examRediRecentActivity', JSON.stringify(response.recentActivity));
@@ -181,6 +230,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             [subTopicId]: { confidence, lastReviewed: new Date().toISOString() }
         };
         setStudyProgress(newProgress);
+        setEstimatedScore(calculateScore(newProgress));
         localStorage.setItem('examRediStudyProgress', JSON.stringify(newProgress));
 
         if (isAuthenticated) {
@@ -195,6 +245,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
                 if (response && response.studyProgress) {
                     setStudyProgress(response.studyProgress);
+                    setEstimatedScore(calculateScore(response.studyProgress));
                     localStorage.setItem('examRediStudyProgress', JSON.stringify(response.studyProgress));
                 }
             } catch (error) {
@@ -250,7 +301,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             syncProgress,
             updateEngagementState,
             updateConfidence,
-            calculateTopicStatus
+            calculateTopicStatus,
+            estimatedScore
         }}>
             {children}
         </UserProgressContext.Provider>

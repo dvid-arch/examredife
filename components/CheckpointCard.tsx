@@ -3,9 +3,10 @@ import { InlineQuestion } from '../types.ts';
 
 interface CheckpointCardProps {
     question: InlineQuestion;
+    onResult?: (isCorrect: boolean) => void;
 }
 
-const CheckpointCard: React.FC<CheckpointCardProps> = ({ question }) => {
+const CheckpointCard: React.FC<CheckpointCardProps> = ({ question, onResult }) => {
     const [selectedOption, setSelectedOption] = useState<string | null>(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -21,6 +22,9 @@ const CheckpointCard: React.FC<CheckpointCardProps> = ({ question }) => {
     const handleSubmit = () => {
         if (selectedOption) {
             setIsSubmitted(true);
+            if (onResult) {
+                onResult(selectedOption === question.answer);
+            }
         }
     };
 
@@ -84,8 +88,8 @@ const CheckpointCard: React.FC<CheckpointCardProps> = ({ question }) => {
                         onClick={handleSubmit}
                         disabled={!selectedOption}
                         className={`w-full py-4 rounded-2xl font-black transition-all shadow-lg ${selectedOption
-                                ? 'bg-primary text-white shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]'
-                                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                            ? 'bg-primary text-white shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                             }`}
                     >
                         Submit Answer
