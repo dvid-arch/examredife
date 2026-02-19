@@ -4,8 +4,36 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
+import { InlineQuestion } from '../types.ts';
+import CheckpointCard from './CheckpointCard.tsx';
 
-const MarkdownRenderer: React.FC<{ content: string; forceLightMode?: boolean }> = ({ content, forceLightMode = false }) => {
+const MarkdownRenderer: React.FC<{
+  content: string;
+  forceLightMode?: boolean;
+  inlineQuestions?: InlineQuestion[];
+}> = ({ content, forceLightMode = false, inlineQuestions = [] }) => {
+
+  // Helper to extract text from React children
+  const getHeaderText = (children: any): string => {
+    if (typeof children === 'string') return children;
+    if (Array.isArray(children)) return children.map(child => getHeaderText(child)).join('');
+    if (children?.props?.children) return getHeaderText(children.props.children);
+    return '';
+  };
+
+  const renderHeaderWithCheckpoint = (Level: 'h1' | 'h2' | 'h3', props: any, children: any) => {
+    const text = getHeaderText(children);
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    const question = inlineQuestions.find(q => q.triggerHeader.toLowerCase() === text.toLowerCase());
+
+    return (
+      <>
+        <Level id={id} {...props}>{children}</Level>
+        {question && <CheckpointCard question={question} />}
+      </>
+    );
+  };
+
   return (
     <ReactMarkdown
       children={content}
@@ -13,18 +41,9 @@ const MarkdownRenderer: React.FC<{ content: string; forceLightMode?: boolean }> 
       rehypePlugins={[rehypeKatex, rehypeRaw]}
       className={`prose prose-slate ${forceLightMode ? '' : 'dark:prose-invert'} max-w-none`}
       components={{
-        h1: ({ node, children, ...props }) => {
-          const id = children?.toString().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-          return <h1 id={id} {...props}>{children}</h1>;
-        },
-        h2: ({ node, children, ...props }) => {
-          const id = children?.toString().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-          return <h2 id={id} {...props}>{children}</h2>;
-        },
-        h3: ({ node, children, ...props }) => {
-          const id = children?.toString().toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-          return <h3 id={id} {...props}>{children}</h3>;
-        },
+        h1: ({ node, children, ...props }) => renderHeaderWithCheckpoint('h1', props, children),
+        h2: ({ node, children, ...props }) => renderHeaderWithCheckpoint('h2', props, children),
+        h3: ({ node, children, ...props }) => renderHeaderWithCheckpoint('h3', props, children),
         table: ({ node, ...props }) => (
           <div className={`overflow-x-auto my-4 border border-slate-200 ${forceLightMode ? '' : 'dark:border-slate-700'} rounded-lg`}>
             <table className="min-w-full text-sm" {...props} />

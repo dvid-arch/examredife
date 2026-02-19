@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext.tsx';
 import apiService from '../services/apiService.ts';
+import { ConfidenceLevel } from '../types.ts';
 
 interface RecentActivity {
     id: string; // This should now be a unique sessionId for practice/challenges
@@ -21,9 +22,11 @@ interface UserProgressContextType {
     streakHistory: string[];
     recentActivity: RecentActivity[];
     engagement: { dismissedNudges: string[], unlockedNudges: string[] };
+    studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } };
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     syncProgress: () => Promise<void>;
     updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
+    updateConfidence: (subTopicId: string, confidence: ConfidenceLevel) => Promise<void>;
 }
 
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
@@ -34,12 +37,14 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
     const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[] }>({ dismissedNudges: [], unlockedNudges: [] });
+    const [studyProgress, setStudyProgress] = useState<{ [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }>({});
 
     const loadFromLocal = useCallback(() => {
         const savedStreak = localStorage.getItem('examRediStreak');
         const savedStreakHistory = localStorage.getItem('examRediStreakHistory');
         const savedActivity = localStorage.getItem('examRediRecentActivity');
         const savedEngagement = localStorage.getItem('examRediEngagement');
+        const savedStudyProgress = localStorage.getItem('examRediStudyProgress');
 
         if (savedStreak) setStreak(parseInt(savedStreak));
         if (savedStreakHistory) {
@@ -63,6 +68,13 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 setEngagement({ dismissedNudges: [], unlockedNudges: [] });
             }
         }
+        if (savedStudyProgress) {
+            try {
+                setStudyProgress(JSON.parse(savedStudyProgress));
+            } catch (e) {
+                setStudyProgress({});
+            }
+        }
     }, []);
 
     const syncProgress = useCallback(async () => {
@@ -72,7 +84,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     streak: number,
                     streakHistory?: string[],
                     recentActivity: RecentActivity[],
-                    engagement?: { dismissedNudges: string[], unlockedNudges: string[] }
+                    engagement?: { dismissedNudges: string[], unlockedNudges: string[] },
+                    studyProgress?: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }
                 }>('/user/progress');
 
                 setStreak(data.streak);
@@ -81,6 +94,10 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (data.engagement) {
                     setEngagement(data.engagement);
                     localStorage.setItem('examRediEngagement', JSON.stringify(data.engagement));
+                }
+                if (data.studyProgress) {
+                    setStudyProgress(data.studyProgress);
+                    localStorage.setItem('examRediStudyProgress', JSON.stringify(data.studyProgress));
                 }
 
                 localStorage.setItem('examRediStreak', data.streak.toString());
@@ -156,8 +173,47 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediEngagement', JSON.stringify(newEngagement));
     };
 
+    const updateConfidence = async (subTopicId: string, confidence: ConfidenceLevel) => {
+        // Optimistic update
+        const newProgress = {
+            ...studyProgress,
+            [subTopicId]: { confidence, lastReviewed: new Date().toISOString() }
+        };
+        setStudyProgress(newProgress);
+        localStorage.setItem('examRediStudyProgress', JSON.stringify(newProgress));
+
+        if (isAuthenticated) {
+            try {
+                const response = await apiService<{
+                    success: boolean,
+                    studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }
+                }>('/user/progress/confidence', {
+                    method: 'POST',
+                    body: { subTopicId, confidence }
+                });
+
+                if (response && response.studyProgress) {
+                    setStudyProgress(response.studyProgress);
+                    localStorage.setItem('examRediStudyProgress', JSON.stringify(response.studyProgress));
+                }
+            } catch (error) {
+                console.error("Failed to update confidence:", error);
+            }
+        }
+    };
+
     return (
-        <UserProgressContext.Provider value={{ streak, streakHistory, recentActivity, engagement, addActivity, syncProgress, updateEngagementState }}>
+        <UserProgressContext.Provider value={{
+            streak,
+            streakHistory,
+            recentActivity,
+            engagement,
+            studyProgress,
+            addActivity,
+            syncProgress,
+            updateEngagementState,
+            updateConfidence
+        }}>
             {children}
         </UserProgressContext.Provider>
     );

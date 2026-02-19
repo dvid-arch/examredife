@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import apiService from '../../services/apiService.ts';
-import { StudyGuide, Topic, SubTopic } from '../../types.ts';
+import { StudyGuide, Topic, SubTopic, ConfidenceLevel } from '../../types.ts';
 import { useUserProgress } from '../../contexts/UserProgressContext.tsx';
 
 const GuideReader: React.FC = () => {
     const { category, slug, subTopicId } = useParams<{ category: string, slug: string, subTopicId?: string }>();
     const location = useLocation();
     const navigate = useNavigate();
-    const { addActivity } = useUserProgress();
+    const { addActivity, studyProgress, updateConfidence } = useUserProgress();
 
     // State management for hierarchical data
     const [topic, setTopic] = useState<Topic | null>(location.state?.topic || null);
@@ -216,8 +216,104 @@ const GuideReader: React.FC = () => {
                     </div>
 
                     <div className="p-6 sm:p-12 prose dark:prose-invert max-w-none prose-slate prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary">
-                        <MarkdownRenderer content={contentToRender.trim()} />
+                        <MarkdownRenderer
+                            content={contentToRender.trim()}
+                            inlineQuestions={subTopic?.inlineQuestions}
+                        />
                     </div>
+
+                    {subTopic?.videos && subTopic.videos.length > 0 && (
+                        <div className="px-6 sm:px-12 pb-12 space-y-8">
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-full mb-8"></div>
+                            <h2 className="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
+                                </svg>
+                                {subTopic.videos.some(v => v.type === 'study-hack') ? 'Study Hacks & Tutorials' : 'Video Tutorials'}
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {subTopic.videos.map(video => (
+                                    <div key={video.id} className="group bg-slate-50 dark:bg-slate-800/50 rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-700/50 transition-all hover:shadow-xl">
+                                        <div className="aspect-video relative">
+                                            <iframe
+                                                className="w-full h-full"
+                                                src={`https://www.youtube.com/embed/${video.youtubeId}`}
+                                                title={video.title}
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </div>
+                                        <div className="p-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${video.type === 'study-hack'
+                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                                    }`}>
+                                                    {video.type === 'study-hack' ? 'Study Hack' : 'Tutorial'}
+                                                </span>
+                                                {video.duration && (
+                                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+                                                        {video.duration}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h4 className="font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors line-clamp-2">
+                                                {video.title}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {!isOverview && subTopicId && (
+                        <div className="px-6 sm:px-12 pb-12">
+                            <div className="h-px bg-slate-100 dark:bg-slate-800 w-full mb-8"></div>
+                            <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[24px] p-6 sm:p-8">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="text-center sm:text-left">
+                                        <h3 className="text-xl font-black text-slate-800 dark:text-white mb-1">How's your confidence?</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Be honest! We use this to help you focus on your weak areas.</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {[
+                                            { id: 'lost' as ConfidenceLevel, label: 'Lost', icon: '🔴', color: 'bg-red-50 text-red-600 border-red-100 active:bg-red-100' },
+                                            { id: 'shaky' as ConfidenceLevel, label: 'Shaky', icon: '🟡', color: 'bg-amber-50 text-amber-600 border-amber-100 active:bg-amber-100' },
+                                            { id: 'confident' as ConfidenceLevel, label: 'Got It!', icon: '🟢', color: 'bg-green-50 text-green-600 border-green-100 active:bg-green-100' }
+                                        ].map((level) => {
+                                            const isSelected = studyProgress?.[subTopicId]?.confidence === level.id;
+                                            return (
+                                                <button
+                                                    key={level.id}
+                                                    onClick={() => updateConfidence(subTopicId, level.id)}
+                                                    className={`group relative flex flex-col items-center gap-1.5 px-5 py-3 rounded-2xl border-2 transition-all hover:scale-105 active:scale-95 ${isSelected
+                                                        ? `${level.color.replace('bg-', 'bg-opacity-100 bg-').replace('text-', 'text-')} border-current shadow-lg`
+                                                        : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 grayscale'
+                                                        }`}
+                                                >
+                                                    <span className={`text-xl transition-transform group-hover:scale-110 ${isSelected ? 'scale-110 grayscale-0' : ''}`}>
+                                                        {level.icon}
+                                                    </span>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'opacity-100' : 'opacity-60'}`}>
+                                                        {level.label}
+                                                    </span>
+                                                    {isSelected && (
+                                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-current" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                            </svg>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="m-6 sm:m-12 p-8 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row items-center justify-between gap-6">
                         <div className="text-center sm:text-left">

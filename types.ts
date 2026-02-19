@@ -14,12 +14,33 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export type ConfidenceLevel = 'lost' | 'shaky' | 'confident';
+
+export interface Video {
+  id: string;
+  title: string;
+  youtubeId: string;
+  type: 'study-hack' | 'tutorial' | 'explanation';
+  duration?: string;
+}
+
+export interface InlineQuestion {
+  id: string;
+  triggerHeader: string;
+  question: string;
+  options: string[];
+  answer: string;
+  explanation: string;
+}
+
 export interface SubTopic {
   id: string;
   title: string;
   content: string;
   keywords?: string[];
   order?: number;
+  videos?: Video[];
+  inlineQuestions?: InlineQuestion[];
 }
 
 export interface Topic {
@@ -116,6 +137,12 @@ export interface User {
   lastMessageDate: string; // YYYY-MM-DD format
   role: 'user' | 'admin';
   preferredSubjects?: string[];
+  studyProgress?: {
+    [subTopicId: string]: {
+      confidence: ConfidenceLevel;
+      lastReviewed: string; // ISO string
+    }
+  };
 }
 
 export type NudgeType = 'HERO_CARD' | 'BOTTOM_SHEET' | 'MODAL';
