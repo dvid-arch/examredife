@@ -9,7 +9,7 @@ const GuideReader: React.FC = () => {
     const { category, slug, subTopicId } = useParams<{ category: string, slug: string, subTopicId?: string }>();
     const location = useLocation();
     const navigate = useNavigate();
-    const { addActivity, studyProgress, updateConfidence } = useUserProgress();
+    const { addActivity, studyProgress, updateConfidence, calculateTopicStatus } = useUserProgress();
 
     // State management for hierarchical data
     const [topic, setTopic] = useState<Topic | null>(location.state?.topic || null);
@@ -283,27 +283,37 @@ const GuideReader: React.FC = () => {
                                             { id: 'shaky' as ConfidenceLevel, label: 'Shaky', icon: '🟡', color: 'bg-amber-50 text-amber-600 border-amber-100 active:bg-amber-100' },
                                             { id: 'confident' as ConfidenceLevel, label: 'Got It!', icon: '🟢', color: 'bg-green-50 text-green-600 border-green-100 active:bg-green-100' }
                                         ].map((level) => {
+                                            const currentStatus = calculateTopicStatus(subTopicId);
                                             const isSelected = studyProgress?.[subTopicId]?.confidence === level.id;
+                                            const isStale = isSelected && currentStatus === 'stale';
+
                                             return (
                                                 <button
                                                     key={level.id}
                                                     onClick={() => updateConfidence(subTopicId, level.id)}
                                                     className={`group relative flex flex-col items-center gap-1.5 px-5 py-3 rounded-2xl border-2 transition-all hover:scale-105 active:scale-95 ${isSelected
-                                                        ? `${level.color.replace('bg-', 'bg-opacity-100 bg-').replace('text-', 'text-')} border-current shadow-lg`
+                                                        ? isStale
+                                                            ? 'bg-orange-50 border-orange-200 text-orange-600' // Stale styling
+                                                            : `${level.color.replace('bg-', 'bg-opacity-100 bg-').replace('text-', 'text-')} border-current shadow-lg`
                                                         : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 grayscale'
                                                         }`}
                                                 >
                                                     <span className={`text-xl transition-transform group-hover:scale-110 ${isSelected ? 'scale-110 grayscale-0' : ''}`}>
-                                                        {level.icon}
+                                                        {isStale ? '🟠' : level.icon}
                                                     </span>
                                                     <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'opacity-100' : 'opacity-60'}`}>
-                                                        {level.label}
+                                                        {isStale ? 'Review Needed' : level.label}
                                                     </span>
                                                     {isSelected && (
-                                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-current" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                            </svg>
+                                                        <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${isStale ? 'bg-orange-500 text-white' : 'bg-white dark:bg-slate-900 text-current'
+                                                            }`}>
+                                                            {isStale ? (
+                                                                <span className="text-[10px] font-bold">!</span>
+                                                            ) : (
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                </svg>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </button>

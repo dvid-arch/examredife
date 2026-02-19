@@ -46,6 +46,8 @@ const Profile: React.FC = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(user?.name || '');
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.preferredSubjects || []);
+    const [examDate, setExamDate] = useState(user?.studyPlan?.examDate ? new Date(user.studyPlan.examDate).toISOString().split('T')[0] : '');
+    const [targetScore, setTargetScore] = useState(user?.studyPlan?.targetScore || 250);
     const [biometricsEnabled, setBiometricsEnabled] = useState(localStorage.getItem('examRediBiometricsEnabled') === 'true');
 
     const availableSubjects = [...STANDARD_SUBJECTS].sort();
@@ -54,6 +56,8 @@ const Profile: React.FC = () => {
         if (user) {
             setName(user.name);
             setSelectedSubjects(user.preferredSubjects || []);
+            setExamDate(user.studyPlan?.examDate ? new Date(user.studyPlan.examDate).toISOString().split('T')[0] : '');
+            setTargetScore(user.studyPlan?.targetScore || 250);
         }
     }, [user]);
 
@@ -76,6 +80,34 @@ const Profile: React.FC = () => {
             const subjectsToSave = selectedSubjects.includes('English') ? selectedSubjects : ['English', ...selectedSubjects.filter(s => s !== 'English')].slice(0, 4);
             await updateUser({ preferredSubjects: subjectsToSave });
             success('Preferred subjects updated!');
+        }
+    };
+
+    const handleSaveGoals = async () => {
+        if (updateUser) {
+            await updateUser({
+                studyPlan: {
+                    targetScore,
+                    examDate: examDate ? new Date(examDate).toISOString() : undefined,
+                    weakSubjects: user?.studyPlan?.weakSubjects || [],
+                    dailyGoal: user?.studyPlan?.dailyGoal || 10
+                }
+            });
+            success('Study goals updated!');
+        }
+    };
+
+    const handleSaveGoals = async () => {
+        if (updateUser) {
+            await updateUser({
+                studyPlan: {
+                    targetScore,
+                    examDate: examDate ? new Date(examDate).toISOString() : undefined,
+                    weakSubjects: user?.studyPlan?.weakSubjects || [],
+                    dailyGoal: user?.studyPlan?.dailyGoal || 10
+                }
+            });
+            success('Study goals updated!');
         }
     };
 
@@ -212,6 +244,39 @@ const Profile: React.FC = () => {
                                 Upgrade to Pro
                             </button>
                         )}
+
+                        <div className="pt-6 border-t dark:border-slate-700">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Study Goals</h3>
+                            <div className="space-y-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Target UTME Score</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="400"
+                                        value={targetScore}
+                                        onChange={(e) => setTargetScore(parseInt(e.target.value))}
+                                        className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Exam Date</label>
+                                    <input
+                                        type="date"
+                                        value={examDate}
+                                        onChange={(e) => setExamDate(e.target.value)}
+                                        className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-2 font-body focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-1">We use this to calculate your daily study intensity.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleSaveGoals}
+                                className="w-full bg-primary/10 text-primary font-bold py-2 rounded-lg hover:bg-primary/20 transition-colors"
+                            >
+                                Update Goals
+                            </button>
+                        </div>
 
                         <div className="pt-6 border-t dark:border-slate-700">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Target Subjects (Exam Defaults)</h3>

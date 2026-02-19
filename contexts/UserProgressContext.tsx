@@ -27,12 +27,13 @@ interface UserProgressContextType {
     syncProgress: () => Promise<void>;
     updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
     updateConfidence: (subTopicId: string, confidence: ConfidenceLevel) => Promise<void>;
+    calculateTopicStatus: (subTopicId: string) => ConfidenceLevel | 'stale' | null;
 }
 
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
 
 export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [streak, setStreak] = useState(0);
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -202,6 +203,39 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     };
 
+    const calculateTopicStatus = (subTopicId: string): ConfidenceLevel | 'stale' | null => {
+        const progress = studyProgress[subTopicId];
+        if (!progress) return null;
+
+        if (progress.confidence === 'confident') {
+            const lastReviewed = new Date(progress.lastReviewed);
+            const now = new Date();
+            const daysSinceReview = Math.floor((now.getTime() - lastReviewed.getTime()) / (1000 * 60 * 60 * 24));
+
+            // Default: Standard retention (14 days)
+            let decayThreshold = 14;
+
+            // Urgency Logic: If exam is close, decay faster
+            const { user } = useAuth();
+            if (user?.studyPlan?.examDate) {
+                const examDate = new Date(user.studyPlan.examDate);
+                const daysToExam = Math.ceil((examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+                if (daysToExam <= 14) {
+                    decayThreshold = 3; // "Cram Mode": decay in 3 days
+                } else if (daysToExam <= 30) {
+                    decayThreshold = 7; // "Intensive Mode": decay in 7 days
+                }
+            }
+
+            if (daysSinceReview > decayThreshold) {
+                return 'stale';
+            }
+        }
+
+        return progress.confidence;
+    };
+
     return (
         <UserProgressContext.Provider value={{
             streak,
@@ -212,7 +246,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             addActivity,
             syncProgress,
             updateEngagementState,
-            updateConfidence
+            updateConfidence,
+            calculateTopicStatus
         }}>
             {children}
         </UserProgressContext.Provider>

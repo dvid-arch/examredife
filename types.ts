@@ -137,6 +137,12 @@ export interface User {
   lastMessageDate: string; // YYYY-MM-DD format
   role: 'user' | 'admin';
   preferredSubjects?: string[];
+  studyPlan?: {
+    targetScore: number;
+    weakSubjects: string[];
+    dailyGoal: number;
+    examDate?: string; // ISO string
+  };
   studyProgress?: {
     [subTopicId: string]: {
       confidence: ConfidenceLevel;
