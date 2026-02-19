@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
@@ -8,6 +8,8 @@ import OnboardingTour from '../components/OnboardingTour.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import VerificationBanner from '../components/VerificationBanner.tsx';
 import { DashboardSkeleton } from '../components/Skeletons.tsx';
+import apiService from '../services/apiService.ts';
+import { StudyGuide } from '../types.ts';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
 const PracticeIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
@@ -69,7 +71,11 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
 
 const WelcomeBanner = () => {
     const { isAuthenticated, user } = useAuth();
-    const { streak } = useUserProgress();
+    const { streak, estimatedScore } = useUserProgress();
+
+    // Calculate percentage for progress circle (400 is max score)
+    const scorePercentage = (estimatedScore / 400) * 100;
+    const strokeDashoffset = 100 - scorePercentage;
 
     return (
         <div data-tour-id="welcome-banner" className="bg-primary text-white p-8 rounded-3xl shadow-lg shadow-primary/20 relative overflow-hidden mb-8">
@@ -89,16 +95,35 @@ const WelcomeBanner = () => {
                             }
                         </p>
                     </div>
+
                     {isAuthenticated && (
-                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/20">
-                            <span className="text-2xl">🔥</span>
-                            <div>
-                                <span className="block text-xl font-bold leading-none">{streak}</span>
-                                <span className="text-[10px] uppercase tracking-wider font-bold text-blue-100">Day Streak</span>
+                        <div className="flex gap-4">
+                            {/* Streak Badge */}
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/20">
+                                <span className="text-2xl">🔥</span>
+                                <div>
+                                    <span className="block text-xl font-bold leading-none">{streak}</span>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-blue-100">Day Streak</span>
+                                </div>
+                            </div>
+
+                            {/* Estimated Score Ring */}
+                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/20">
+                                <div className="relative w-10 h-10">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-blue-900/30" />
+                                        <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-white" strokeDasharray="100" strokeDashoffset={strokeDashoffset} style={{ transition: 'stroke-dashoffset 1s ease-in-out' }} />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span className="block text-xl font-bold leading-none">{estimatedScore}</span>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-blue-100">Est. Score</span>
+                                </div>
                             </div>
                         </div>
                     )}
                 </div>
+
                 <div className="mt-8 flex flex-wrap gap-3">
                     <Link to="/practice" className="bg-white text-primary font-bold py-3 px-8 rounded-full hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-md">
                         Start Practice
@@ -112,14 +137,62 @@ const WelcomeBanner = () => {
     );
 };
 
-
 const Dashboard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
-    const { recentActivity } = useUserProgress();
+    const { recentActivity, studyProgress, calculateTopicStatus } = useUserProgress();
     const [showTour, setShowTour] = useState(false);
 
+    // State for calculated weak areas
+    const [weakAreas, setWeakAreas] = useState<{ id: string, title: string, subject: string, link: string }[]>([]);
+
+    // Calculate Weak Areas on mount
+    useEffect(() => {
+        const fetchGuidesAndIdentifyWeaknesses = async () => {
+            if (!isAuthenticated) return;
+
+            // 1. Identify stale/lost/shaky IDs from progress
+            const problemIds = Object.keys(studyProgress || {}).filter(id => {
+                const status = calculateTopicStatus(id);
+                return status === 'stale' || studyProgress[id].confidence === 'lost' || studyProgress[id].confidence === 'shaky';
+            });
+
+            if (problemIds.length === 0) {
+                setWeakAreas([]);
+                return;
+            }
+
+            // 2. Fetch guides to find titles and paths
+            try {
+                const guides: StudyGuide[] = await apiService('/data/guides');
+                const weaknesses: { id: string, title: string, subject: string, link: string }[] = [];
+
+                // Optimized search (could be better with a map, but N is small)
+                for (const guide of guides) {
+                    for (const topic of guide.topics) {
+                        for (const sub of topic.subTopics) {
+                            if (problemIds.includes(sub.id)) {
+                                weaknesses.push({
+                                    id: sub.id,
+                                    title: sub.title,
+                                    subject: guide.subject,
+                                    link: `/study-guides/${guide.id}/${topic.id}/${sub.id}`
+                                });
+                            }
+                        }
+                    }
+                }
+                setWeakAreas(weaknesses.slice(0, 3));
+            } catch (err) {
+                console.error("Failed to fetch guides for weak areas", err);
+            }
+        };
+
+        fetchGuidesAndIdentifyWeaknesses();
+    }, [isAuthenticated, studyProgress, calculateTopicStatus]);
+
+
     // Filter and sort activities for "Continue Studying" by most recent activity
-    const continueStudyingActivities = React.useMemo(() => {
+    const continueStudyingActivities = useMemo(() => {
         return [...recentActivity].sort((a, b) => b.timestamp - a.timestamp);
     }, [recentActivity]);
 
@@ -195,6 +268,35 @@ const Dashboard: React.FC = () => {
             {showTour && <OnboardingTour steps={tourSteps} onComplete={handleTourComplete} />}
             <VerificationBanner />
             <WelcomeBanner />
+
+            {/* Weak Areas Widget */}
+            {isAuthenticated && weakAreas.length > 0 && (
+                <section className="bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 rounded-3xl p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="bg-orange-100 text-orange-600 p-2 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Focus Areas</h2>
+                    </div>
+
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                        Based on your activity, we recommend reviewing these topics:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {weakAreas.map(area => (
+                            <Link key={area.id} to={area.link} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2 group">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider group-hover:text-primary transition-colors">{area.subject}</span>
+                                <h4 className="font-bold text-slate-800 dark:text-white leading-tight">{area.title}</h4>
+                                <div className="mt-auto pt-2 text-xs font-bold text-orange-500 flex items-center gap-1">
+                                    Review Now <span>→</span>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {isAuthenticated && continueStudyingActivities.length > 0 && (
                 <section className="relative">
