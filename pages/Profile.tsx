@@ -97,20 +97,6 @@ const Profile: React.FC = () => {
         }
     };
 
-    const handleSaveGoals = async () => {
-        if (updateUser) {
-            await updateUser({
-                studyPlan: {
-                    targetScore,
-                    examDate: examDate ? new Date(examDate).toISOString() : undefined,
-                    weakSubjects: user?.studyPlan?.weakSubjects || [],
-                    dailyGoal: user?.studyPlan?.dailyGoal || 10
-                }
-            });
-            success('Study goals updated!');
-        }
-    };
-
     const handleSave = async () => {
         if (name.trim() === '') return;
         if (updateUser) {

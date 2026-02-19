@@ -212,20 +212,23 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             const now = new Date();
             const daysSinceReview = Math.floor((now.getTime() - lastReviewed.getTime()) / (1000 * 60 * 60 * 24));
 
-            // Default: Standard retention (14 days)
-            let decayThreshold = 14;
+            // Default: "High Urgency" (Assume ~2 weeks to study)
+            // If you have 2 weeks, you can't afford to forget something for 14 days. 
+            // You need to review it every 3-4 days.
+            let decayThreshold = 3;
 
-            // Urgency Logic: If exam is close, decay faster
-            const { user } = useAuth();
+            // Urgency Logic: Adjust if explicit exam date is known
+            // Use 'user' from component scope (UserProgressProvider)
             if (user?.studyPlan?.examDate) {
                 const examDate = new Date(user.studyPlan.examDate);
                 const daysToExam = Math.ceil((examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-                if (daysToExam <= 14) {
-                    decayThreshold = 3; // "Cram Mode": decay in 3 days
-                } else if (daysToExam <= 30) {
-                    decayThreshold = 7; // "Intensive Mode": decay in 7 days
+                if (daysToExam > 60) {
+                    decayThreshold = 14; // "Long Term": Relaxed review
+                } else if (daysToExam > 30) {
+                    decayThreshold = 7; // "Standard": Weekly review
                 }
+                // Else (< 30 days) keeps default of 3
             }
 
             if (daysSinceReview > decayThreshold) {
