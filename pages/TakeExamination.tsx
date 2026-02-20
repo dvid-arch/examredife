@@ -107,9 +107,9 @@ const TakeExamination: React.FC = () => {
             return typeof state.year !== 'undefined' && typeof state.examTitle === 'string';
         }
 
-        // Check for custom mode state
+        // Check for custom mode state (per-subject count, no global questionsPerSubject)
         if (state.selections && Array.isArray(state.selections) && state.selections.length > 0) {
-            return typeof state.questionsPerSubject === 'number' && typeof state.examTitle === 'string';
+            return typeof state.examTitle === 'string';
         }
 
         return false;
