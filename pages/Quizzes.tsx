@@ -298,7 +298,7 @@ const Quizzes: React.FC = () => {
                                 {displayedSubjects.map(subject => (
                                     <label
                                         key={subject}
-                                        className={`flex-shrink-0 min-w-[200px] w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 flex items-center space-x-3 p-3 border rounded-lg transition-colors snap-start
+                                        className={`min-w-[200px] flex items-center space-x-3 p-3 border rounded-lg transition-colors snap-start
                                             ${subject === 'English' ? 'cursor-not-allowed bg-primary-light dark:bg-primary/20 border-primary' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 has-[:checked]:bg-primary-light has-[:checked]:border-primary dark:has-[:checked]:bg-primary/20'}
                                             ${selectedSubjects.length === 4 && !selectedSubjects.includes(subject) ? 'opacity-50 cursor-not-allowed' : ''}
 `}
@@ -336,9 +336,9 @@ const Quizzes: React.FC = () => {
 
                                 <div>
                                     <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">1. Select Subjects & Years</h3>
-                                    <div className="flex overflow-x-auto pb-4 gap-4 scrollbar-hide snap-x">
+                                    <div className="grid grid-rows-4 md:grid-rows-2 grid-flow-col gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
                                         {subjects.map(subject => (
-                                            <div key={subject} className={`flex-shrink-0 min-w-[240px] w-full md:w-1/2 lg:w-1/3 xl:w-1/4 p-3 border rounded-lg transition-colors snap-start ${customSelections[subject] ? 'bg-primary-light dark:bg-primary/20 border-primary' : 'bg-white dark:bg-gray-800/50'}`}>
+                                            <div key={subject} className={`min-w-[240px] p-3 border rounded-lg transition-colors snap-start ${customSelections[subject] ? 'bg-primary-light dark:bg-primary/20 border-primary' : 'bg-white dark:bg-gray-800/50'}`}>
                                                 <label className="flex items-center space-x-3 cursor-pointer">
                                                     <input
                                                         type="checkbox"
