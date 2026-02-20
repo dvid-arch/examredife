@@ -943,7 +943,5 @@ const TakeExamination: React.FC = () => {
         </div>
     );
 };
-    );
-};
 
 export default TakeExamination;
