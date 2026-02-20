@@ -11,7 +11,8 @@ const MarkdownRenderer: React.FC<{
   content: string;
   forceLightMode?: boolean;
   inlineQuestions?: InlineQuestion[];
-}> = ({ content, forceLightMode, inlineQuestions = [], onCheckpointResult }) => {
+  renderOptions?: boolean; // Control whether to render options internally
+}> = ({ content, forceLightMode, inlineQuestions = [], renderOptions = true, onCheckpointResult }) => {
   // Normalize LaTeX delimiters for remark-math ($ instead of \( or \[)
   const normalizeLatex = (text: string) => {
     if (!text) return '';

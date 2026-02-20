@@ -8,9 +8,10 @@ interface QuestionRendererProps {
   className?: string;
   imageClassName?: string;
   forceLightMode?: boolean;
+  renderOptions?: boolean;
 }
 
-const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionContent, className = '', imageClassName = '', forceLightMode = false }) => {
+const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionContent, className = '', imageClassName = '', forceLightMode = false, renderOptions = true }) => {
   const content = questionContent || question?.question || '';
   const hasPlaceholder = content.includes('[IMAGE]');
   const hasDiagram = !!question.questionDiagram;
@@ -47,8 +48,8 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
         </div>
       )}
 
-      {/* Render Options if available */}
-      {question.options && Object.keys(question.options).length > 0 && (
+      {/* Render Options if available and requested */}
+      {renderOptions && question.options && Object.keys(question.options).length > 0 && (
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {Object.entries(question.options).map(([key, option]) => (
             <div key={key} className={`flex items-start gap-3 p-3 rounded-xl border ${forceLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>

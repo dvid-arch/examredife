@@ -12,6 +12,7 @@ import { evaluateNudgeTrigger, NUDGE_REGISTRY } from '../constants/engagementRul
 import QuizResults from '../components/QuizResults.tsx';
 
 import apiService from '../services/apiService.ts';
+import QuestionNavigation from '../components/QuestionNavigation.tsx';
 
 
 const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
@@ -740,7 +741,7 @@ const TakeExamination: React.FC = () => {
                 </div>
             </header>
 
-            <div className="flex-1 flex flex-col overflow-hidden relative w-full">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative w-full">
                 <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     {subjects.length > 1 && (
                         <div className="flex-shrink-0 mb-4 sm:mb-6 overflow-x-auto py-3 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar w-[calc(100%+2rem)] sm:w-full">
@@ -793,6 +794,7 @@ const TakeExamination: React.FC = () => {
                                         question={currentQuestion}
                                         className="text-lg text-slate-800 mb-4 min-h-[40px]"
                                         forceLightMode={true}
+                                        renderOptions={false}
                                     />
 
                                     {mode === 'study' && (
@@ -924,77 +926,23 @@ const TakeExamination: React.FC = () => {
                     </div>
                 </main>
 
-                <footer className="bg-white p-4 border-t shadow-inner flex-shrink-0 z-10">
-                    <div className="max-w-4xl mx-auto">
-                        <p className="font-semibold text-slate-600 text-sm mb-2">
-                            Attempted {attemptedInSubject} / {totalQuestionsInSubject}
-                        </p>
-                        <div className="space-y-4">
-                            {(() => {
-                                const subject = activeSubject;
-                                const bounds = subjectBoundaries[subject];
-                                if (!bounds) return null;
-                                const questionCount = bounds.end - bounds.start + 1;
-
-                                return (
-                                    <div key={subject}>
-                                        <div className="flex flex-wrap gap-2">
-                                            {Array.from({ length: questionCount }).map((_, localIndex) => {
-                                                const globalIndex = bounds.start + localIndex;
-                                                const q = questions[globalIndex];
-                                                if (!q) return null;
-
-                                                const isCurrent = globalIndex === currentQuestionIndex;
-                                                const isAnswered = userAnswers[q.id] !== undefined;
-
-                                                // Guest logic: visual lock?
-                                                // If we have answered 5 questions, UNANSWERED questions should perhaps look locked?
-                                                // But the user said "all questions are opened... once... answered 5... rest are locked"
-                                                // So if !isAnswered and limitReached, show lock.
-
-                                                let isLocked = false;
-                                                if (!isAuthenticated && guestAnswerLimitReached && !isAnswered) {
-                                                    isLocked = true;
-                                                }
-
-                                                let buttonClass = 'border border-gray-300 text-slate-700 hover:bg-gray-100';
-
-                                                if (isLocked) {
-                                                    buttonClass = 'border border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed opacity-60';
-                                                } else if (isAnswered) {
-                                                    buttonClass = 'bg-green-100 border-green-300 text-green-800';
-                                                }
-
-                                                if (isCurrent) {
-                                                    buttonClass = 'bg-primary text-white border-green-700 ring-2 ring-offset-1 ring-primary';
-                                                }
-
-                                                return (
-                                                    <button
-                                                        key={q.id}
-                                                        onClick={() => handleJumpToQuestion(globalIndex)}
-                                                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg text-sm font-bold flex items-center justify-center transition-all duration-150 ${buttonClass}`}
-                                                        aria-label={`Go to ${subject} question ${localIndex + 1}`}
-                                                    >
-                                                        {isLocked ? (
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mx-auto" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                                            </svg>
-                                                        ) : (
-                                                            localIndex + 1
-                                                        )}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    </div>
-                </footer>
+                {/* Sidebar Navigation (Desktop) / Drawer (Mobile) */}
+                <QuestionNavigation
+                    questions={questions}
+                    currentQuestionIndex={currentQuestionIndex}
+                    userAnswers={userAnswers}
+                    onJumpToQuestion={handleJumpToQuestion}
+                    activeSubject={activeSubject}
+                    onSubjectChange={handleSubjectChange}
+                    subjects={subjects}
+                    isFinished={isFinished}
+                    guestAnswerLimitReached={guestAnswerLimitReached}
+                    isAuthenticated={isAuthenticated}
+                />
             </div>
         </div>
+    );
+};
     );
 };
 
