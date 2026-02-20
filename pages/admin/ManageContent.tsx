@@ -337,9 +337,7 @@ interface GuideModalProps {
     onClose: () => void;
 }
 const GuideModal: React.FC<GuideModalProps> = ({ guide, onSave, onClose }) => {
-    const [formData, setFormData] = useState<Partial<StudyGuide>>({
-        title: '', subject: '', content: '', ...guide
-    });
+    const [formData, setFormData] = useState<Partial<StudyGuide>>({ subject: '', topics: [], ...guide });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -358,16 +356,12 @@ const GuideModal: React.FC<GuideModalProps> = ({ guide, onSave, onClose }) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{guide ? 'Edit Guide' : 'Add New Guide'}</h2>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Title</label>
-                        <input type="text" name="title" value={formData.title} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Guide ID (slug)</label>
+                        <input type="text" name="id" value={formData.id ?? ''} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Subject</label>
-                        <input type="text" name="subject" value={formData.subject} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Content (Markdown)</label>
-                        <textarea name="content" value={formData.content} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md h-40 bg-slate-100 dark:bg-slate-700" required />
+                        <input type="text" name="subject" value={formData.subject ?? ''} onChange={handleChange} className="w-full mt-1 p-2 border dark:border-slate-600 rounded-md bg-slate-100 dark:bg-slate-700" required />
                     </div>
                     <div className="flex justify-end gap-4 pt-2">
                         <button type="button" onClick={onClose} className="font-semibold px-4 py-2 text-slate-700 dark:text-slate-300">Cancel</button>
@@ -400,14 +394,14 @@ const ManageContent: React.FC = () => {
             try {
                 // Use API calls
                 const papersData = await apiService<PastPaper[]>('/data/papers');
-                setPapers(papersData.length > 0 ? papersData : pastPapersData);
+                setPapers(papersData.length > 0 ? papersData : []);
 
                 const guidesData = await apiService<StudyGuide[]>('/data/guides');
                 setGuides(guidesData.length > 0 ? guidesData : allStudyGuides);
             } catch (error) {
                 console.error("Failed to fetch content", error);
                 // Fallback
-                setPapers(pastPapersData);
+                setPapers([]);
                 setGuides(allStudyGuides);
             } finally {
                 setIsLoading(false);
@@ -640,9 +634,9 @@ const ManageGuides: React.FC<ManageGuidesProps> = ({ guides, isLoading, onAdd, o
                         ) : (
                             guides.map(guide => (
                                 <tr key={guide.id} className="border-b dark:border-slate-700 last:border-b-0">
-                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-100 break-words">{guide.title}</td>
-                                    <td className="p-4 text-slate-600 dark:text-slate-300 break-words">{guide.subject}</td>
-                                    <td className="p-4 text-slate-600 dark:text-slate-300">{guide.createdAt}</td>
+                                    <td className="p-4 font-medium text-slate-800 dark:text-slate-100 break-words">{guide.subject}</td>
+                                    <td className="p-4 text-slate-600 dark:text-slate-300 break-words">{guide.id}</td>
+                                    <td className="p-4 text-slate-600 dark:text-slate-300">{guide.lastUpdated ?? '—'}</td>
                                     <td className="p-4 flex gap-4">
                                         <button onClick={() => onEdit(guide)} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">Edit</button>
                                         <button onClick={() => onDelete(guide.id)} className="font-semibold text-red-600 dark:text-red-400 hover:underline">Delete</button>

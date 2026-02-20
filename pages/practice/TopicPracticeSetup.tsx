@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
-import { ChallengeQuestion } from '../../types.ts';
+import { ChallengeQuestion, StudyGuide } from '../../types.ts';
 
 const TopicPracticeSetup: React.FC = () => {
     const { subject, topicSlug, subTopicId } = useParams<{ subject: string, topicSlug: string, subTopicId?: string }>();

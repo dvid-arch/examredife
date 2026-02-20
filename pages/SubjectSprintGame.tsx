@@ -140,8 +140,7 @@ const SubjectSprintGame: React.FC = () => {
         setCurrentQuestionIndex(0);
         setScore(0);
         setUserAnswers({});
-        setGameState('selecting');
-        setEndTime(null); // Corrected the syntax error from the instruction
+        setEndTime(null);
         setSelectedAnswer(null);
         setAnswerStatus(null);
         setGameState('playing');
