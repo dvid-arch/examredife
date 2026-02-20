@@ -66,8 +66,14 @@ const Quizzes: React.FC = () => {
 
 
     // State for Custom Mode
-    const [customSelections, setCustomSelections] = useState<Record<string, 'random' | number>>({});
-    const [customQuestionCount, setCustomQuestionCount] = useState<number>(10);
+    // Updated structure: Year AND Count per subject
+    type CustomSelection = {
+        year: 'random' | number;
+        count: number;
+    };
+
+    const [customSelections, setCustomSelections] = useState<Record<string, CustomSelection>>({});
+    // Removed global customQuestionCount
 
     const yearsBySubject = useMemo(() => {
         const map = new Map<string, number[]>();
@@ -105,10 +111,11 @@ const Quizzes: React.FC = () => {
             if (newSelections[subject]) {
                 delete newSelections[subject]; // uncheck
             } else {
-                // check, default to most recent year for that specific subject
+                // check, default to most recent year and default count
                 const subjectYears = yearsBySubject.get(subject) || [];
                 const defaultYear = subjectYears.length > 0 ? subjectYears[0] : 'random';
-                newSelections[subject] = defaultYear;
+                // Default count: 40, but capped at 50 for non-English (though loop below handles options)
+                newSelections[subject] = { year: defaultYear, count: 40 };
             }
             return newSelections;
         });
@@ -117,7 +124,20 @@ const Quizzes: React.FC = () => {
     const handleCustomYearChange = (subject: string, year: string) => {
         setCustomSelections(prev => ({
             ...prev,
-            [subject]: year === 'random' ? 'random' : Number(year),
+            [subject]: {
+                ...prev[subject],
+                year: year === 'random' ? 'random' : Number(year)
+            },
+        }));
+    };
+
+    const handleCustomCountChange = (subject: string, count: number) => {
+        setCustomSelections(prev => ({
+            ...prev,
+            [subject]: {
+                ...prev[subject],
+                count: count
+            },
         }));
     };
 
@@ -146,7 +166,12 @@ const Quizzes: React.FC = () => {
 
     const handleStartCustomPractice = (e: React.FormEvent) => {
         e.preventDefault();
-        const selectionsArray = Object.entries(customSelections).map(([subject, year]) => ({ subject, year }));
+        // Updated to pass count as well
+        const selectionsArray = Object.entries(customSelections).map(([subject, data]) => ({
+            subject,
+            year: data.year,
+            count: data.count
+        }));
 
         if (selectionsArray.length === 0) {
             alert('Please select at least one subject for your custom practice.');
@@ -159,7 +184,7 @@ const Quizzes: React.FC = () => {
         navigate('/take-examination', {
             state: {
                 selections: selectionsArray,
-                questionsPerSubject: customQuestionCount, // FIX: Added missing param
+                // questionsPerSubject removed, using per-subject count
                 examTitle: `Custom Practice`,
                 mode: examMode,
                 timestamp: Date.now(),
@@ -324,39 +349,45 @@ const Quizzes: React.FC = () => {
                                                     <span className="font-medium text-slate-700 dark:text-slate-200">{subject}</span>
                                                 </label>
                                                 {customSelections[subject] && (
-                                                    <div className="mt-2">
-                                                        <select
-                                                            value={String(customSelections[subject])}
-                                                            onChange={(e) => handleCustomYearChange(subject, e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="w-full bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-slate-600 border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                        >
-                                                            {getYearsForSubject(subject).map(year => (
-                                                                <option key={year} value={year}>{year}</option>
-                                                            ))}
-                                                            <option value="random">Random Year</option>
-                                                        </select>
+                                                    <div className="mt-3 grid grid-cols-2 gap-2">
+                                                        {/* Year Selection */}
+                                                        <div>
+                                                            <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">Year</label>
+                                                            <select
+                                                                value={String(customSelections[subject].year)}
+                                                                onChange={(e) => handleCustomYearChange(subject, e.target.value)}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-full bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-slate-600 border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                                            >
+                                                                {getYearsForSubject(subject).map(year => (
+                                                                    <option key={year} value={year}>{year}</option>
+                                                                ))}
+                                                                <option value="random">Random</option>
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Count Selection */}
+                                                        <div>
+                                                            <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">Questions</label>
+                                                            <select
+                                                                value={customSelections[subject].count}
+                                                                onChange={(e) => handleCustomCountChange(subject, Number(e.target.value))}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="w-full bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-slate-600 border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                                            >
+                                                                {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                                                                    .filter(num => subject === 'English' || num <= 50) // English gets up to 100, others capped at 50
+                                                                    .map(num => (
+                                                                        <option key={num} value={num}>{num}</option>
+                                                                    ))
+                                                                }
+                                                            </select>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-
-                                <div>
-                                    <h3 className="text-md font-semibold text-slate-700 dark:text-slate-300 mb-2">2. Questions Per Subject</h3>
-                                    <div className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 border border-gray-200 dark:border-slate-700 rounded-lg">
-                                        <input
-                                            type="range"
-                                            min="1"
-                                            max="50"
-                                            value={customQuestionCount}
-                                            onChange={(e) => setCustomQuestionCount(Number(e.target.value))}
-                                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
-                                        />
-                                        <span className="font-bold text-primary min-w-[3rem] text-center">{customQuestionCount}</span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-1 italic">Note: Pro users can take up to 50 questions per subject.</p>
                                 </div>
 
                                 <ModeSelector />
@@ -374,8 +405,9 @@ const Quizzes: React.FC = () => {
                         </Card>
                     )}
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

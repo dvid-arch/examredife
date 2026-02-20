@@ -156,7 +156,7 @@ const TopicPracticeSetup: React.FC = () => {
                                     <input
                                         type="range"
                                         min="5"
-                                        max={Math.min(50, availableQuestions.length)}
+                                        max={Math.min(subject === 'English' ? 100 : 50, availableQuestions.length)}
                                         step="5"
                                         value={questionCount}
                                         onChange={(e) => setQuestionCount(Number(e.target.value))}

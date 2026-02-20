@@ -19,7 +19,12 @@ const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5
 
 const GUEST_QUESTION_LIMIT = 5;
 
-const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject: string, year: 'random' | number }[], questionsPerSubject: number, keyword?: string): ChallengeQuestion[] => {
+const preparePracticeQuestions = (
+    allPapers: PastPaper[],
+    selections: { subject: string, year: 'random' | number, count?: number }[], // count is now optional per subject
+    globalCount: number, // fallback
+    keyword?: string
+): ChallengeQuestion[] => {
     if (!selections || selections.length === 0) return [];
 
     const sortedSelections = [...selections].sort((a, b) => {
@@ -30,13 +35,11 @@ const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject:
 
     let allQuestions: ChallengeQuestion[] = [];
 
-    sortedSelections.forEach(({ subject, year }) => {
+    sortedSelections.forEach(({ subject, year, count: subjectCount }) => {
         let papersForSubject = allPapers.filter(paper => paper.subject === subject);
 
         if (year !== 'random') {
             papersForSubject = papersForSubject.filter(paper => paper.year === year);
-            // Fallback: If no papers for specific year, use all papers for that subject
-            // This prevents subjects from disappearing if the year is missing
             if (papersForSubject.length === 0) {
                 papersForSubject = allPapers.filter(paper => paper.subject === subject);
             }
@@ -54,8 +57,15 @@ const preparePracticeQuestions = (allPapers: PastPaper[], selections: { subject:
             );
         }
 
+        // Determine count: explicit subject count > global defaults
+        const countToUse = subjectCount || globalCount;
+
+        // Safety Cap
+        const limit = subject === 'English' ? 100 : 50;
+        const finalCount = Math.min(countToUse, limit);
+
         const shuffled = shuffleArray(questionsForSubject);
-        allQuestions.push(...shuffled.slice(0, questionsPerSubject));
+        allQuestions.push(...shuffled.slice(0, finalCount));
     });
 
     return allQuestions;
@@ -423,14 +433,17 @@ const TakeExamination: React.FC = () => {
                     }
 
                     const numQuestions = questionsPerSubject;
-                    let practiceSelections: { subject: string, year: 'random' | number }[] = [];
+                    let practiceSelections: { subject: string, year: 'random' | number, count?: number }[] = [];
 
                     if (selections) {
                         practiceSelections = selections;
                     } else if (practiceSubjectsFromState && practiceSubjectsFromState.length > 0) {
+                        // Standard Mode: 4 subjects, default to 60 for English, 40 for others? 
+                        // Or just use the global default passed in (likely 40 or 50)
                         practiceSelections = practiceSubjectsFromState.map((subject: string) => ({
                             subject,
                             year: practiceYear || 'random',
+                            count: subject === 'English' ? 60 : 40 // Default standard exam distribution if not specified
                         }));
                     }
 
