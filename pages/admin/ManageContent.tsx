@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Card from '../../components/Card.tsx';
 import QuestionRenderer from '../../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
@@ -192,14 +192,6 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
     );
 };
 
-// --- Question Tagging Row ---
-interface QuestionTaggingRowProps {
-    question: PastQuestion;
-    subject: string;
-    availableTopics: { slug: string; label: string }[];
-    onSave: (topics: string[]) => Promise<void>;
-}
-
 const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subject, availableTopics, onSave }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedTopics, setSelectedTopics] = useState<string[]>(question.topics || []);
@@ -213,19 +205,23 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
     };
 
     const handleAiSuggest = async () => {
+        if (availableTopics.length === 0) {
+            alert('No topics available for this subject to suggest from.');
+            return;
+        }
         setIsAiLoading(true);
         try {
             const result = await apiService<{ suggestedTopics: string[] }>('/ai/suggest-question-topics', {
                 method: 'POST',
                 body: {
                     questionText: question.question,
-                    availableTopics: availableTopics.slice(0, 50), // Send a manageable chunk
+                    availableTopics: availableTopics.slice(0, 100), // Send a manageable chunk
                     subject
                 }
             });
             setSelectedTopics(result.suggestedTopics);
         } catch (err) {
-            alert('AI suggestion failed');
+            alert('AI suggestion failed. Please try manual tagging.');
         } finally {
             setIsAiLoading(false);
         }
@@ -237,57 +233,63 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
             await onSave(selectedTopics);
             setIsEditing(false);
         } catch (err) {
-            alert('Failed to save tags');
+            alert('Failed to save tags. Please check your connection.');
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <div className="mt-2 pt-2 border-t dark:border-slate-700/50">
+        <div className="mt-3 pt-3 border-t dark:border-slate-700 transition-all duration-300">
             {!isEditing ? (
-                <div className="flex items-center justify-between gap-2 overflow-hidden">
-                    <div className="flex flex-wrap gap-1">
+                <div className="flex items-center justify-between gap-3 group">
+                    <div className="flex flex-wrap gap-1.5 flex-1 p-2 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-100 dark:border-slate-700 min-h-[36px] items-center">
+                        <span className="text-[10px] font-black text-slate-400 uppercase mr-1">Topics:</span>
                         {selectedTopics.length > 0 ? selectedTopics.map(slug => (
-                            <span key={slug} className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded">
+                            <span key={slug} className="text-[10px] bg-white dark:bg-slate-700 text-primary dark:text-primary-light px-2 py-0.5 rounded-md font-bold shadow-sm border border-slate-100 dark:border-slate-600">
                                 {availableTopics.find(t => t.slug === slug)?.label || slug}
                             </span>
                         )) : (
-                            <span className="text-[10px] text-slate-400 italic">No topics tagged</span>
+                            <span className="text-[10px] text-slate-400 font-medium italic">Untagged</span>
                         )}
                     </div>
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="text-[10px] font-bold text-primary hover:underline whitespace-nowrap"
+                        className="flex items-center gap-1.5 text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/5 px-3 py-1.5 rounded-lg border border-transparent hover:border-primary/20 transition-all active:scale-95"
                     >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.171V17h2.829l8.38-8.379-2.83-2.828z" />
+                        </svg>
                         Edit Tags
                     </button>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    <TopicSelector
-                        availableTopics={availableTopics}
-                        selectedTopics={selectedTopics}
-                        onToggle={handleToggle}
-                        onAiSuggest={handleAiSuggest}
-                        isAiLoading={isAiLoading}
-                    />
-                    <div className="flex justify-end gap-2">
+                <div className="flex flex-col md:flex-row gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex-1">
+                        <TopicSelector
+                            availableTopics={availableTopics}
+                            selectedTopics={selectedTopics}
+                            onToggle={handleToggle}
+                            onAiSuggest={handleAiSuggest}
+                            isAiLoading={isAiLoading}
+                        />
+                    </div>
+                    <div className="md:w-32 flex md:flex-col justify-end gap-2">
                         <button
                             onClick={() => {
                                 setIsEditing(false);
                                 setSelectedTopics(question.topics || []);
                             }}
-                            className="text-xs font-semibold px-3 py-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                            className="flex-1 md:flex-none text-xs font-bold px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleConfirm}
                             disabled={isSaving}
-                            className="text-xs font-bold bg-primary text-white px-4 py-1 rounded-md disabled:bg-slate-400"
+                            className="flex-1 md:flex-none text-xs font-black bg-primary text-white px-4 py-2 rounded-lg shadow-lg shadow-primary/20 hover:bg-accent transition-all active:scale-95 disabled:bg-slate-400 disabled:shadow-none"
                         >
-                            {isSaving ? 'Saving...' : 'Save Tags'}
+                            {isSaving ? 'SAVING...' : 'SAVE TAGS'}
                         </button>
                     </div>
                 </div>
