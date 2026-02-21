@@ -240,8 +240,7 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
     };
 
     return (
-        <div className="mt-3 pt-3 border-t border-red-500 dark:border-red-500 transition-all duration-300">
-            <div className="text-[10px] text-red-500 font-bold mb-1">TAGGING ROW DEBUG</div>
+        <div className="mt-3 pt-3 border-t dark:border-slate-700 transition-all duration-300">
             {!isEditing ? (
                 <div className="flex items-center justify-between gap-3 group">
                     <div className="flex flex-wrap gap-1.5 flex-1 p-2 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-100 dark:border-slate-700 min-h-[36px] items-center">
@@ -322,6 +321,8 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
     }, []);
 
     const paperTopics = useMemo(() => {
+        if (Object.keys(allTopicsMap).length === 0) return [];
+
         const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
         const normalizedSubject = normalize(paper.subject);
 
@@ -330,10 +331,13 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
             'useofenglish': 'english-language',
             'english': 'english-language',
             'maths': 'mathematics',
+            'mathematics': 'mathematics',
             'crk': 'christian-religious-knowledge-crk',
             'irk': 'islamic-religious-knowledge-irk',
             'government': 'government',
-            'accounting': 'accounts-principles-of-accounts'
+            'accounting': 'accounts-principles-of-accounts',
+            'accountsprinciplesofaccounts': 'accounts-principles-of-accounts',
+            'principlesofaccounts': 'accounts-principles-of-accounts'
         };
 
         if (manualMapping[normalizedSubject]) {
@@ -347,7 +351,12 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
             return normalizedSubject.includes(normalizedKey) || normalizedKey.includes(normalizedSubject);
         });
 
-        return key ? allTopicsMap[key].topics : [];
+        if (key && allTopicsMap[key]) {
+            return allTopicsMap[key].topics;
+        }
+
+        console.warn(`[Subject Mapping Fallback] No match for: ${paper.subject} (${normalizedSubject})`);
+        return [];
     }, [allTopicsMap, paper.subject]);
 
     const handleTagUpdate = async (questionId: string, topics: string[]) => {
@@ -415,25 +424,18 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                             question={q}
                                             className="font-semibold text-slate-700 dark:text-slate-300"
                                             imageClassName="max-w-sm"
-                                            renderOptions={false}
+                                            correctAnswer={q.answer}
                                         />
-                                        <div className="mt-2 pl-5 space-y-1">
-                                            {Object.keys(q.options).map((key) => {
-                                                const option = q.options[key];
-                                                const isCorrect = key === q.answer;
-                                                return (
-                                                    <div key={key} className={`text-sm flex items-start gap-2 p-2 rounded ${isCorrect ? 'bg-green-100 dark:bg-green-500/20' : ''}`}>
-                                                        <span className={`font-bold ${isCorrect ? 'text-green-800 dark:text-green-300' : 'text-slate-600 dark:text-slate-400'}`}>{key}.</span>
-                                                        <div className={isCorrect ? 'text-green-800 dark:text-green-200' : 'text-slate-700 dark:text-slate-300'}>
-                                                            <MarkdownRenderer content={option.text} />
-                                                            {option.diagram && <img src={option.diagram} alt={`Option ${key}`} className="mt-1 max-w-[150px] h-auto rounded border dark:border-slate-600" />}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        <div className="bg-red-50 border-2 border-red-500 p-2 mt-4 rounded-lg">
-                                            <div className="text-[10px] font-bold text-red-600 mb-1">ADMIN TAGGING MODULE</div>
+
+                                        <div className="p-2 mt-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-dashed border-slate-200 dark:border-slate-700">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase">Topic Tagging</span>
+                                                {paperTopics.length === 0 && (
+                                                    <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">
+                                                        Debug: No match for "{paper.subject}"
+                                                    </span>
+                                                )}
+                                            </div>
                                             <QuestionTaggingRow
                                                 question={q}
                                                 subject={paper.subject}

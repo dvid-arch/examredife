@@ -80,8 +80,8 @@ const TopicSelector: React.FC<TopicSelectorProps> = ({
                             key={topic.slug}
                             onClick={() => onToggle(topic.slug)}
                             className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-all flex justify-between items-center group ${isSelected
-                                    ? 'bg-primary text-white shadow-sm font-semibold'
-                                    : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                ? 'bg-primary text-white shadow-sm font-semibold'
+                                : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
                                 }`}
                         >
                             <span>{topic.label}</span>
