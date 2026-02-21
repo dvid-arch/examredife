@@ -3,6 +3,7 @@ import Card from '../../components/Card.tsx';
 import QuestionRenderer from '../../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import { PastPaper, StudyGuide, PastQuestion } from '../../types.ts';
+import TopicSelector from '../../components/admin/TopicSelector.tsx';
 
 import { allStudyGuides } from '../../data/studyGuides.ts';
 import apiService from '../../services/apiService.ts';
@@ -191,6 +192,110 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
     );
 };
 
+// --- Question Tagging Row ---
+interface QuestionTaggingRowProps {
+    question: PastQuestion;
+    subject: string;
+    availableTopics: { slug: string; label: string }[];
+    onSave: (topics: string[]) => Promise<void>;
+}
+
+const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subject, availableTopics, onSave }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedTopics, setSelectedTopics] = useState<string[]>(question.topics || []);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isAiLoading, setIsAiLoading] = useState(false);
+
+    const handleToggle = (slug: string) => {
+        setSelectedTopics(prev =>
+            prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
+        );
+    };
+
+    const handleAiSuggest = async () => {
+        setIsAiLoading(true);
+        try {
+            const result = await apiService<{ suggestedTopics: string[] }>('/ai/suggest-question-topics', {
+                method: 'POST',
+                body: {
+                    questionText: question.question,
+                    availableTopics: availableTopics.slice(0, 50), // Send a manageable chunk
+                    subject
+                }
+            });
+            setSelectedTopics(result.suggestedTopics);
+        } catch (err) {
+            alert('AI suggestion failed');
+        } finally {
+            setIsAiLoading(false);
+        }
+    };
+
+    const handleConfirm = async () => {
+        setIsSaving(true);
+        try {
+            await onSave(selectedTopics);
+            setIsEditing(false);
+        } catch (err) {
+            alert('Failed to save tags');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="mt-2 pt-2 border-t dark:border-slate-700/50">
+            {!isEditing ? (
+                <div className="flex items-center justify-between gap-2 overflow-hidden">
+                    <div className="flex flex-wrap gap-1">
+                        {selectedTopics.length > 0 ? selectedTopics.map(slug => (
+                            <span key={slug} className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded">
+                                {availableTopics.find(t => t.slug === slug)?.label || slug}
+                            </span>
+                        )) : (
+                            <span className="text-[10px] text-slate-400 italic">No topics tagged</span>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="text-[10px] font-bold text-primary hover:underline whitespace-nowrap"
+                    >
+                        Edit Tags
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    <TopicSelector
+                        availableTopics={availableTopics}
+                        selectedTopics={selectedTopics}
+                        onToggle={handleToggle}
+                        onAiSuggest={handleAiSuggest}
+                        isAiLoading={isAiLoading}
+                    />
+                    <div className="flex justify-end gap-2">
+                        <button
+                            onClick={() => {
+                                setIsEditing(false);
+                                setSelectedTopics(question.topics || []);
+                            }}
+                            className="text-xs font-semibold px-3 py-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleConfirm}
+                            disabled={isSaving}
+                            className="text-xs font-bold bg-primary text-white px-4 py-1 rounded-md disabled:bg-slate-400"
+                        >
+                            {isSaving ? 'Saving...' : 'Save Tags'}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- Manage Questions Modal ---
 interface ManageQuestionsProps {
     paper: PastPaper;
@@ -199,6 +304,41 @@ interface ManageQuestionsProps {
 }
 const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, onUpdate }) => {
     const [showBulkUpload, setShowBulkUpload] = useState(false);
+    const [allTopicsMap, setAllTopicsMap] = useState<Record<string, { label: string; topics: { slug: string; label: string }[] }>>({});
+
+    useEffect(() => {
+        const fetchTopics = async () => {
+            try {
+                const topics = await apiService<any>('/admin/topics');
+                setAllTopicsMap(topics);
+            } catch (err) {
+                console.error("Failed to fetch topics", err);
+            }
+        };
+        fetchTopics();
+    }, []);
+
+    const paperTopics = useMemo(() => {
+        const normalized = paper.subject.toLowerCase();
+        // Try exact match or fuzzy match
+        const key = Object.keys(allTopicsMap).find(k =>
+            normalized.includes(k) || k.includes(normalized)
+        );
+        return key ? allTopicsMap[key].topics : [];
+    }, [allTopicsMap, paper.subject]);
+
+    const handleTagUpdate = async (questionId: string, topics: string[]) => {
+        const result = await apiService<PastQuestion>(`/admin/papers/${paper.id}/questions/${questionId}/tags`, {
+            method: 'PUT',
+            body: { topics }
+        });
+
+        const updatedPaper = {
+            ...paper,
+            questions: paper.questions.map(q => q.id === questionId ? { ...q, topics: result.topics } : q)
+        };
+        onUpdate(updatedPaper);
+    };
 
     const handleBulkUploadComplete = (newQuestions: PastQuestion[]) => {
         const upload = async () => {
@@ -268,6 +408,12 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                                 );
                                             })}
                                         </div>
+                                        <QuestionTaggingRow
+                                            question={q}
+                                            subject={paper.subject}
+                                            availableTopics={paperTopics}
+                                            onSave={(topics) => handleTagUpdate(q.id, topics)}
+                                        />
                                     </div>
                                 </div>
                             </div>
