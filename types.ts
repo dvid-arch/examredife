@@ -76,6 +76,7 @@ export interface PastQuestion {
   options: { [key: string]: PastQuestionOption }; // e.g., { A: { text: 'Option A', diagram?: 'url' } }
   answer: string; // The key of the correct option, e.g., 'A'
   explanation?: string; // Optional detailed explanation for the answer
+  topics?: string[]; // Array of topic slugs
 }
 
 export interface PastPaper {

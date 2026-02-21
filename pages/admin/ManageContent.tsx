@@ -240,7 +240,8 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
     };
 
     return (
-        <div className="mt-3 pt-3 border-t dark:border-slate-700 transition-all duration-300">
+        <div className="mt-3 pt-3 border-t border-red-500 dark:border-red-500 transition-all duration-300">
+            <div className="text-[10px] text-red-500 font-bold mb-1">TAGGING ROW DEBUG</div>
             {!isEditing ? (
                 <div className="flex items-center justify-between gap-3 group">
                     <div className="flex flex-wrap gap-1.5 flex-1 p-2 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-100 dark:border-slate-700 min-h-[36px] items-center">
@@ -414,6 +415,7 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                             question={q}
                                             className="font-semibold text-slate-700 dark:text-slate-300"
                                             imageClassName="max-w-sm"
+                                            renderOptions={false}
                                         />
                                         <div className="mt-2 pl-5 space-y-1">
                                             {Object.keys(q.options).map((key) => {
@@ -430,12 +432,15 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                                 );
                                             })}
                                         </div>
-                                        <QuestionTaggingRow
-                                            question={q}
-                                            subject={paper.subject}
-                                            availableTopics={paperTopics}
-                                            onSave={(topics) => handleTagUpdate(q.id, topics)}
-                                        />
+                                        <div className="bg-red-50 border-2 border-red-500 p-2 mt-4 rounded-lg">
+                                            <div className="text-[10px] font-bold text-red-600 mb-1">ADMIN TAGGING MODULE</div>
+                                            <QuestionTaggingRow
+                                                question={q}
+                                                subject={paper.subject}
+                                                availableTopics={paperTopics}
+                                                onSave={(topics) => handleTagUpdate(q.id, topics)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
