@@ -22,7 +22,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
     onClose
 }) => {
     return (
-        <div className={`fixed inset-0 z-40 lg:relative lg:z-0 lg:block ${isOpen ? 'block' : 'hidden'}`}>
+        <div className={`fixed inset-0 z-40 lg:relative lg:z-0 lg:block lg:w-64 ${isOpen ? 'block' : 'hidden'}`}>
             <div
                 className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm lg:hidden"
                 onClick={onClose}
@@ -51,8 +51,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                             if (window.innerWidth < 1024) onClose();
                                         }}
                                         className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-all ${selectedSubject === subject
-                                                ? 'bg-primary text-white font-bold shadow-md shadow-primary/20'
-                                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                            ? 'bg-primary text-white font-bold shadow-md shadow-primary/20'
+                                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                                             }`}
                                     >
                                         {subject === 'all' ? 'All Subjects' : subject}
@@ -72,8 +72,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                             if (window.innerWidth < 1024) onClose();
                                         }}
                                         className={`px-3 py-2 rounded-xl text-xs transition-all border ${selectedYear === year.toString()
-                                                ? 'bg-primary border-primary text-white font-bold'
-                                                : 'border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/50'
+                                            ? 'bg-primary border-primary text-white font-bold'
+                                            : 'border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-primary/50'
                                             }`}
                                     >
                                         {year === 'all' ? 'All' : year}
