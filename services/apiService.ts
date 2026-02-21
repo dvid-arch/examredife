@@ -50,7 +50,7 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
     }
 
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const id = setTimeout(() => controller.abort(), 30000); // 30s timeout
     config.signal = controller.signal;
 
     try {

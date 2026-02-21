@@ -8,7 +8,7 @@ import OnboardingTour from '../components/OnboardingTour.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import VerificationBanner from '../components/VerificationBanner.tsx';
 import { DashboardSkeleton } from '../components/Skeletons.tsx';
-import apiService from '../services/apiService.ts';
+import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import { StudyGuide } from '../types.ts';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
@@ -138,8 +138,9 @@ const WelcomeBanner = () => {
 };
 
 const Dashboard: React.FC = () => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const { recentActivity, studyProgress, calculateTopicStatus } = useUserProgress();
+    const { guides, fetchGuides, isLoading: isGuidesLoading } = usePastQuestions();
     const [showTour, setShowTour] = useState(false);
 
     // State for calculated weak areas
@@ -163,11 +164,11 @@ const Dashboard: React.FC = () => {
 
             // 2. Fetch guides to find titles and paths
             try {
-                const guides: StudyGuide[] = await apiService('/data/guides');
+                const fetchedGuides = await fetchGuides();
                 const weaknesses: { id: string, title: string, subject: string, link: string }[] = [];
 
                 // Optimized search (could be better with a map, but N is small)
-                for (const guide of guides) {
+                for (const guide of fetchedGuides) {
                     for (const topic of guide.topics) {
                         if (problemIds.includes(topic.id)) {
                             weaknesses.push({
@@ -186,7 +187,7 @@ const Dashboard: React.FC = () => {
         };
 
         fetchGuidesAndIdentifyWeaknesses();
-    }, [isAuthenticated, studyProgress, calculateTopicStatus]);
+    }, [isAuthenticated, studyProgress, calculateTopicStatus, fetchGuides]);
 
 
     // Filter and sort activities for "Continue Studying" by most recent activity
@@ -259,7 +260,7 @@ const Dashboard: React.FC = () => {
             },
         ];
 
-    if (isLoading) return <DashboardSkeleton />;
+    if (isAuthLoading) return <DashboardSkeleton />;
 
     return (
         <div className="space-y-8">

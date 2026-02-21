@@ -5,6 +5,7 @@ import { useToasts } from '../contexts/ToastContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import { STANDARD_SUBJECTS } from '../constants/subjects.ts';
+import { clearAllCache } from '../services/db.ts';
 
 // --- Icons ---
 const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536l12.232-12.232z" /></svg>;
@@ -12,6 +13,7 @@ const SaveIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-
 const LogoutIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
 const ProIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>;
 const FreeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
+const SyncIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>;
 const CreditsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>;
 const MessagesIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>;
 
@@ -145,6 +147,14 @@ const Profile: React.FC = () => {
             }
         } else {
             info("Notifications are already enabled in your browser settings.");
+        }
+    };
+
+    const handleSyncData = async () => {
+        if (window.confirm('This will clear your local content cache and reload the latest papers from the server. Your progress will not be affected. Continue?')) {
+            await clearAllCache();
+            // Force a hard reload to clear memory refs and trigger fresh fetch
+            window.location.reload();
         }
     };
 
@@ -360,6 +370,20 @@ const Profile: React.FC = () => {
                                             }`}
                                     >
                                         {notificationStatus === 'granted' ? 'Enabled' : 'Enable'}
+                                    </button>
+                                </div>
+
+                                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                    <div>
+                                        <p className="font-semibold text-slate-800 dark:text-white">Content Cache</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Clear stale papers and guides</p>
+                                    </div>
+                                    <button
+                                        onClick={handleSyncData}
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                                    >
+                                        <SyncIcon />
+                                        <span>Sync Now</span>
                                     </button>
                                 </div>
                             </div>

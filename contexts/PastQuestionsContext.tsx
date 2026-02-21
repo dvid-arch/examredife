@@ -30,7 +30,7 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
 
     const fetchPapers = useCallback(async (forceRefresh = false) => {
         // 1. In-memory cache hit (same session, no reload needed)
-        if (!forceRefresh && hasFetchedPapersRef.current && papersRef.current.length > 0) {
+        if (!forceRefresh && hasFetchedPapersRef.current) {
             return papersRef.current;
         }
 
@@ -62,6 +62,8 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
             return data;
         } catch (error) {
             console.error("Failed to fetch papers:", error);
+            // Mark as fetched even on error to prevent infinite retry loops in the same session
+            hasFetchedPapersRef.current = true;
             return [];
         } finally {
             setIsLoading(false);
@@ -70,7 +72,7 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
 
     const fetchGuides = useCallback(async (forceRefresh = false) => {
         // 1. In-memory cache hit
-        if (!forceRefresh && hasFetchedGuidesRef.current && guidesRef.current.length > 0) {
+        if (!forceRefresh && hasFetchedGuidesRef.current) {
             return guidesRef.current;
         }
 
@@ -102,6 +104,8 @@ export const PastQuestionsProvider: React.FC<{ children: ReactNode }> = ({ child
             return data;
         } catch (error) {
             console.error("Failed to fetch guides:", error);
+            // Mark as fetched even on error to prevent infinite retry loops
+            hasFetchedGuidesRef.current = true;
             return [];
         } finally {
             setIsLoading(false);
