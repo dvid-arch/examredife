@@ -5,7 +5,7 @@ import apiService from '../../services/apiService.ts';
 import { ChallengeQuestion, StudyGuide } from '../../types.ts';
 
 const TopicPracticeSetup: React.FC = () => {
-    const { subject, topicSlug, subTopicId } = useParams<{ subject: string, topicSlug: string, subTopicId?: string }>();
+    const { subject, topicSlug } = useParams<{ subject: string, topicSlug: string }>();
     const navigate = useNavigate();
 
     const [displayTitle, setDisplayTitle] = useState(topicSlug?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || '');
@@ -20,31 +20,21 @@ const TopicPracticeSetup: React.FC = () => {
             if (!topicSlug || !subject) return;
             setIsLoading(true);
             try {
-                // 1. Fetch guide to get keywords for subtopic if applicable
+                // 1. Fetch guide to get keywords for topic
                 const guides = await apiService<StudyGuide[]>('/data/guides');
                 const guide = guides.find(g => g.id.toLowerCase() === subject.toLowerCase());
                 const topic = guide?.topics.find(t => t.id === topicSlug);
 
-                let searchKeywords = [topic?.title || displayTitle];
+                let searchKeywords = topic?.keywords && topic.keywords.length > 0
+                    ? topic.keywords
+                    : [topic?.title || displayTitle];
                 let searchTopic = topic?.title || displayTitle;
                 let currentTitle = topic?.title || displayTitle;
-
-                if (subTopicId && topic) {
-                    const subTopic = topic.subTopics.find(st => st.id === subTopicId);
-                    if (subTopic) {
-                        searchKeywords = subTopic.keywords && subTopic.keywords.length > 0
-                            ? subTopic.keywords
-                            : [subTopic.title];
-                        currentTitle = subTopic.title;
-                        // Keep searchTopic as the main topic to broaden the search if keywords are sparse
-                        // but prioritize keywords.
-                    }
-                }
 
                 setDisplayTitle(currentTitle);
 
                 // 2. Search for questions
-                console.log("Searching for questions with keywords:", searchKeywords);
+                console.log("Searching for questions for topic:", searchTopic);
                 const results = await apiService<ChallengeQuestion[]>('/data/search-batch', {
                     method: 'POST',
                     body: {
@@ -68,7 +58,7 @@ const TopicPracticeSetup: React.FC = () => {
         };
 
         fetchContentAndQuestions();
-    }, [topicSlug, subject, subTopicId]);
+    }, [topicSlug, subject]);
 
     const handleStart = () => {
         if (availableQuestions.length === 0) return;
@@ -83,7 +73,7 @@ const TopicPracticeSetup: React.FC = () => {
         navigate('/take-examination', {
             state: {
                 questions: selectedQuestions,
-                examTitle: `${displayTitle} ${subTopicId ? 'Practice' : 'Mastery Test'}`,
+                examTitle: `${displayTitle} Mastery Test`,
                 isTopicTest: true,
                 topicName: displayTitle,
                 mode: mode,
@@ -130,8 +120,8 @@ const TopicPracticeSetup: React.FC = () => {
                     <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg">
                         📝
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white capitalize">{displayTitle} {subTopicId ? 'Practice' : 'Test'}</h1>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">Test your knowledge on this {subTopicId ? 'specific lesson' : 'topic'} with real past questions.</p>
+                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white capitalize">{displayTitle} Mastery Test</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">Test your knowledge on this syllabus topic with real past questions.</p>
                 </div>
 
                 <div className="p-8 space-y-10">

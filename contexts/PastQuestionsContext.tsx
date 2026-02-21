@@ -4,8 +4,8 @@ import apiService from '../services/apiService.ts';
 import { getCache, setCache } from '../services/db.ts';
 
 // Cache keys used in IndexedDB
-const CACHE_KEY_PAPERS = 'papers';
-const CACHE_KEY_GUIDES = 'guides';
+const CACHE_KEY_PAPERS = 'papers_v2';
+const CACHE_KEY_GUIDES = 'guides_v2';
 
 interface PastQuestionsContextType {
     papers: PastPaper[];

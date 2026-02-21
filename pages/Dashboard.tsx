@@ -169,15 +169,13 @@ const Dashboard: React.FC = () => {
                 // Optimized search (could be better with a map, but N is small)
                 for (const guide of guides) {
                     for (const topic of guide.topics) {
-                        for (const sub of topic.subTopics) {
-                            if (problemIds.includes(sub.id)) {
-                                weaknesses.push({
-                                    id: sub.id,
-                                    title: sub.title,
-                                    subject: guide.subject,
-                                    link: `/study-guides/${guide.id}/${topic.id}/${sub.id}`
-                                });
-                            }
+                        if (problemIds.includes(topic.id)) {
+                            weaknesses.push({
+                                id: topic.id,
+                                title: topic.title,
+                                subject: guide.subject,
+                                link: `/study-guides/${guide.id}/${topic.id}`
+                            });
                         }
                     }
                 }

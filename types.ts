@@ -33,23 +33,15 @@ export interface InlineQuestion {
   explanation: string;
 }
 
-export interface SubTopic {
-  id: string;
-  title: string;
-  content: string;
-  keywords?: string[];
-  order?: number;
-  videos?: Video[];
-  inlineQuestions?: InlineQuestion[];
-}
-
 export interface Topic {
   id: string;
   title: string;
   content?: string;
   description?: string;
-  subTopics: SubTopic[];
+  keywords?: string[];
   order?: number;
+  videos?: Video[];
+  inlineQuestions?: InlineQuestion[];
 }
 
 export interface StudyGuide {
@@ -144,7 +136,7 @@ export interface User {
     examDate?: string; // ISO string
   };
   studyProgress?: {
-    [subTopicId: string]: {
+    [topicId: string]: {
       confidence: ConfidenceLevel;
       lastReviewed: string; // ISO string
     }

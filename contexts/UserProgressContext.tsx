@@ -26,8 +26,8 @@ interface UserProgressContextType {
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     syncProgress: () => Promise<void>;
     updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
-    updateConfidence: (subTopicId: string, confidence: ConfidenceLevel) => Promise<void>;
-    calculateTopicStatus: (subTopicId: string) => ConfidenceLevel | 'stale' | null;
+    updateConfidence: (topicId: string, confidence: ConfidenceLevel) => Promise<void>;
+    calculateTopicStatus: (topicId: string) => ConfidenceLevel | 'stale' | null;
     estimatedScore: number;
 }
 
@@ -223,11 +223,11 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediEngagement', JSON.stringify(newEngagement));
     };
 
-    const updateConfidence = async (subTopicId: string, confidence: ConfidenceLevel) => {
+    const updateConfidence = async (topicId: string, confidence: ConfidenceLevel) => {
         // Optimistic update
         const newProgress = {
             ...studyProgress,
-            [subTopicId]: { confidence, lastReviewed: new Date().toISOString() }
+            [topicId]: { confidence, lastReviewed: new Date().toISOString() }
         };
         setStudyProgress(newProgress);
         setEstimatedScore(calculateScore(newProgress));
@@ -240,7 +240,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }
                 }>('/user/progress/confidence', {
                     method: 'POST',
-                    body: { subTopicId, confidence }
+                    body: { topicId, confidence }
                 });
 
                 if (response && response.studyProgress) {
@@ -254,8 +254,8 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
     };
 
-    const calculateTopicStatus = (subTopicId: string): ConfidenceLevel | 'stale' | null => {
-        const progress = studyProgress[subTopicId];
+    const calculateTopicStatus = (topicId: string): ConfidenceLevel | 'stale' | null => {
+        const progress = studyProgress[topicId];
         if (!progress) return null;
 
         if (progress.confidence === 'confident') {

@@ -173,14 +173,14 @@ const router = createHashRouter(
         <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
         <Route path="/practice" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
         <Route path="/practice/:tab" element={<Suspense fallback={<PageLoader />}><Quizzes /></Suspense>} />
-        <Route path="/practice/topic/:subject/:topicSlug/:subTopicId?" element={<Suspense fallback={<PageLoader />}><TopicPracticeSetup /></Suspense>} />
+        <Route path="/practice/topic/:subject/:topicSlug" element={<Suspense fallback={<PageLoader />}><TopicPracticeSetup /></Suspense>} />
         <Route path="/ai-buddy" element={<Suspense fallback={<PageLoader />}><ExamWithAI /></Suspense>} />
         <Route path="/question-search" element={<Suspense fallback={<PageLoader />}><QuestionSearch /></Suspense>} />
         <Route path="/study-guides" element={<Suspense fallback={<PageLoader />}><StudyGuides /></Suspense>}>
           <Route index element={<Suspense fallback={<PageLoader />}><StudyGuideLibrary /></Suspense>} />
           <Route path="generator" element={<Suspense fallback={<PageLoader />}><GuideGenerator /></Suspense>} />
           <Route path=":category" element={<Suspense fallback={<PageLoader />}><SubjectIndex /></Suspense>} />
-          <Route path=":category/:slug/:subTopicId?" element={<Suspense fallback={<PageLoader />}><GuideReader /></Suspense>} />
+          <Route path=":category/:slug" element={<Suspense fallback={<PageLoader />}><GuideReader /></Suspense>} />
         </Route>
         <Route path="/guides" element={<Navigate to="/study-guides" replace />} />
         <Route path="/guides/*" element={<Navigate to="/study-guides" replace />} />
