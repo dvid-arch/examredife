@@ -321,11 +321,31 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
     }, []);
 
     const paperTopics = useMemo(() => {
-        const normalized = paper.subject.toLowerCase();
-        // Try exact match or fuzzy match
-        const key = Object.keys(allTopicsMap).find(k =>
-            normalized.includes(k) || k.includes(normalized)
-        );
+        const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const normalizedSubject = normalize(paper.subject);
+
+        // Manual mapping for common discrepancies
+        const manualMapping: Record<string, string> = {
+            'useofenglish': 'english-language',
+            'english': 'english-language',
+            'maths': 'mathematics',
+            'crk': 'christian-religious-knowledge-crk',
+            'irk': 'islamic-religious-knowledge-irk',
+            'government': 'government',
+            'accounting': 'accounts-principles-of-accounts'
+        };
+
+        if (manualMapping[normalizedSubject]) {
+            const mappedKey = manualMapping[normalizedSubject];
+            if (allTopicsMap[mappedKey]) return allTopicsMap[mappedKey].topics;
+        }
+
+        // Try to find the best match by comparing normalized strings
+        const key = Object.keys(allTopicsMap).find(k => {
+            const normalizedKey = normalize(k);
+            return normalizedSubject.includes(normalizedKey) || normalizedKey.includes(normalizedSubject);
+        });
+
         return key ? allTopicsMap[key].topics : [];
     }, [allTopicsMap, paper.subject]);
 
