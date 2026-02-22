@@ -11,14 +11,14 @@ import ThemeToggle from './ThemeToggle.tsx';
 import OfflineIndicator from './OfflineIndicator.tsx';
 
 const Logo = () => (
-    <div className="flex items-center space-x-2">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7">
-            <rect x="4" y="4" width="12" height="3" rx="1.5" fill="#3B82F6" />
-            <rect x="4" y="9" width="18" height="3" rx="1.5" fill="#EF4444" />
-            <rect x="4" y="14" width="10" height="3" rx="1.5" fill="#FACC15" />
-            <rect x="4" y="19" width="15" height="3" rx="1.5" fill="#22C55E" />
-        </svg>
-        <span className="font-bold text-xl text-slate-800 dark:text-white">ExamRedi</span>
+    <div className="flex items-center px-1 select-none">
+        <div className="font-black text-2xl tracking-tight flex items-center" style={{ fontFamily: "'Nunito', 'Segoe UI', sans-serif" }}>
+            <span className="text-slate-700 dark:text-slate-100">Exam</span>
+            <span className="text-blue-500">R</span>
+            <span className="text-red-400">e</span>
+            <span className="text-yellow-400">d</span>
+            <span className="text-green-500">i</span>
+        </div>
     </div>
 );
 
