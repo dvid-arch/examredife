@@ -49,6 +49,7 @@ export interface StudyGuide {
   subject: string;
   topics: Topic[];
   lastUpdated?: string;
+  createdAt?: string;
 }
 
 export interface Flashcard {

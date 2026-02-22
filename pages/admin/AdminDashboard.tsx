@@ -94,7 +94,8 @@ const AdminDashboard: React.FC = () => {
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h2>
                 <div className="flex flex-col md:flex-row gap-4">
                     <Link to="/admin/users" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Users</Link>
-                    <Link to="/admin/content" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Content</Link>
+                    <Link to="/admin/papers" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Papers</Link>
+                    <Link to="/admin/guides" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Guides</Link>
                 </div>
             </Card>
 

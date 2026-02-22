@@ -52,7 +52,10 @@ const AuthSuccess = lazy(() => import('./pages/AuthSuccess.tsx'));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout.tsx'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard.tsx'));
 const ManageUsers = lazy(() => import('./pages/admin/ManageUsers.tsx'));
-const ManageContent = lazy(() => import('./pages/admin/ManageContent.tsx'));
+const PapersList = lazy(() => import('./pages/admin/PapersList.tsx'));
+const PaperEditor = lazy(() => import('./pages/admin/PaperEditor.tsx'));
+const GuidesList = lazy(() => import('./pages/admin/GuidesList.tsx'));
+const GuideBuilder = lazy(() => import('./pages/admin/GuideBuilder.tsx'));
 const ProtectedRoute = lazy(() => import('./components/ProtectedRoute.tsx'));
 
 // Loading fallback component
@@ -209,7 +212,10 @@ const router = createHashRouter(
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>} />
         <Route path="users" element={<Suspense fallback={<PageLoader />}><ManageUsers /></Suspense>} />
-        <Route path="content" element={<Suspense fallback={<PageLoader />}><ManageContent /></Suspense>} />
+        <Route path="papers" element={<Suspense fallback={<PageLoader />}><PapersList /></Suspense>} />
+        <Route path="papers/:id" element={<Suspense fallback={<PageLoader />}><PaperEditor /></Suspense>} />
+        <Route path="guides" element={<Suspense fallback={<PageLoader />}><GuidesList /></Suspense>} />
+        <Route path="guides/:id" element={<Suspense fallback={<PageLoader />}><GuideBuilder /></Suspense>} />
       </Route>
 
       <Route
