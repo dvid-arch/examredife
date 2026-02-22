@@ -135,7 +135,10 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                 responseData,
                 fullError: responseData
             });
-            throw new Error(responseData.message || 'An API error occurred');
+            let errorMsg = responseData.message || 'An API error occurred';
+            if (responseData.error) errorMsg += ` (${responseData.error})`;
+            if (responseData.path) errorMsg += ` [Path: ${responseData.path}]`;
+            throw new Error(errorMsg);
         }
 
         // For 204 No Content, response.json() will fail. Handle it gracefully.
