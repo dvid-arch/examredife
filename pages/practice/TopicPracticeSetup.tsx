@@ -25,9 +25,6 @@ const TopicPracticeSetup: React.FC = () => {
                 const guide = guides.find(g => g.id.toLowerCase() === subject.toLowerCase());
                 const topic = guide?.topics.find(t => t.id === topicSlug);
 
-                let searchKeywords = topic?.keywords && topic.keywords.length > 0
-                    ? topic.keywords
-                    : [topic?.title || displayTitle];
                 let searchTopic = topic?.title || displayTitle;
                 let currentTitle = topic?.title || displayTitle;
 
@@ -35,10 +32,9 @@ const TopicPracticeSetup: React.FC = () => {
 
                 // 2. Search for questions
                 console.log("Searching for questions for topic:", searchTopic);
-                const results = await apiService<ChallengeQuestion[]>('/data/search-batch', {
+                const results = await apiService<ChallengeQuestion[]>('/data/search-by-topic', {
                     method: 'POST',
                     body: {
-                        keywords: searchKeywords,
                         subject,
                         topic: searchTopic
                     }
