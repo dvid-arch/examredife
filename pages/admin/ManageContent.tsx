@@ -308,13 +308,29 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
     const [showBulkUpload, setShowBulkUpload] = useState(false);
     const [allTopicsMap, setAllTopicsMap] = useState<Record<string, { label: string; topics: { slug: string; label: string }[] }>>({});
 
+    const [apiError, setApiError] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchTopics = async () => {
             try {
-                const topics = await apiService<any>('/admin/topics');
-                setAllTopicsMap(topics);
-            } catch (err) {
+                setApiError(null);
+                const data = await apiService<any>('/admin/topics');
+
+                if (Array.isArray(data)) {
+                    // Convert array to map if necessary
+                    const map: any = {};
+                    data.forEach((item: any) => {
+                        map[item.slug] = item;
+                    });
+                    console.log("Fetched topics count (array conversion):", data.length);
+                    setAllTopicsMap(map);
+                } else {
+                    console.log("Fetched topics keys count (object):", Object.keys(data).length);
+                    setAllTopicsMap(data);
+                }
+            } catch (err: any) {
                 console.error("Failed to fetch topics", err);
+                setApiError(err.message || String(err));
             }
         };
         fetchTopics();
@@ -445,7 +461,11 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                                 <span className="text-[10px] font-black text-slate-400 uppercase">Topic Tagging</span>
                                                 {paperTopics.length === 0 && (
                                                     <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">
-                                                        Debug: No match for "{paper.subject}" ({Object.keys(allTopicsMap).length} subjects loaded)
+                                                        {apiError ? (
+                                                            <span className="text-red-600">Error: {apiError}</span>
+                                                        ) : (
+                                                            `Debug: No match for "${paper.subject}" (${Object.keys(allTopicsMap).length} subjects loaded)`
+                                                        )}
                                                     </span>
                                                 )}
                                             </div>
