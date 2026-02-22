@@ -120,9 +120,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                         >
                             <MenuIcon />
                         </button>
-                        <div className="md:hidden flex-shrink-0">
+                        <Link to="/dashboard" className="md:hidden flex-shrink-0 hover:opacity-80 transition-opacity">
                             <Logo />
-                        </div>
+                        </Link>
                         {/* Display Page Title on Desktop */}
                         <h1 className="hidden md:block text-lg lg:text-xl font-bold text-slate-800 dark:text-white whitespace-nowrap">
                             {pageTitle}

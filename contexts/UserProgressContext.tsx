@@ -13,6 +13,7 @@ interface RecentActivity {
     score?: number;
     maxScore?: number;
     progress?: number; // 0 to 100
+    subject?: string;
     subtitle?: string;
     mastered?: boolean;
 }
@@ -22,11 +23,11 @@ interface UserProgressContextType {
     streakHistory: string[];
     recentActivity: RecentActivity[];
     engagement: { dismissedNudges: string[], unlockedNudges: string[] };
-    studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } };
+    studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } };
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     syncProgress: () => Promise<void>;
     updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
-    updateConfidence: (topicId: string, confidence: ConfidenceLevel) => Promise<void>;
+    updateConfidence: (topicId: string, confidence: ConfidenceLevel, subject?: string) => Promise<void>;
     calculateTopicStatus: (topicId: string) => ConfidenceLevel | 'stale' | null;
     estimatedScore: number;
 }
@@ -39,35 +40,107 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
     const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[] }>({ dismissedNudges: [], unlockedNudges: [] });
-    const [studyProgress, setStudyProgress] = useState<{ [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }>({});
+    const [studyProgress, setStudyProgress] = useState<{ [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } }>({});
     const [estimatedScore, setEstimatedScore] = useState(150); // Base score
 
-    // Calculate Estimated Score based on progress
-    const calculateScore = useCallback((progressMap: { [key: string]: { confidence: ConfidenceLevel } }) => {
-        let score = 150; // Base score
-        const entries = Object.values(progressMap);
-        const totalReviewed = entries.length;
-        if (totalReviewed === 0) return 150;
+    // Calculate Estimated Score based on progress and activity
+    const calculateScore = useCallback((
+        progressMap: { [key: string]: { confidence: ConfidenceLevel, lastReviewed?: string, subject?: string } },
+        activities: RecentActivity[]
+    ) => {
+        const MAX_SCORE = 400;
+        const BASE_SCORE = 140;
 
-        // 1. Mastery Impact (Confident = +2, Shaky = +1)
-        // Capped at 200 points max for mastery
-        const masteryPoints = entries.reduce((acc, curr) => {
-            if (curr.confidence === 'confident') return acc + 5;
-            if (curr.confidence === 'shaky') return acc + 2;
-            return acc;
-        }, 0);
+        // We'll calculate mastery per subject below
+        const masteryEntries = Object.values(progressMap);
 
-        // 2. Consistency Bonus (Streak) - Max 20 points
-        // We'll use the current streak from state, but inside this callback we might process it separately
-        // For simplicity, we'll just add masteryPoints to base
+        // 2. Gather Quiz Data (60% Weight)
+        const quizActivities = activities.filter(a => a.type === 'quiz' && a.score !== undefined && a.maxScore !== undefined && a.maxScore > 0);
+        let quizPercentage = 0;
+        if (quizActivities.length > 0) {
+            const totalQuizPercentage = quizActivities.reduce((acc, curr) => {
+                return acc + ((curr.score! / curr.maxScore!) * 100);
+            }, 0);
+            quizPercentage = totalQuizPercentage / quizActivities.length;
+        }
 
-        score += Math.min(masteryPoints, 200);
+        // 4. Final UTME Mapping (Subject-Based)
+        // If the user has explicitly selected 4 subjects, calculate out of those 4 subjects
+        if (user?.preferredSubjects && user.preferredSubjects.length === 4) {
+            let totalEstimatedScore = 0;
+            const BASE_SUBJECT_SCORE = 35; // 35 * 4 = 140
+            const MAX_SUBJECT_SCORE = 100;
 
-        // 3. Activity Bonus (Mock Quiz scores would go here in a real app)
-        // For now, heuristic based purely on confidence volume
+            user.preferredSubjects.forEach(subject => {
+                const subjectActivities = quizActivities.filter(a =>
+                    a.subject?.toLowerCase() === subject.toLowerCase() ||
+                    a.subtitle?.toLowerCase() === subject.toLowerCase()
+                );
 
-        return Math.min(score, 400); // Cap at 400
-    }, []);
+                const subjectMasteryEntries = masteryEntries.filter(m =>
+                    m.subject?.toLowerCase() === subject.toLowerCase()
+                );
+
+                let subjectMasteryPercentage = 0;
+                if (subjectMasteryEntries.length > 0) {
+                    const totalMasteryScore = subjectMasteryEntries.reduce((acc, curr) => {
+                        if (curr.confidence === 'confident') return acc + 100;
+                        if (curr.confidence === 'shaky') return acc + 50;
+                        return acc;
+                    }, 0);
+                    subjectMasteryPercentage = totalMasteryScore / subjectMasteryEntries.length;
+                }
+
+                let subjectProficiency = 0;
+                if (subjectActivities.length > 0) {
+                    const totalQuizPercentage = subjectActivities.reduce((acc, curr) => {
+                        return acc + ((curr.score! / curr.maxScore!) * 100);
+                    }, 0);
+                    const specificQuizPercentage = totalQuizPercentage / subjectActivities.length;
+
+                    if (subjectMasteryEntries.length > 0) {
+                        subjectProficiency = (specificQuizPercentage * 0.60) + (subjectMasteryPercentage * 0.40);
+                    } else {
+                        subjectProficiency = specificQuizPercentage;
+                    }
+                } else if (subjectMasteryEntries.length > 0) {
+                    subjectProficiency = subjectMasteryPercentage; // 100% weight to mastery if no quizzes in this subject yet
+                }
+
+                const scoreRange = MAX_SUBJECT_SCORE - BASE_SUBJECT_SCORE;
+                totalEstimatedScore += BASE_SUBJECT_SCORE + (subjectProficiency / 100) * scoreRange;
+            });
+
+            return Math.min(Math.round(totalEstimatedScore), MAX_SCORE);
+        }
+
+        // 5. Fallback for users who haven't selected subjects yet
+        let fallbackMasteryPercentage = 0;
+        if (masteryEntries.length > 0) {
+            const totalMasteryScore = masteryEntries.reduce((acc, curr) => {
+                if (curr.confidence === 'confident') return acc + 100;
+                if (curr.confidence === 'shaky') return acc + 50;
+                return acc;
+            }, 0);
+            fallbackMasteryPercentage = totalMasteryScore / masteryEntries.length;
+        }
+
+        let overallProficiency = 0;
+        if (masteryEntries.length > 0 && quizActivities.length > 0) {
+            overallProficiency = (quizPercentage * 0.60) + (fallbackMasteryPercentage * 0.40);
+        } else if (quizActivities.length > 0) {
+            overallProficiency = quizPercentage; // 100% weight to quizzes if no mastery
+        } else if (masteryEntries.length > 0) {
+            overallProficiency = fallbackMasteryPercentage; // 100% weight to mastery if no quizzes
+        } else {
+            return BASE_SCORE; // New user, no data
+        }
+
+        const scoreRange = MAX_SCORE - BASE_SCORE;
+        const calculatedScore = BASE_SCORE + (overallProficiency / 100) * scoreRange;
+
+        return Math.min(Math.round(calculatedScore), MAX_SCORE);
+    }, [user?.preferredSubjects]);
 
     const loadFromLocal = useCallback(() => {
         const savedStreak = localStorage.getItem('examRediStreak');
@@ -84,9 +157,11 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 setStreakHistory([]);
             }
         }
+        let parsedActivity: RecentActivity[] = [];
         if (savedActivity) {
             try {
-                setRecentActivity(JSON.parse(savedActivity));
+                parsedActivity = JSON.parse(savedActivity);
+                setRecentActivity(parsedActivity);
             } catch (e) {
                 setRecentActivity([]);
             }
@@ -102,7 +177,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             try {
                 const parsed = JSON.parse(savedStudyProgress);
                 setStudyProgress(parsed);
-                setEstimatedScore(calculateScore(parsed));
+                setEstimatedScore(calculateScore(parsed, parsedActivity));
             } catch (e) {
                 setStudyProgress({});
             }
@@ -117,7 +192,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     streakHistory?: string[],
                     recentActivity: RecentActivity[],
                     engagement?: { dismissedNudges: string[], unlockedNudges: string[] },
-                    studyProgress?: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } },
+                    studyProgress?: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } },
                     estimatedScore?: number
                 }>('/user/progress');
 
@@ -131,7 +206,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (data.studyProgress) {
                     setStudyProgress(data.studyProgress);
                     // If backend return score, use it, else calculate
-                    const score = data.estimatedScore || calculateScore(data.studyProgress);
+                    const score = data.estimatedScore || calculateScore(data.studyProgress, data.recentActivity || []);
                     setEstimatedScore(score);
                     localStorage.setItem('examRediStudyProgress', JSON.stringify(data.studyProgress));
                 } else if (data.estimatedScore) {
@@ -176,9 +251,9 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         const updatedActivity = [newActivity, ...recentActivity.filter(a => a.id !== activity.id)].slice(0, 50);
         setRecentActivity(updatedActivity);
 
-        // Recalculate Score locally for instant feedback (if it depended on activity)
-        // Currently it depends on studyProgress (confidence), but if we added quiz scores to calculation:
-        // const newScore = calculateScore(...) 
+        // Recalculate Score locally for instant feedback
+        const newScore = calculateScore(studyProgress, updatedActivity);
+        setEstimatedScore(newScore);
 
         if (isAuthenticated) {
             try {
@@ -193,7 +268,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     method: 'PUT',
                     body: {
                         recentActivity: [newActivity],
-                        estimatedScore
+                        estimatedScore: newScore
                     }
                 });
 
@@ -223,29 +298,29 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediEngagement', JSON.stringify(newEngagement));
     };
 
-    const updateConfidence = async (topicId: string, confidence: ConfidenceLevel) => {
+    const updateConfidence = async (topicId: string, confidence: ConfidenceLevel, subject?: string) => {
         // Optimistic update
         const newProgress = {
             ...studyProgress,
-            [topicId]: { confidence, lastReviewed: new Date().toISOString() }
+            [topicId]: { confidence, lastReviewed: new Date().toISOString(), subject }
         };
         setStudyProgress(newProgress);
-        setEstimatedScore(calculateScore(newProgress));
+        setEstimatedScore(calculateScore(newProgress, recentActivity));
         localStorage.setItem('examRediStudyProgress', JSON.stringify(newProgress));
 
         if (isAuthenticated) {
             try {
                 const response = await apiService<{
                     success: boolean,
-                    studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string } }
+                    studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } }
                 }>('/user/progress/confidence', {
                     method: 'POST',
-                    body: { topicId, confidence }
+                    body: { topicId, confidence, subject }
                 });
 
                 if (response && response.studyProgress) {
                     setStudyProgress(response.studyProgress);
-                    setEstimatedScore(calculateScore(response.studyProgress));
+                    setEstimatedScore(calculateScore(response.studyProgress, recentActivity));
                     localStorage.setItem('examRediStudyProgress', JSON.stringify(response.studyProgress));
                 }
             } catch (error) {

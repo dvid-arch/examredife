@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { NAV_ITEMS, LogoutIcon, InstallAppIcon } from '../constants.tsx';
 import { NavItemType } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
@@ -85,7 +85,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate }) => {
             ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             md:relative md:translate-x-0 md:z-auto`}
             >
-                <Logo />
+                <Link to="/dashboard" onClick={onClose} className="hover:opacity-80 transition-opacity">
+                    <Logo />
+                </Link>
                 <nav className="flex-1 space-y-2 overflow-y-auto">
                     {NAV_ITEMS.map((item) => (
                         <NavItem key={item.path} item={item} onClick={onNavigate || onClose} />
