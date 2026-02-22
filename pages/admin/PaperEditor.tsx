@@ -210,6 +210,8 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
                 method: 'POST',
                 body: {
                     questionText: question.question,
+                    questionOptions: question.options,
+                    correctAnswer: question.answer,
                     availableTopics: availableTopics.slice(0, 100),
                     subject
                 }
