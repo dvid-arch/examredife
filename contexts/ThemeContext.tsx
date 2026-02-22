@@ -16,7 +16,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Initialize theme on mount
     useEffect(() => {
         const storedTheme = localStorage.getItem('theme') as Theme | null;
-        const initialTheme = storedTheme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const initialTheme = storedTheme || 'light';
         setTheme(initialTheme);
         setMounted(true);
     }, []);
@@ -30,22 +30,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         }
     }, [theme, mounted]);
 
-    // Listen for system theme changes
-    useEffect(() => {
-        if (!mounted) return;
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-        const handleChange = (e: MediaQueryListEvent) => {
-            // Only update if user hasn't manually set a preference
-            if (!localStorage.getItem('theme')) {
-                setTheme(e.matches ? 'dark' : 'light');
-            }
-        };
-
-        mediaQuery.addEventListener('change', handleChange);
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [mounted]);
+    // Removed system theme listener to enforce light mode by default
 
     const toggleTheme = () => {
         setTheme(prevTheme => {
