@@ -321,7 +321,8 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
     }, []);
 
     const paperTopics = useMemo(() => {
-        if (Object.keys(allTopicsMap).length === 0) return [];
+        const keys = Object.keys(allTopicsMap);
+        if (keys.length === 0) return [];
 
         const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
         const normalizedSubject = normalize(paper.subject);
@@ -337,25 +338,37 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
             'government': 'government',
             'accounting': 'accounts-principles-of-accounts',
             'accountsprinciplesofaccounts': 'accounts-principles-of-accounts',
-            'principlesofaccounts': 'accounts-principles-of-accounts'
+            'principlesofaccounts': 'accounts-principles-of-accounts',
+            'accounts': 'accounts-principles-of-accounts'
         };
 
+        // 1. Try manual mapping first
         if (manualMapping[normalizedSubject]) {
             const mappedKey = manualMapping[normalizedSubject];
             if (allTopicsMap[mappedKey]) return allTopicsMap[mappedKey].topics;
         }
 
-        // Try to find the best match by comparing normalized strings
-        const key = Object.keys(allTopicsMap).find(k => {
-            const normalizedKey = normalize(k);
-            return normalizedSubject.includes(normalizedKey) || normalizedKey.includes(normalizedSubject);
-        });
+        // 2. Try to find by slug normalization
+        let key = keys.find(k => normalize(k) === normalizedSubject);
+
+        // 3. Try inclusion matching
+        if (!key) {
+            key = keys.find(k => {
+                const normalizedKey = normalize(k);
+                return normalizedSubject.includes(normalizedKey) || normalizedKey.includes(normalizedSubject);
+            });
+        }
+
+        // 4. Try matching against the label property
+        if (!key) {
+            key = keys.find(k => normalize(allTopicsMap[k].label) === normalizedSubject);
+        }
 
         if (key && allTopicsMap[key]) {
             return allTopicsMap[key].topics;
         }
 
-        console.warn(`[Subject Mapping Fallback] No match for: ${paper.subject} (${normalizedSubject})`);
+        console.warn(`[Subject Mapping Fallback] No match for: ${paper.subject} (${normalizedSubject}). Total keys: ${keys.length}`);
         return [];
     }, [allTopicsMap, paper.subject]);
 
@@ -432,7 +445,7 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                                 <span className="text-[10px] font-black text-slate-400 uppercase">Topic Tagging</span>
                                                 {paperTopics.length === 0 && (
                                                     <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">
-                                                        Debug: No match for "{paper.subject}"
+                                                        Debug: No match for "{paper.subject}" ({Object.keys(allTopicsMap).length} subjects loaded)
                                                     </span>
                                                 )}
                                             </div>
