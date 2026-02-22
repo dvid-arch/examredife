@@ -220,8 +220,8 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
                 }
             });
             setSelectedTopics(result.suggestedTopics);
-        } catch (err) {
-            alert('AI suggestion failed. Please try manual tagging.');
+        } catch (err: any) {
+            alert(`AI suggestion failed: ${err.message || 'Unknown error'}`);
         } finally {
             setIsAiLoading(false);
         }
@@ -232,8 +232,8 @@ const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subje
         try {
             await onSave(selectedTopics);
             setIsEditing(false);
-        } catch (err) {
-            alert('Failed to save tags. Please check your connection.');
+        } catch (err: any) {
+            alert(`Failed to save tags: ${err.message || 'Unknown error'}`);
         } finally {
             setIsSaving(false);
         }
@@ -464,7 +464,7 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                                                         {apiError ? (
                                                             <span className="text-red-600">Error: {apiError}</span>
                                                         ) : (
-                                                            `Debug: No match for "${paper.subject}" (${Object.keys(allTopicsMap).length} subjects loaded)`
+                                                            `No topics matched for "${paper.subject}"`
                                                         )}
                                                     </span>
                                                 )}
