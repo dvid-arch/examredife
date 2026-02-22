@@ -192,6 +192,13 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
     );
 };
 
+interface QuestionTaggingRowProps {
+    question: PastQuestion;
+    subject: string;
+    availableTopics: { slug: string; label: string }[];
+    onSave: (topics: string[]) => Promise<void>;
+}
+
 const QuestionTaggingRow: React.FC<QuestionTaggingRowProps> = ({ question, subject, availableTopics, onSave }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedTopics, setSelectedTopics] = useState<string[]>(question.topics || []);
@@ -389,7 +396,8 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
     }, [allTopicsMap, paper.subject]);
 
     const handleTagUpdate = async (questionId: string, topics: string[]) => {
-        const result = await apiService<PastQuestion>(`/admin/papers/${paper.id}/questions/${questionId}/tags`, {
+        const paperId = paper.id || (paper as any)._id;
+        const result = await apiService<PastQuestion>(`/admin/papers/${paperId}/questions/${questionId}/tags`, {
             method: 'PUT',
             body: { topics }
         });
@@ -408,7 +416,8 @@ const ManageQuestionsModal: React.FC<ManageQuestionsProps> = ({ paper, onClose, 
                     ...paper,
                     questions: [...paper.questions, ...newQuestions],
                 };
-                const savedPaper = await apiService<PastPaper>(`/admin/papers/${paper.id}`, {
+                const paperId = paper.id || (paper as any)._id;
+                const savedPaper = await apiService<PastPaper>(`/admin/papers/${paperId}`, {
                     method: 'PUT',
                     body: updatedPaper
                 });
@@ -661,7 +670,8 @@ const ManageContent: React.FC = () => {
     const handleUpdatePaper = (updatedPaper: PastPaper) => {
         const update = async () => {
             try {
-                const savedPaper = await apiService<PastPaper>(`/admin/papers/${updatedPaper.id}`, {
+                const pId = updatedPaper.id || (updatedPaper as any)._id;
+                const savedPaper = await apiService<PastPaper>(`/admin/papers/${pId}`, {
                     method: 'PUT',
                     body: updatedPaper
                 });
