@@ -108,7 +108,14 @@ const UtmeChallenge: React.FC = () => {
 
     const isLoadingData = isLoadingPapers || isLoadingLeaderboard;
 
-    const availableSubjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+    const isAdmin = user?.role === 'admin';
+    const allSubjectsFromPapers = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+
+    // For non-admins: restrict to their 4 preferred subjects
+    const availableSubjects = useMemo(() => {
+        if (isAdmin || !user?.preferredSubjects?.length) return allSubjectsFromPapers;
+        return allSubjectsFromPapers.filter(s => user.preferredSubjects!.includes(s));
+    }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
     const saveScoreToLeaderboard = useCallback(async (currentScore: number, answers: any) => {
         if (!isAuthenticated || !user) return;

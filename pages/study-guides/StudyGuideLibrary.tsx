@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
+import { useAuth } from '../../contexts/AuthContext.tsx';
 
 const GuideIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -11,12 +12,19 @@ const GuideIcon = () => (
 
 const StudyGuideLibrary: React.FC = () => {
     const { guides, isLoading, fetchGuides } = usePastQuestions();
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         fetchGuides();
     }, [fetchGuides]);
 
-    const subjects = [...guides].sort((a, b) => a.subject.localeCompare(b.subject));
+    const allSubjects = [...guides].sort((a, b) => a.subject.localeCompare(b.subject));
+
+    // For non-admins: show only their 4 preferred subjects (if set)
+    const subjects = isAdmin || !user?.preferredSubjects?.length
+        ? allSubjects
+        : allSubjects.filter(g => user.preferredSubjects!.some(p => p.toLowerCase() === g.subject.toLowerCase() || g.id.toLowerCase() === p.toLowerCase()));
 
     return (
         <div className="space-y-6">

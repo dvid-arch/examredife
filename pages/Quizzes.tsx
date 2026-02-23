@@ -23,7 +23,14 @@ const Quizzes: React.FC = () => {
         fetchPapers();
     }, [fetchPapers]);
 
-    const subjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+    const isAdmin = user?.role === 'admin';
+    const allSubjectsFromPapers = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+
+    // For non-admins: show only their 4 preferred subjects (if set)
+    const subjects = useMemo(() => {
+        if (isAdmin || !user?.preferredSubjects?.length) return allSubjectsFromPapers;
+        return allSubjectsFromPapers.filter(s => user.preferredSubjects!.includes(s));
+    }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
     const availableYears = useMemo(() => {
         const years = new Set(allPapers.map(p => p.year));

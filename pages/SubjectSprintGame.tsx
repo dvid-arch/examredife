@@ -44,7 +44,14 @@ const SubjectSprintGame: React.FC = () => {
         fetchPapers();
     }, [fetchPapers]);
 
-    const availableSubjects = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+    const isAdmin = user?.role === 'admin';
+    const allSubjectsFromPapers = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
+
+    // For non-admins: show only their preferred subjects
+    const availableSubjects = useMemo(() => {
+        if (isAdmin || !user?.preferredSubjects?.length) return allSubjectsFromPapers;
+        return allSubjectsFromPapers.filter(s => user.preferredSubjects!.includes(s));
+    }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
     const isLoading = isLoadingPapers || isLoadingLeaderboard;
 
     const handleGameOver = async (finalScore: number) => {
