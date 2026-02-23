@@ -239,13 +239,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                                     <div className="mt-3 space-y-1">
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Password requirements:</p>
                                         <div className="flex flex-wrap gap-2 text-xs">
-                                            <span className={`px-2 py-1 rounded-full border ${strength.hasLength ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                            <span className={`px-2 py-1 rounded-md border ${strength.hasLength ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                                                 8+ Characters
                                             </span>
-                                            <span className={`px-2 py-1 rounded-full border ${strength.hasNumber ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                            <span className={`px-2 py-1 rounded-md border ${strength.hasNumber ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                                                 Number
                                             </span>
-                                            <span className={`px-2 py-1 rounded-full border ${strength.hasUpperOrSymbol ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                            <span className={`px-2 py-1 rounded-md border ${strength.hasUpperOrSymbol ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
                                                 Uppercase/Symbol
                                             </span>
                                         </div>

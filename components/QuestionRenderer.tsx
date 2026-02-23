@@ -55,19 +55,19 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
           {Object.entries(question.options).map(([key, option]) => {
             const isCorrect = key === correctAnswer;
             return (
-              <div key={key} className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${isCorrect
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 ring-1 ring-green-100 dark:ring-green-900/30'
-                  : forceLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+              <div key={key} className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${isCorrect
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 ring-1 ring-green-100 dark:ring-green-900/30'
+                : forceLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                 }`}>
-                <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isCorrect
-                    ? 'bg-green-500 text-white'
-                    : forceLightMode ? 'bg-slate-200 text-slate-600' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                <span className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${isCorrect
+                  ? 'bg-green-500 text-white'
+                  : forceLightMode ? 'bg-slate-200 text-slate-600' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}>
                   {key}
                 </span>
                 <div className={`text-sm ${isCorrect
-                    ? 'text-green-800 dark:text-green-200 font-medium'
-                    : forceLightMode ? 'text-slate-700' : 'text-slate-700 dark:text-slate-300'
+                  ? 'text-green-800 dark:text-green-200 font-medium'
+                  : forceLightMode ? 'text-slate-700' : 'text-slate-700 dark:text-slate-300'
                   }`}>
                   <MarkdownRenderer content={option.text} forceLightMode={forceLightMode} />
                 </div>

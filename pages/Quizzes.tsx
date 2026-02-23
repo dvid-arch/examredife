@@ -280,7 +280,7 @@ const Quizzes: React.FC = () => {
                                         const currentYear = standardSelections[subject]?.year ?? 'random';
                                         const isCompulsory = subject === 'English' || subject === 'English Language';
                                         return (
-                                            <div key={subject} className={`flex items-center justify-between gap-4 p-4 rounded-xl border-2 ${isCompulsory
+                                            <div key={subject} className={`flex items-center justify-between gap-4 p-4 rounded-lg border-2 ${isCompulsory
                                                 ? 'border-primary/50 bg-primary/5 dark:bg-primary/10'
                                                 : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50'
                                                 }`}>

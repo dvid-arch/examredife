@@ -41,7 +41,7 @@ const NavItem: React.FC<{ item: NavItemType; onClick?: () => void }> = ({ item, 
             {...navLinkProps}
             onClick={onClick}
             className={({ isActive }) =>
-                `flex items-center space-x-3 px-4 py-3 rounded-full transition-all duration-200 mx-2 ${isActive
+                `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 mx-2 ${isActive
                     ? 'bg-primary-light dark:bg-primary/20 text-primary font-bold shadow-sm'
                     : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50'
                 }`

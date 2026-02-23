@@ -39,18 +39,18 @@ const tiles = [
 // FIX: Changed icon prop type to be more specific, allowing React.cloneElement to pass a className without a type error.
 const DashboardTile: React.FC<{ title: string; description: string; colorClass: string; path: string; icon: React.ReactElement<{ className?: string }>; tourId?: string; }> = ({ title, description, colorClass, path, icon, tourId }) => (
     <Link to={path} className="block group" data-tour-id={tourId}>
-        <div className="relative p-6 h-48 flex flex-col justify-between bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 group-hover:-translate-y-1">
+        <div className="relative p-6 h-48 flex flex-col justify-between bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 group-hover:-translate-y-1">
             {/* Watermark Icon - Softer in light mode */}
             <div className="absolute -right-6 -bottom-6 text-gray-50/50 dark:text-gray-700/30 group-hover:text-gray-100/50 dark:group-hover:text-gray-600/30 transition-colors">
                 {React.cloneElement(icon, { className: "h-32 w-32" })}
             </div>
             <div className="relative z-10 hidden sm:block"> {/* Hide icon on very small screens if needed, but usually keep */}
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass.replace('bg-', 'text-').replace('500', '600')} bg-opacity-10 bg-${colorClass.split('-')[1]}-50`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass.replace('bg-', 'text-').replace('500', '600')} bg-opacity-10 bg-${colorClass.split('-')[1]}-50`}>
                     {/* We need to restructure how colorClass is used or pass a lighter bg class. 
                         For now, let's just make the icon generic primary or parse the color.
                         Simpler approach: Use the passed colorClass for the ICON COLOR, not background.
                      */}
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-${colorClass.split('-')[1]}-200`}>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-${colorClass.split('-')[1]}-200`}>
                         {React.cloneElement(icon, { className: "h-6 w-6" })}
                     </div>
                 </div>
@@ -79,7 +79,7 @@ const WelcomeBanner = () => {
     const strokeDashoffset = 100 - scorePercentage;
 
     return (
-        <div data-tour-id="welcome-banner" className="bg-primary text-white p-8 rounded-3xl shadow-lg shadow-primary/20 relative overflow-hidden mb-8">
+        <div data-tour-id="welcome-banner" className="bg-primary text-white p-8 rounded-2xl shadow-lg shadow-primary/20 relative overflow-hidden mb-8">
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
 
@@ -100,7 +100,7 @@ const WelcomeBanner = () => {
                     {isAuthenticated && (
                         <div className="flex gap-4">
                             {/* Streak Badge */}
-                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/20">
+                            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20">
                                 <span className="text-2xl">🔥</span>
                                 <div>
                                     <span className="block text-xl font-bold leading-none">{streak}</span>
@@ -109,7 +109,7 @@ const WelcomeBanner = () => {
                             </div>
 
                             {/* Estimated Score Ring */}
-                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/20">
+                            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20">
                                 <div className="relative w-10 h-10">
                                     <svg className="w-full h-full transform -rotate-90">
                                         <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-blue-900/30" />
@@ -126,10 +126,10 @@ const WelcomeBanner = () => {
                 </div>
 
                 <div className="mt-8 flex flex-wrap gap-3">
-                    <Link to="/practice" className="bg-white text-primary font-bold py-3 px-8 rounded-full hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-md">
+                    <Link to="/practice" className="bg-white text-primary font-bold py-3 px-8 rounded-lg hover:bg-blue-50 transition-all duration-200 shadow-sm hover:shadow-md">
                         Start Practice
                     </Link>
-                    <Link to="/challenge" className="bg-primary-dark/30 text-white border border-white/20 font-semibold py-3 px-8 rounded-full hover:bg-primary-dark/50 transition-all duration-200">
+                    <Link to="/challenge" className="bg-primary-dark/30 text-white border border-white/20 font-semibold py-3 px-8 rounded-lg hover:bg-primary-dark/50 transition-all duration-200">
                         Daily Challenge
                     </Link>
                 </div>
@@ -291,7 +291,7 @@ const Dashboard: React.FC = () => {
 
             {/* Weak Areas Widget */}
             {isAuthenticated && weakAreas.length > 0 && (
-                <section className="bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 rounded-3xl p-6">
+                <section className="bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900/20 rounded-2xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="bg-orange-100 text-orange-600 p-2 rounded-full">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -327,7 +327,7 @@ const Dashboard: React.FC = () => {
 
                     <div className="flex overflow-x-auto pb-6 gap-5 snap-x no-scrollbar px-1 -mx-1">
                         {continueStudyingActivities.slice(0, 5).map((activity) => (
-                            <div key={activity.id} className="flex-none w-[300px] snap-start flex flex-col bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 group relative">
+                            <div key={activity.id} className="flex-none w-[300px] snap-start flex flex-col bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 group relative">
                                 {activity.mastered && (
                                     <div className="absolute top-3 right-3 bg-yellow-400 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm z-10 animate-bounce-subtle">
                                         MASTERED 🏆

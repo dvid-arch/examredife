@@ -65,10 +65,10 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                             </div>
 
                             <div className="flex flex-wrap justify-center gap-4">
-                                <Link to="/practice" replace className="bg-slate-800 dark:bg-slate-700 text-white font-bold py-4 px-8 rounded-2xl hover:bg-black transition-all shadow-xl active:scale-95">
+                                <Link to="/practice" replace className="bg-slate-800 dark:bg-slate-700 text-white font-bold py-4 px-8 rounded-xl hover:bg-black transition-all shadow-xl active:scale-95">
                                     New Practice
                                 </Link>
-                                <Link to="/performance" replace className="bg-primary text-white font-bold py-4 px-10 rounded-2xl hover:bg-accent transition-all shadow-xl shadow-primary/20 active:scale-95">
+                                <Link to="/performance" replace className="bg-primary text-white font-bold py-4 px-10 rounded-xl hover:bg-accent transition-all shadow-xl shadow-primary/20 active:scale-95">
                                     Full Analysis
                                 </Link>
                             </div>
@@ -116,7 +116,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                                                 {stats.correct} / {stats.total}
                                             </span>
                                         </div>
-                                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-lg h-2.5 overflow-hidden">
                                             <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${acc}%` }}
@@ -141,7 +141,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                         {weakestTopic && (
                             <Card className="p-6 bg-primary/5 border-primary/20 border-2">
                                 <div className="flex items-start gap-4 mb-4">
-                                    <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shrink-0">
+                                    <div className="w-10 h-10 bg-primary text-white rounded-lg flex items-center justify-center shrink-0">
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                                     </div>
                                     <div>
@@ -152,7 +152,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                                 <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
                                     Your performance on <span className="font-bold text-slate-800 dark:text-slate-200">{weakestTopic}</span> suggests a knowledge gap. Reviewing the study guide could help bridge this.
                                 </p>
-                                <Link to={`/study-guides`} className="w-full inline-block text-center bg-white dark:bg-slate-800 text-primary font-bold py-3 px-4 rounded-xl border border-primary/20 hover:bg-primary hover:text-white transition-all">
+                                <Link to={`/study-guides`} className="w-full inline-block text-center bg-white dark:bg-slate-800 text-primary font-bold py-3 px-4 rounded-lg border border-primary/20 hover:bg-primary hover:text-white transition-all">
                                     Open Study Guide
                                 </Link>
                             </Card>
@@ -162,7 +162,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                             <Card className="p-6 bg-slate-800 text-white">
                                 <h4 className="font-bold mb-2">Save this result?</h4>
                                 <p className="text-slate-400 text-xs mb-6">Log in to track this score and earn mastery trophies for your performance dashboard.</p>
-                                <button onClick={requestLogin} className="w-full bg-white text-slate-800 font-bold py-3 rounded-xl hover:bg-slate-100 transition-all">
+                                <button onClick={requestLogin} className="w-full bg-white text-slate-800 font-bold py-3 rounded-lg hover:bg-slate-100 transition-all">
                                     Login to Save
                                 </button>
                             </Card>
