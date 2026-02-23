@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import { usePrompt } from '../hooks/usePrompt.ts';
 import { useSearchParams } from 'react-router-dom';
@@ -349,7 +349,7 @@ const Flashcards: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isReminderModalVisible, setReminderModalVisible] = useState(false);
-    const { isAuthenticated, requestLogin } = useAuth();
+    const { isAuthenticated, user, requestLogin } = useAuth();
 
     // --- FETCH DECKS ---
     useEffect(() => {
@@ -371,6 +371,18 @@ const Flashcards: React.FC = () => {
         };
         fetchDecks();
     }, [isAuthenticated]);
+
+    const isAdmin = user?.role === 'admin';
+    const preferredSubjects = user?.preferredSubjects || [];
+
+    const displayDecks = useMemo(() => {
+        if (isAdmin || preferredSubjects.length === 0) return decks;
+        return decks.filter(deck => {
+            const isEnglish = ['english', 'english language', 'use of english'].includes(deck.subject.toLowerCase());
+            const isPreferred = preferredSubjects.some(p => p.toLowerCase() === deck.subject.toLowerCase());
+            return isEnglish || isPreferred;
+        });
+    }, [decks, isAdmin, preferredSubjects]);
 
     // --- DECK HANDLERS ---
     const handleSaveDeck = async (deckData: { name: string, subject: string }) => {
@@ -618,7 +630,7 @@ const Flashcards: React.FC = () => {
             {isReminderModalVisible && <ReminderModal decks={decks} onSave={handleSetReminder} onCancel={() => setReminderModalVisible(false)} />}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {decks.map((deck) => (
+                {displayDecks.map((deck) => (
                     <div key={deck.id} onClick={() => setSearchParams({ deck: deck.id })} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
                         <h3 className="font-bold text-lg text-slate-800 dark:text-slate-50">{deck.name}</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">{deck.subject}</p>

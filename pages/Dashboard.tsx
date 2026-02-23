@@ -167,9 +167,17 @@ const Dashboard: React.FC = () => {
             try {
                 const fetchedGuides = await fetchGuides();
                 const weaknesses: { id: string, title: string, subject: string, link: string }[] = [];
+                const isAdmin = user?.role === 'admin';
+                const preferred = user?.preferredSubjects || [];
 
-                // Optimized search (could be better with a map, but N is small)
+                // Optimized search
                 for (const guide of fetchedGuides) {
+                    // Check if this subject should be shown
+                    const isEnglish = ['english', 'english language', 'use of english'].includes(guide.subject.toLowerCase());
+                    const isPreferred = preferred.some(p => p.toLowerCase() === guide.subject.toLowerCase() || guide.id.toLowerCase() === p.toLowerCase());
+
+                    if (!isAdmin && preferred.length > 0 && !isPreferred && !isEnglish) continue;
+
                     for (const topic of guide.topics) {
                         if (problemIds.includes(topic.id)) {
                             weaknesses.push({
