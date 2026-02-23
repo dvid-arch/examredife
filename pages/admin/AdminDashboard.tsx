@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
+import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 
 const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
     const [selectedSubject, setSelectedSubject] = useState("");
@@ -109,9 +110,9 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
                                     </span>
                                     <span className="text-[10px] text-slate-400 font-mono">{q.id}</span>
                                 </div>
-                                <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 italic">
-                                    {q.question.replace(/<[^>]*>/g, '').slice(0, 150)}...
-                                </p>
+                                <div className="text-sm p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                                    <MarkdownRenderer content={q.question} />
+                                </div>
                             </div>
                         ))}
                         {previewData.length > 50 && (

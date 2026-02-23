@@ -24,14 +24,15 @@ const MarkdownRenderer: React.FC<{
       .replace(/\\\[/g, ' $$')    // Replace \[ with " $$"
       .replace(/\\\]/g, '$$ ');   // Replace \] with "$$ "
 
-    // Fallback for user-reported case: (\frac... without backslash
-    // We only replace if we see (\frac specifically to avoid false positives
-    normalized = normalized.replace(/\((\\frac)/g, ' $$1'); // (\frac -> $ \frac
+    // Fix escaped braces within math mode which break grouping (e.g. x^\{3\} -> x^{3})
+    // This is a common data mangling issue
+    normalized = normalized.replace(/\$([^\$]+)\$/g, (match, p1) => {
+      return '$' + p1.replace(/\\\{/g, '{').replace(/\\\}/g, '}') + '$';
+    });
 
-    // Debug only if it looks like math
-    if (text.includes('\\(') || text.includes('frac')) {
-      console.log('MarkdownRenderer Debug:', { original: text, normalized });
-    }
+    // Fallback for user-reported case: (\frac... without backslash
+    normalized = normalized.replace(/\((\\frac)/g, ' $$1');
+
     return normalized;
   };
 
