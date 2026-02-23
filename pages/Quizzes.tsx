@@ -35,8 +35,8 @@ const Quizzes: React.FC = () => {
         );
     }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
-    // Standard Mode: per-subject year selection
-    type StandardSelection = { year: 'random' | number };
+    // Standard Mode: per-subject year and count selection
+    type StandardSelection = { year: 'random' | number; count: number };
     const [standardSelections, setStandardSelections] = useState<Record<string, StandardSelection>>({});
 
     const yearsBySubject = useMemo(() => {
@@ -65,7 +65,10 @@ const Quizzes: React.FC = () => {
             subjects.forEach(subject => {
                 if (!next[subject]) {
                     const subjectYears = yearsBySubject.get(subject) || [];
-                    next[subject] = { year: subjectYears.length > 0 ? subjectYears[0] : 'random' };
+                    next[subject] = {
+                        year: subjectYears.length > 0 ? subjectYears[0] : 'random',
+                        count: subject === 'English' ? 60 : 40
+                    };
                 }
             });
             return next;
@@ -126,7 +129,7 @@ const Quizzes: React.FC = () => {
         const selections = subjects.map(subject => ({
             subject,
             year: standardSelections[subject]?.year ?? 'random',
-            count: subject === 'English' ? 60 : 40,
+            count: standardSelections[subject]?.count ?? (subject === 'English' ? 60 : 40),
         }));
 
         if (selections.length !== 4) {
@@ -287,19 +290,42 @@ const Quizzes: React.FC = () => {
                                                     )}
                                                     <span className="font-semibold text-slate-800 dark:text-white">{subject}</span>
                                                 </div>
-                                                <select
-                                                    value={String(currentYear)}
-                                                    onChange={(e) => setStandardSelections(prev => ({
-                                                        ...prev,
-                                                        [subject]: { year: e.target.value === 'random' ? 'random' : Number(e.target.value) }
-                                                    }))}
-                                                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                                >
-                                                    {subjectYears.map(year => (
-                                                        <option key={year} value={year}>{year}</option>
-                                                    ))}
-                                                    <option value="random">Random Year</option>
-                                                </select>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex flex-col">
+                                                        <label className="text-[10px] uppercase text-gray-500 font-bold mb-1">Year</label>
+                                                        <select
+                                                            value={String(currentYear)}
+                                                            onChange={(e) => setStandardSelections(prev => ({
+                                                                ...prev,
+                                                                [subject]: { ...prev[subject], year: e.target.value === 'random' ? 'random' : Number(e.target.value) }
+                                                            }))}
+                                                            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                        >
+                                                            {subjectYears.map(year => (
+                                                                <option key={year} value={year}>{year}</option>
+                                                            ))}
+                                                            <option value="random">Random Year</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <label className="text-[10px] uppercase text-gray-500 font-bold mb-1">Questions</label>
+                                                        <select
+                                                            value={standardSelections[subject]?.count ?? (isCompulsory ? 60 : 40)}
+                                                            onChange={(e) => setStandardSelections(prev => ({
+                                                                ...prev,
+                                                                [subject]: { ...prev[subject], count: Number(e.target.value) }
+                                                            }))}
+                                                            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                        >
+                                                            {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+                                                                .filter(num => isCompulsory || num <= 50)
+                                                                .map(num => (
+                                                                    <option key={num} value={num}>{num}</option>
+                                                                ))
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </div>
                                         );
                                     })}
