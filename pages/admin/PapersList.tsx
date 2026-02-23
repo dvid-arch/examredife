@@ -45,10 +45,11 @@ const PapersList: React.FC = () => {
 
     // Filter logic
     const filteredPapers = useMemo(() => {
+        const lowerSearch = searchTerm.toLowerCase();
         return papers.filter(p =>
-            p.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.exam.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.year.toString().includes(searchTerm)
+            (p.subject || '').toLowerCase().includes(lowerSearch) ||
+            (p.exam || '').toLowerCase().includes(lowerSearch) ||
+            (p.year || '').toString().includes(searchTerm)
         );
     }, [papers, searchTerm]);
 
