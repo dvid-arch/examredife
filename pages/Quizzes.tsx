@@ -317,12 +317,9 @@ const Quizzes: React.FC = () => {
                                                             }))}
                                                             className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                                                         >
-                                                            {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-                                                                .filter(num => isCompulsory ? num <= 60 : num <= 50)
-                                                                .map(num => (
-                                                                    <option key={num} value={num}>{num}</option>
-                                                                ))
-                                                            }
+                                                            {(isCompulsory ? [10, 40, 60, 100] : [10, 20, 30, 40, 50]).map(num => (
+                                                                <option key={num} value={num}>{num}</option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 </div>
