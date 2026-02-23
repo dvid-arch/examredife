@@ -52,8 +52,8 @@ const preparePracticeQuestions = (
         if (keyword) {
             const lowerKeyword = keyword.toLowerCase();
             questionsForSubject = questionsForSubject.filter(q =>
-                q.question.toLowerCase().includes(lowerKeyword) ||
-                (q.options && Object.values(q.options).some(o => (o as any).text.toLowerCase().includes(lowerKeyword)))
+                (q.question || '').toLowerCase().includes(lowerKeyword) ||
+                (q.options && Object.values(q.options).some(o => ((o as any).text || '').toLowerCase().includes(lowerKeyword)))
             );
         }
 

@@ -501,8 +501,8 @@ const Flashcards: React.FC = () => {
         }
 
         const filteredCards = selectedDeck.cards.filter(card =>
-            card.front.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            card.back.toLowerCase().includes(searchQuery.toLowerCase())
+            (card.front || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (card.back || '').toLowerCase().includes(searchQuery.toLowerCase())
         );
 
         return (

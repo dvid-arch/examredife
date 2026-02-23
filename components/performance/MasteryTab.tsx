@@ -22,7 +22,7 @@ export const MasteryTab: React.FC<MasteryTabProps> = ({ performanceBySubject, pe
     const topics = performanceByTopic.filter(t => t.subject === currentSubject);
 
     const filteredTopics = topics.filter(t =>
-        t.topic.toLowerCase().includes(searchQuery.toLowerCase())
+        (t.topic || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
@@ -52,8 +52,8 @@ export const MasteryTab: React.FC<MasteryTabProps> = ({ performanceBySubject, pe
                                     setSearchQuery('');
                                 }}
                                 className={`w-full text-left p-5 rounded-2xl transition-all border group ${isSelected
-                                        ? 'bg-white dark:bg-slate-800 shadow-md ring-2 ring-offset-2 dark:ring-offset-slate-900 border-transparent transform scale-[1.02]'
-                                        : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800'
+                                    ? 'bg-white dark:bg-slate-800 shadow-md ring-2 ring-offset-2 dark:ring-offset-slate-900 border-transparent transform scale-[1.02]'
+                                    : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-white dark:hover:bg-slate-800'
                                     }`}
                                 style={isSelected ? { ringColor: subjectColor } : {}}
                             >
@@ -152,7 +152,7 @@ export const MasteryTab: React.FC<MasteryTabProps> = ({ performanceBySubject, pe
                                                         </div>
                                                     </div>
                                                     <span className={`text-2xl font-black ${topic.average >= 90 ? 'text-green-500' :
-                                                            topic.average >= 60 ? 'text-blue-500' : 'text-orange-500'
+                                                        topic.average >= 60 ? 'text-blue-500' : 'text-orange-500'
                                                         }`}>
                                                         {Math.round(topic.average)}<span className="text-sm text-slate-400 font-bold ml-0.5">%</span>
                                                     </span>
