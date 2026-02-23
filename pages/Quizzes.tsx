@@ -274,7 +274,7 @@ const Quizzes: React.FC = () => {
                                     <a href="/profile" className="font-bold underline">Update your profile</a> to continue.
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {subjects.map(subject => {
                                         const subjectYears = getYearsForSubject(subject);
                                         const currentYear = standardSelections[subject]?.year ?? 'random';
