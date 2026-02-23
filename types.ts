@@ -156,4 +156,5 @@ export interface EngagementNudge {
   actionLabel?: string;
   actionPath?: string;
   ctaColor?: string;
+  isRecurring?: boolean;
 }

@@ -19,7 +19,8 @@ export const NUDGE_REGISTRY: Record<string, EngagementNudge> = {
         icon: 'rocket',
         actionLabel: 'Go Pro Today',
         actionPath: '/profile',
-        ctaColor: '#8b5cf6'
+        ctaColor: '#8b5cf6',
+        isRecurring: true
     },
     'streak-motivator': {
         id: 'streak-motivator',
