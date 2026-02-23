@@ -70,6 +70,51 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
         name: 'Agricultural Science',
         color: '#4ade80', // Light Green
         aliases: ['Agricultural Science', 'Agric']
+    },
+    irk: {
+        name: 'Islamic Religious Knowledge (IRK)',
+        color: '#6366f1', // Indigo sharing CRS color
+        aliases: ['Islamic Religious Knowledge (IRK)', 'Islamic Religious Studies', 'IRS', 'IRK']
+    },
+    fine_arts: {
+        name: 'Fine Arts',
+        color: '#f43f5e', // Rose
+        aliases: ['Fine Arts', 'Fine Art']
+    },
+    phe: {
+        name: 'Physical and Health Education',
+        color: '#0ea5e9', // Sky Blue
+        aliases: ['Physical and Health Education', 'Physical and Health Education (PHE)', 'PHE']
+    },
+    history: {
+        name: 'History',
+        color: '#b45309', // Amber-Amber
+        aliases: ['History']
+    },
+    civic: {
+        name: 'Civic Education',
+        color: '#84cc16', // Lime
+        aliases: ['Civic Education']
+    },
+    computer: {
+        name: 'Computer Studies',
+        color: '#64748b', // Slate
+        aliases: ['Computer Studies', 'Computer']
+    },
+    french: {
+        name: 'French',
+        color: '#d946ef', // Fuchsia
+        aliases: ['French']
+    },
+    home_ecu: {
+        name: 'Home Economics',
+        color: '#fbbf24', // Amber/Yellow
+        aliases: ['Home Economics']
+    },
+    music: {
+        name: 'Music',
+        color: '#a855f7', // Purple
+        aliases: ['Music']
     }
 };
 
