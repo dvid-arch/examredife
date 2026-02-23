@@ -17,6 +17,7 @@ const GuideReader: React.FC = () => {
     const [subjectName, setSubjectName] = useState<string>(location.state?.subjectName || "");
     const [isLoading, setIsLoading] = useState(!topic);
     const [toc, setToc] = useState<{ id: string; text: string; level: number }[]>([]);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,6 +62,7 @@ const GuideReader: React.FC = () => {
                 setToc([]);
             }
         }
+        setIsMobileMenuOpen(false); // Close menu when topic changes
     }, [topic]);
 
     const trackActivity = (subject: string, t: Topic) => {
@@ -92,28 +94,49 @@ const GuideReader: React.FC = () => {
     const nextTopic = (currentIndex !== -1 && currentIndex < allTopics.length - 1) ? allTopics[currentIndex + 1] : null;
 
     return (
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 pb-20">
-            {/* Left Sidebar: All subject topics */}
-            <aside className="lg:w-72 flex-shrink-0 space-y-6">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-800 sticky top-24">
-                    <h3 className="font-extrabold text-slate-800 dark:text-white mb-4 px-2 flex items-center gap-2 text-sm uppercase tracking-tight">
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 pb-10 sm:pb-20 px-2 sm:px-4 lg:px-0 relative">
+
+            {/* Mobile Drawer Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/40 z-[60] lg:hidden backdrop-blur-sm transition-opacity"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
+            {/* Left Sidebar */}
+            <aside className={`fixed inset-y-0 left-0 z-[70] w-72 sm:w-80 bg-white dark:bg-slate-900 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:w-72 lg:bg-transparent shadow-2xl lg:shadow-none flex flex-col lg:block ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex-1 bg-white dark:bg-slate-900 lg:rounded-2xl p-4 sm:p-5 lg:shadow-sm lg:border lg:border-slate-100 lg:dark:border-slate-800 lg:sticky lg:top-24 flex flex-col h-full overflow-hidden lg:h-auto">
+
+                    {/* Mobile Drawer Header */}
+                    <div className="flex items-center justify-between lg:hidden border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+                        <h3 className="font-black text-slate-800 dark:text-white text-base uppercase tracking-tight">Menu</h3>
+                        <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 bg-slate-100 dark:bg-slate-800 rounded-full active:scale-95 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <h3 className="font-extrabold text-slate-800 dark:text-white mb-4 px-2 hidden lg:flex items-center gap-2 text-sm uppercase tracking-tight">
                         <div className="w-1 h-5 bg-primary rounded-full"></div>
                         Course Outline
                     </h3>
-                    <nav className="space-y-1 overflow-y-auto max-h-[60vh] custom-scrollbar">
+                    <nav className="space-y-1 overflow-y-auto flex-1 lg:max-h-[60vh] custom-scrollbar pb-6 lg:pb-0">
                         {allTopics.map((t) => (
                             <Link
                                 key={t.id}
                                 to={`/study-guides/${category}/${t.id}`}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${topic?.id === t.id
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={`flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-xl text-sm transition-all ${topic?.id === t.id
                                     ? 'bg-primary/10 text-primary font-bold border-l-4 border-primary'
                                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900'
                                     }`}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-50 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
-                                <span className="line-clamp-2">{t.title}</span>
+                                <span className="line-clamp-2 leading-snug">{t.title}</span>
                             </Link>
                         ))}
                     </nav>
@@ -128,8 +151,11 @@ const GuideReader: React.FC = () => {
                                 {toc.map((item) => (
                                     <li key={item.id} className={`pl-4 ${item.level === 3 ? 'ml-2' : ''}`}>
                                         <button
-                                            onClick={() => scrollToSection(item.id)}
-                                            className="text-left text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors line-clamp-1"
+                                            onClick={() => {
+                                                scrollToSection(item.id);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className="text-left py-0.5 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors line-clamp-2 leading-relaxed"
                                         >
                                             {item.text}
                                         </button>
@@ -142,44 +168,57 @@ const GuideReader: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 min-w-0 space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0 flex flex-col space-y-4 sm:space-y-6">
+
+                {/* Header Actions */}
+                <div className="flex justify-between items-center bg-white/80 backdrop-blur-md dark:bg-slate-900/80 p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 sticky top-2 z-30 lg:relative lg:top-0 lg:z-auto lg:bg-transparent lg:shadow-none lg:border-none lg:p-0">
                     <button
                         onClick={() => navigate(`/study-guides/${category}`)}
-                        className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-bold text-sm"
+                        className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-bold text-xs sm:text-sm bg-white dark:bg-slate-800 lg:bg-transparent px-3 py-2 lg:px-0 lg:py-0 rounded-xl lg:rounded-none shadow-sm lg:shadow-none border border-slate-200 lg:border-transparent dark:border-slate-700 group"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                         </svg>
-                        Back to {subjectName}
+                        <span className="hidden sm:inline">Back to {subjectName}</span>
+                        <span className="sm:hidden">Back</span>
                     </button>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
+
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 sm:px-4 py-1.5 rounded-full border border-primary/20 truncate max-w-[140px] sm:max-w-none shadow-sm">
                             {subjectName}
                         </span>
+
+                        <button
+                            className="lg:hidden p-2 bg-slate-800 text-white rounded-xl flex items-center gap-1 shadow-md active:scale-95 transition-transform"
+                            onClick={() => setIsMobileMenuOpen(true)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                    <div className="p-8 sm:p-12 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/30 dark:to-slate-900">
-                        <h1 className="text-3xl sm:text-5xl font-black text-slate-800 dark:text-white mb-4 leading-tight tracking-tight">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[32px] shadow-xl sm:shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
+                    <div className="p-6 sm:p-10 lg:p-12 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/30 dark:to-slate-900">
+                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-800 dark:text-white mb-3 sm:mb-4 leading-tight tracking-tight">
                             {topic.title}
                         </h1>
-                        <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400 text-sm font-medium">
-                            <span className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <div className="flex flex-wrap items-center gap-4 text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
+                            <span className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-md">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                                 JAMB Topic
                             </span>
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                8 min read
+                                ~8 min read
                             </span>
                         </div>
                     </div>
 
-                    <div className="p-6 sm:p-12 prose dark:prose-invert max-w-none prose-slate prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary border-b border-slate-100 dark:border-slate-800">
+                    <div className="p-5 sm:p-10 lg:p-12 prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary border-b border-slate-100 dark:border-slate-800 prose-img:rounded-3xl prose-img:shadow-lg prose-p:leading-relaxed sm:prose-p:leading-loose text-[15px] sm:text-base">
                         <MarkdownRenderer
                             content={contentToRender.trim()}
                             inlineQuestions={topic.inlineQuestions}
@@ -202,7 +241,7 @@ const GuideReader: React.FC = () => {
                     </div>
 
                     {topic.videos && topic.videos.length > 0 && (
-                        <div className="px-6 sm:px-12 py-12 space-y-8 border-b border-slate-100 dark:border-slate-800">
+                        <div className="px-5 sm:px-10 lg:px-12 py-8 sm:py-12 space-y-6 sm:space-y-8 border-b border-slate-100 dark:border-slate-800">
                             <h2 className="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
@@ -246,8 +285,8 @@ const GuideReader: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="px-6 sm:px-12 py-12">
-                        <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[24px] p-6 sm:p-8">
+                    <div className="px-4 sm:px-10 lg:px-12 py-8 sm:py-12">
+                        <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[24px] p-5 sm:p-8 shadow-sm">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                                 <div className="text-center sm:text-left">
                                     <h3 className="text-xl font-black text-slate-800 dark:text-white mb-1">How's your confidence?</h3>
@@ -300,8 +339,8 @@ const GuideReader: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="m-6 sm:m-12 p-8 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                        <div className="text-center sm:text-left">
+                    <div className="m-4 sm:m-8 lg:m-12 p-5 sm:p-8 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center xl:flex-row xl:items-start justify-between gap-6">
+                        <div className="text-center xl:text-left">
                             <h3 className="text-lg font-black text-slate-800 dark:text-white">
                                 {nextTopic ? 'Next Topic' : 'You\'ve reached the end!'}
                             </h3>
@@ -311,10 +350,10 @@ const GuideReader: React.FC = () => {
                                     : `You've completed all JAMB topics for ${subjectName}.`}
                             </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full xl:w-auto">
                             <Link
                                 to={`/practice/topic/${category}/${topic.id}`}
-                                className="flex-1 sm:flex-initial bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-black py-4 px-8 rounded-2xl hover:scale-105 active:scale-95 transition-all text-sm text-center"
+                                className="flex-1 sm:flex-initial bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:scale-105 active:scale-95 transition-all text-sm text-center"
                             >
                                 Practice this Topic
                             </Link>
@@ -322,14 +361,14 @@ const GuideReader: React.FC = () => {
                             {nextTopic ? (
                                 <Link
                                     to={`/study-guides/${category}/${nextTopic.id}`}
-                                    className="flex-1 sm:flex-initial bg-primary text-white font-black py-4 px-8 rounded-2xl hover:bg-accent hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 text-sm text-center"
+                                    className="flex-1 sm:flex-initial bg-primary text-white font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:bg-accent hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 text-sm text-center"
                                 >
                                     Start Next Topic
                                 </Link>
                             ) : (
                                 <Link
                                     to={`/practice/topic/${category}/${topic.id}`}
-                                    className="flex-1 sm:flex-initial bg-primary text-white font-black py-4 px-8 rounded-2xl hover:bg-accent hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 text-sm text-center"
+                                    className="flex-1 sm:flex-initial bg-primary text-white font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:bg-accent hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 text-sm text-center"
                                 >
                                     Take Final Mastery Quiz
                                 </Link>
