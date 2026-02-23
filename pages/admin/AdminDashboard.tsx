@@ -19,11 +19,14 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
     const handleFetchPreview = async () => {
         if (!selectedTopic) return;
         setIsExporting(true);
+        console.log(`[AdminExport] Starting fetch for topic: ${selectedTopic}`);
         try {
             const data = await apiService<any[]>(`/admin/export-questions/${selectedTopic}`);
+            console.log(`[AdminExport] Received ${data.length} questions`);
             setPreviewData(data);
-        } catch (error) {
-            alert("Fetch failed. Please check console.");
+        } catch (error: any) {
+            console.error(`[AdminExport] Fetch failed:`, error);
+            alert(`Fetch failed: ${error.message || 'Unknown error'}. Check console for details.`);
         } finally {
             setIsExporting(false);
         }
