@@ -20,9 +20,10 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
     const handleFetchPreview = async () => {
         if (!selectedTopic) return;
         setIsExporting(true);
-        console.log(`[AdminExport] Starting fetch for topic: ${selectedTopic}`);
+        const topicLabel = topics.find((t: any) => t.slug === selectedTopic)?.label || "";
+        console.log(`[AdminExport] Starting fetch for topic: ${selectedTopic} (${topicLabel})`);
         try {
-            const data = await apiService<any[]>(`/admin/export-questions/${selectedTopic}`);
+            const data = await apiService<any[]>(`/admin/export-questions/${selectedTopic}?label=${encodeURIComponent(topicLabel)}`);
             console.log(`[AdminExport] Received ${data.length} questions`);
             setPreviewData(data);
         } catch (error: any) {
