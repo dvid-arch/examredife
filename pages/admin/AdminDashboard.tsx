@@ -3,6 +3,87 @@ import { Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
 
+const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
+    const [selectedSubject, setSelectedSubject] = useState("");
+    const [selectedTopic, setSelectedTopic] = useState("");
+    const [isExporting, setIsExporting] = useState(false);
+
+    const subjects = topicsData ? Object.keys(topicsData).map(key => ({
+        key,
+        label: topicsData[key].label
+    })) : [];
+
+    const topics = selectedSubject && topicsData ? topicsData[selectedSubject].topics : [];
+
+    const handleDownload = async () => {
+        if (!selectedTopic) return;
+        setIsExporting(true);
+        try {
+            const data = await apiService<any[]>(`/admin/export-questions/${selectedTopic}`);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${selectedTopic}_questions_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            alert("Export failed. Please check console.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    return (
+        <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-grain">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Question Export by Topic
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Subject</label>
+                    <select
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary transition-all"
+                        value={selectedSubject}
+                        onChange={(e) => { setSelectedSubject(e.target.value); setSelectedTopic(""); }}
+                    >
+                        <option value="">Select Subject</option>
+                        {subjects.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Topic</label>
+                    <select
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary transition-all disabled:opacity-50"
+                        value={selectedTopic}
+                        disabled={!selectedSubject}
+                        onChange={(e) => setSelectedTopic(e.target.value)}
+                    >
+                        <option value="">Select Topic</option>
+                        {topics.map((t: any) => <option key={t.slug} value={t.slug}>{t.label}</option>)}
+                    </select>
+                </div>
+                <div className="flex items-end">
+                    <button
+                        onClick={handleDownload}
+                        disabled={!selectedTopic || isExporting}
+                        className="w-full bg-primary hover:bg-accent text-white font-bold py-2.5 px-4 rounded-lg transition-all disabled:bg-slate-400 flex items-center justify-center gap-2"
+                    >
+                        {isExporting ? "Processing..." : "Download JSON"}
+                    </button>
+                </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+                This will download all past questions tagged with the selected topic across all available papers.
+            </p>
+        </div>
+    );
+};
+
+
 interface AdminStats {
     users: number;
     papers: number;
@@ -32,25 +113,31 @@ const AdminDashboard: React.FC = () => {
         questions: 0,
         guides: 0,
     });
+    const [topicsData, setTopicsData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             try {
-                const data = await apiService<AdminStats>('/admin/stats');
-                setStats(data);
+                const [statsData, topicsResult] = await Promise.all([
+                    apiService<AdminStats>('/admin/stats'),
+                    apiService<any>('/admin/topics')
+                ]);
+                setStats(statsData);
+                setTopicsData(topicsResult);
                 setError('');
             } catch (error) {
-                console.error("Failed to fetch admin stats:", error);
+                console.error("Failed to fetch admin data:", error);
                 setError('Failed to load dashboard statistics.');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchStats();
+        fetchData();
     }, []);
+
 
     return (
         <div className="space-y-6">
@@ -92,12 +179,17 @@ const AdminDashboard: React.FC = () => {
 
             <Card>
                 <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Quick Actions</h2>
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
                     <Link to="/admin/users" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Users</Link>
                     <Link to="/admin/papers" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Papers</Link>
                     <Link to="/admin/guides" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Guides</Link>
                 </div>
+
+                <div className="border-t border-slate-100 dark:border-slate-700 pt-8">
+                    <QuestionExport topicsData={topicsData} />
+                </div>
             </Card>
+
 
         </div>
     );
