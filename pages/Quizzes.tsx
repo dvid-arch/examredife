@@ -32,44 +32,42 @@ const Quizzes: React.FC = () => {
         return allSubjectsFromPapers.filter(s => user.preferredSubjects!.includes(s));
     }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
-    const availableYears = useMemo(() => {
-        const years = new Set(allPapers.map(p => p.year));
-        // FIX: Explicitly cast years to numbers for sorting to resolve arithmetic operation type error.
-        return Array.from(years).sort((a, b) => Number(b) - Number(a));
-    }, [allPapers]);
+    // Standard Mode: per-subject year selection
+    type StandardSelection = { year: 'random' | number };
+    const [standardSelections, setStandardSelections] = useState<Record<string, StandardSelection>>({});
 
-    // State for Standard Mode
-    // 1. First select the year
-    const [standardSelectedYear, setStandardSelectedYear] = useState<number>(0);
+    const yearsBySubject = useMemo(() => {
+        const map = new Map<string, number[]>();
+        subjects.forEach(subject => {
+            const years = new Set(allPapers
+                .filter(p => p.subject === subject)
+                .map(p => p.year)
+                .filter(y => typeof y === 'number' && !isNaN(y)));
 
-    // 2. Filter subjects available for that year
-    const displayedSubjects = useMemo(() => {
-        if (!standardSelectedYear) return subjects;
-
-        return subjects.filter(subject => {
-            const hasPaperForYear = allPapers.some(p => p.subject === subject && p.year === standardSelectedYear);
-            return hasPaperForYear;
+            const sortedYears = Array.from(years).sort((a, b) => (b as number) - (a as number));
+            map.set(subject, sortedYears);
         });
-    }, [subjects, allPapers, standardSelectedYear]);
+        return map;
+    }, [allPapers, subjects]);
 
-    // 3. Selection state (reset if subject disappears?)
-    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['English']);
+    const getYearsForSubject = (subject: string) => {
+        return yearsBySubject.get(subject) || [];
+    };
 
+    // Auto-initialize standard selections when preferred subjects or papers load
     useEffect(() => {
-        if (availableYears.length > 0) {
-            setStandardSelectedYear(availableYears[0]);
-
-            // Apply preferred subjects if they exist and only default (English) is selected
-            if (user?.preferredSubjects && user.preferredSubjects.length > 0 && selectedSubjects.length === 1 && selectedSubjects[0] === 'English') {
-                setSelectedSubjects(user.preferredSubjects);
-            }
-        }
-    }, [availableYears, user?.preferredSubjects]);
-
-    // Reset selection if a selected subject is no longer available in the new year
-    useEffect(() => {
-        setSelectedSubjects(prev => prev.filter(s => displayedSubjects.includes(s)));
-    }, [standardSelectedYear, displayedSubjects]);
+        if (subjects.length === 0) return;
+        setStandardSelections(prev => {
+            const next = { ...prev };
+            subjects.forEach(subject => {
+                if (!next[subject]) {
+                    const subjectYears = yearsBySubject.get(subject) || [];
+                    next[subject] = { year: subjectYears.length > 0 ? subjectYears[0] : 'random' };
+                }
+            });
+            return next;
+        });
+    }, [subjects, yearsBySubject]);
 
 
     // State for Custom Mode
@@ -82,35 +80,6 @@ const Quizzes: React.FC = () => {
     const [customSelections, setCustomSelections] = useState<Record<string, CustomSelection>>({});
     // Removed global customQuestionCount
 
-    const yearsBySubject = useMemo(() => {
-        const map = new Map<string, number[]>();
-        subjects.forEach(subject => {
-            const years = new Set(allPapers
-                .filter(p => p.subject === subject)
-                .map(p => p.year)
-                .filter(y => typeof y === 'number' && !isNaN(y)));
-
-            const sortedYears = Array.from(years).sort((a, b) => b - a);
-            map.set(subject, sortedYears);
-        });
-        return map;
-    }, [allPapers, subjects]);
-
-    const getYearsForSubject = (subject: string) => {
-        return yearsBySubject.get(subject) || [];
-    };
-
-    const handleStandardSubjectChange = (subject: string) => {
-        if (subject === 'English') return;
-        setSelectedSubjects(prev => {
-            if (prev.includes(subject)) {
-                return prev.filter(s => s !== subject);
-            } else if (prev.length < 4) {
-                return [...prev, subject];
-            }
-            return prev;
-        });
-    };
 
     const handleCustomSubjectChange = (subject: string) => {
         setCustomSelections(prev => {
@@ -151,23 +120,27 @@ const Quizzes: React.FC = () => {
     const [examMode, setExamMode] = useState<'study' | 'practice' | 'mock'>('practice');
 
     const handleStartStandardExam = () => {
-        if (selectedSubjects.length !== 4) {
-            alert('Please select exactly 4 subjects (including the compulsory English subject).');
+        const selections = subjects.map(subject => ({
+            subject,
+            year: standardSelections[subject]?.year ?? 'random',
+            count: subject === 'English' ? 60 : 40,
+        }));
+
+        if (selections.length !== 4) {
+            alert('You need exactly 4 preferred subjects to start a Standard Exam. Please update your profile.');
             return;
         }
-        // Clear any previous session flags before starting new practice
+
         sessionStorage.removeItem('practiceExited');
         sessionStorage.removeItem('practiceCompleted');
         navigate('/take-examination', {
             state: {
-                subjects: selectedSubjects,
-                year: standardSelectedYear,
-                examTitle: `UTME Practice(${standardSelectedYear})`,
+                selections,
+                examTitle: `UTME Standard Practice`,
                 mode: examMode,
                 timestamp: Date.now(),
             },
         });
-        // Mark that practice was properly started
         sessionStorage.setItem('practiceStarted', 'true');
     };
 
@@ -285,49 +258,57 @@ const Quizzes: React.FC = () => {
                     {practiceMode === 'standard' && (
                         <Card>
                             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-50">Configuration</h2>
-                            <div className="mt-4 mb-6">
-                                <label htmlFor="year-select" className="block text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">1. Select Year</label>
-                                <select
-                                    id="year-select"
-                                    value={String(standardSelectedYear)}
-                                    onChange={(e) => setStandardSelectedYear(Number(e.target.value))}
-                                    className="w-full md:w-1/3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                                >
-                                    {availableYears.map(year => (
-                                        <option key={year} value={year}>{year}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 mb-6">
+                                Your 4 UTME subjects are shown below. Each can use a different year — great when not all subjects have the same paper year.
+                            </p>
 
-                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">2. Choose Your Subjects ({selectedSubjects.length}/4)</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">English is compulsory. Please select 3 other subjects available for {standardSelectedYear}.</p>
-                            <div className="flex overflow-x-auto pb-4 gap-4 scrollbar-hide snap-x">
-                                {displayedSubjects.map(subject => (
-                                    <label
-                                        key={subject}
-                                        className={`min-w-[200px] flex items-center space-x-3 p-3 border rounded-lg transition-colors snap-start
-                                            ${subject === 'English' ? 'cursor-not-allowed bg-primary-light dark:bg-primary/20 border-primary' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 has-[:checked]:bg-primary-light has-[:checked]:border-primary dark:has-[:checked]:bg-primary/20'}
-                                            ${selectedSubjects.length === 4 && !selectedSubjects.includes(subject) ? 'opacity-50 cursor-not-allowed' : ''}
-`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedSubjects.includes(subject)}
-                                            disabled={subject === 'English'}
-                                            onChange={() => handleStandardSubjectChange(subject)}
-                                            className="h-5 w-5 rounded border-gray-300 dark:border-slate-600 text-primary focus:ring-primary"
-                                        />
-                                        <span className="font-medium text-slate-700 dark:text-slate-200">{subject}</span>
-                                    </label>
-                                ))}
-                            </div>
+                            {subjects.length < 4 ? (
+                                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl text-orange-700 dark:text-orange-300 text-sm">
+                                    ⚠️ You haven't selected 4 preferred subjects yet.{' '}
+                                    <a href="/profile" className="font-bold underline">Update your profile</a> to continue.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {subjects.map(subject => {
+                                        const subjectYears = getYearsForSubject(subject);
+                                        const currentYear = standardSelections[subject]?.year ?? 'random';
+                                        const isCompulsory = subject === 'English';
+                                        return (
+                                            <div key={subject} className={`flex items-center justify-between gap-4 p-4 rounded-xl border-2 ${isCompulsory
+                                                ? 'border-primary/50 bg-primary/5 dark:bg-primary/10'
+                                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50'
+                                                }`}>
+                                                <div className="flex items-center gap-3">
+                                                    {isCompulsory && (
+                                                        <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">Compulsory</span>
+                                                    )}
+                                                    <span className="font-semibold text-slate-800 dark:text-white">{subject}</span>
+                                                </div>
+                                                <select
+                                                    value={String(currentYear)}
+                                                    onChange={(e) => setStandardSelections(prev => ({
+                                                        ...prev,
+                                                        [subject]: { year: e.target.value === 'random' ? 'random' : Number(e.target.value) }
+                                                    }))}
+                                                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                >
+                                                    {subjectYears.map(year => (
+                                                        <option key={year} value={year}>{year}</option>
+                                                    ))}
+                                                    <option value="random">Random Year</option>
+                                                </select>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             <ModeSelector />
 
                             <div className="flex justify-end mt-6">
                                 <button
                                     onClick={handleStartStandardExam}
-                                    disabled={selectedSubjects.length !== 4}
+                                    disabled={subjects.length !== 4}
                                     className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                 >
                                     Get Started
