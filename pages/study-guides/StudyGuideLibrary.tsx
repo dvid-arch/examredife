@@ -24,7 +24,11 @@ const StudyGuideLibrary: React.FC = () => {
     // For non-admins: show only their 4 preferred subjects (if set)
     const subjects = isAdmin || !user?.preferredSubjects?.length
         ? allSubjects
-        : allSubjects.filter(g => user.preferredSubjects!.some(p => p.toLowerCase() === g.subject.toLowerCase() || g.id.toLowerCase() === p.toLowerCase()));
+        : allSubjects.filter(g => {
+            const isPreferred = user.preferredSubjects!.some(p => p.toLowerCase() === g.subject.toLowerCase() || g.id.toLowerCase() === p.toLowerCase());
+            const isEnglish = ['english', 'english language', 'use of english'].includes(g.subject.toLowerCase());
+            return isPreferred || isEnglish;
+        });
 
     return (
         <div className="space-y-6">

@@ -47,10 +47,13 @@ const SubjectSprintGame: React.FC = () => {
     const isAdmin = user?.role === 'admin';
     const allSubjectsFromPapers = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
 
-    // For non-admins: show only their preferred subjects
+    // For non-admins: show only their preferred subjects + compulsory English
     const availableSubjects = useMemo(() => {
         if (isAdmin || !user?.preferredSubjects?.length) return allSubjectsFromPapers;
-        return allSubjectsFromPapers.filter(s => user.preferredSubjects!.includes(s));
+        return allSubjectsFromPapers.filter(s =>
+            user.preferredSubjects!.includes(s) ||
+            ['english', 'english language', 'use of english'].includes(s.toLowerCase())
+        );
     }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
     const isLoading = isLoadingPapers || isLoadingLeaderboard;
 

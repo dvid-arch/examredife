@@ -111,10 +111,13 @@ const UtmeChallenge: React.FC = () => {
     const isAdmin = user?.role === 'admin';
     const allSubjectsFromPapers = useMemo(() => [...new Set(allPapers.map(p => p.subject))].sort(), [allPapers]);
 
-    // For non-admins: restrict to their 4 preferred subjects
+    // For non-admins: restrict to their 4 preferred subjects + compulsory English
     const availableSubjects = useMemo(() => {
         if (isAdmin || !user?.preferredSubjects?.length) return allSubjectsFromPapers;
-        return allSubjectsFromPapers.filter(s => user.preferredSubjects!.includes(s));
+        return allSubjectsFromPapers.filter(s =>
+            user.preferredSubjects!.includes(s) ||
+            ['english', 'english language', 'use of english'].includes(s.toLowerCase())
+        );
     }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
     const saveScoreToLeaderboard = useCallback(async (currentScore: number, answers: any) => {
