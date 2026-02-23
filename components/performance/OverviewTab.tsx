@@ -10,7 +10,6 @@ interface OverviewTabProps {
     estimatedScore: number;
     streak: number;
     quizzesTaken: number;
-    bestSubject: string;
     weakSubjects: string[];
     scoreTrend: number;
     trendData: any[];

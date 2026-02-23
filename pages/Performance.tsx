@@ -308,7 +308,6 @@ const Performance: React.FC = () => {
                     estimatedScore={estimatedScore}
                     streak={streak}
                     quizzesTaken={quizzesTaken}
-                    bestSubject={bestSubject}
                     weakSubjects={weakSubjects}
                     scoreTrend={scoreTrend}
                     trendData={trendData}
