@@ -13,30 +13,34 @@ interface EngagementContextType {
 
 const EngagementContext = createContext<EngagementContextType | undefined>(undefined);
 
+const COOLDOWN_MS = 12 * 60 * 60 * 1000; // 12 hours
+
 export const EngagementProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const { engagement, updateEngagementState } = useUserProgress();
     const [activeNudge, setActiveNudge] = useState<EngagementNudge | null>(null);
 
-    // Helper to check 12-hour cooldown for recurring nudges
+    // Server-side cooldown check using nudgeDismissalTimes returned by backend
     const isNudgeOnCooldown = useCallback((nudgeId: string) => {
-        const lastDismissed = localStorage.getItem(`examRedi_nudge_dismissed_${nudgeId}`);
+        const dismissalTimes = (engagement as any)?.nudgeDismissalTimes;
+        if (!dismissalTimes) return false;
+        const lastDismissed = dismissalTimes[nudgeId];
         if (!lastDismissed) return false;
-        const cooldownMs = 12 * 60 * 60 * 1000; // 12 hours
-        return (Date.now() - parseInt(lastDismissed, 10)) < cooldownMs;
-    }, []);
+        return (Date.now() - new Date(lastDismissed).getTime()) < COOLDOWN_MS;
+    }, [engagement]);
 
     // Sync newly unlocked nudges from backend
     useEffect(() => {
         if (engagement && engagement.unlockedNudges && engagement.unlockedNudges.length > 0) {
-            // Find the first unlocked nudge that isn't dismissed and isn't currently active
             const nextNudgeId = engagement.unlockedNudges.find(id => {
                 const registryNudge = NUDGE_REGISTRY[id];
                 if (!registryNudge) return false;
 
                 if (registryNudge.isRecurring) {
+                    // Recurring: show unless currently within the 12-hour cooldown
                     return !isNudgeOnCooldown(id);
                 } else {
+                    // One-time: show unless permanently dismissed
                     return !engagement.dismissedNudges.includes(id);
                 }
             });
@@ -53,54 +57,43 @@ export const EngagementProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, [engagement, activeNudge, isNudgeOnCooldown]);
 
     const triggerNudge = useCallback((nudge: EngagementNudge | string) => {
-        if (typeof nudge === 'string') {
-            const registryNudge = NUDGE_REGISTRY[nudge];
-            if (registryNudge) {
-                const canShow = registryNudge.isRecurring
-                    ? !isNudgeOnCooldown(registryNudge.id)
-                    : (!engagement || !engagement.dismissedNudges.includes(registryNudge.id));
-                if (canShow) setActiveNudge(registryNudge);
-            }
-        } else {
-            const canShow = nudge.isRecurring
-                ? !isNudgeOnCooldown(nudge.id)
-                : (!engagement || !engagement.dismissedNudges.includes(nudge.id));
-            if (canShow) setActiveNudge(nudge);
-        }
+        const resolvedNudge = typeof nudge === 'string' ? NUDGE_REGISTRY[nudge] : nudge;
+        if (!resolvedNudge) return;
+
+        const canShow = resolvedNudge.isRecurring
+            ? !isNudgeOnCooldown(resolvedNudge.id)
+            : (!engagement || !engagement.dismissedNudges.includes(resolvedNudge.id));
+
+        if (canShow) setActiveNudge(resolvedNudge);
     }, [engagement, isNudgeOnCooldown]);
 
     const dismissNudge = useCallback(async () => {
-        if (activeNudge) {
-            const nudgeId = activeNudge.id;
-            const isRecurring = activeNudge.isRecurring;
+        if (!activeNudge) return;
+        const nudgeId = activeNudge.id;
+        const isRecurring = activeNudge.isRecurring;
 
-            if (isRecurring) {
-                // Record dismissal locally with a 12-hour cooldown
-                localStorage.setItem(`examRedi_nudge_dismissed_${nudgeId}`, Date.now().toString());
-                setActiveNudge(null);
-            } else {
-                // Permanent dismissal via backend
-                const currentDismissed = engagement?.dismissedNudges || [];
-                if (!currentDismissed.includes(nudgeId)) {
-                    const newEngagement = {
-                        ...engagement,
-                        dismissedNudges: [...currentDismissed, nudgeId]
-                    };
-                    updateEngagementState(newEngagement);
-                }
+        setActiveNudge(null);
 
-                setActiveNudge(null);
+        if (!isRecurring) {
+            // Optimistically update local state for permanent dismissals
+            const currentDismissed = engagement?.dismissedNudges || [];
+            if (!currentDismissed.includes(nudgeId)) {
+                updateEngagementState({
+                    ...engagement,
+                    dismissedNudges: [...currentDismissed, nudgeId]
+                });
+            }
+        }
 
-                if (isAuthenticated) {
-                    try {
-                        await apiService('/user/progress/engagement/dismiss', {
-                            method: 'POST',
-                            body: { nudgeId }
-                        });
-                    } catch (error) {
-                        console.error("Failed to sync nudge dismissal to backend:", error);
-                    }
-                }
+        // Always call backend: it handles recurring (timestamp) and permanent (dismissedNudges) dismissals
+        if (isAuthenticated) {
+            try {
+                await apiService('/user/progress/engagement/dismiss', {
+                    method: 'POST',
+                    body: { nudgeId }
+                });
+            } catch (error) {
+                console.error("Failed to sync nudge dismissal to backend:", error);
             }
         }
     }, [activeNudge, engagement, updateEngagementState, isAuthenticated]);
