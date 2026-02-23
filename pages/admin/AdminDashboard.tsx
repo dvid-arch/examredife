@@ -7,6 +7,7 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
     const [selectedSubject, setSelectedSubject] = useState("");
     const [selectedTopic, setSelectedTopic] = useState("");
     const [isExporting, setIsExporting] = useState(false);
+    const [previewData, setPreviewData] = useState<any[] | null>(null);
 
     const subjects = topicsData ? Object.keys(topicsData).map(key => ({
         key,
@@ -15,40 +16,45 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
 
     const topics = selectedSubject && topicsData ? topicsData[selectedSubject].topics : [];
 
-    const handleDownload = async () => {
+    const handleFetchPreview = async () => {
         if (!selectedTopic) return;
         setIsExporting(true);
         try {
             const data = await apiService<any[]>(`/admin/export-questions/${selectedTopic}`);
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${selectedTopic}_questions_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            setPreviewData(data);
         } catch (error) {
-            alert("Export failed. Please check console.");
+            alert("Fetch failed. Please check console.");
         } finally {
             setIsExporting(false);
         }
+    };
+
+    const handleDownload = () => {
+        if (!previewData) return;
+        const blob = new Blob([JSON.stringify(previewData, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${selectedTopic}_questions_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
     };
 
     return (
         <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-grain">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                Question Export by Topic
+                Question Export & Preview
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Subject</label>
                     <select
                         className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary transition-all"
                         value={selectedSubject}
-                        onChange={(e) => { setSelectedSubject(e.target.value); setSelectedTopic(""); }}
+                        onChange={(e) => { setSelectedSubject(e.target.value); setSelectedTopic(""); setPreviewData(null); }}
                     >
                         <option value="">Select Subject</option>
                         {subjects.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
@@ -60,7 +66,7 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
                         className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-primary transition-all disabled:opacity-50"
                         value={selectedTopic}
                         disabled={!selectedSubject}
-                        onChange={(e) => setSelectedTopic(e.target.value)}
+                        onChange={(e) => { setSelectedTopic(e.target.value); setPreviewData(null); }}
                     >
                         <option value="">Select Topic</option>
                         {topics.map((t: any) => <option key={t.slug} value={t.slug}>{t.label}</option>)}
@@ -68,20 +74,66 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
                 </div>
                 <div className="flex items-end">
                     <button
-                        onClick={handleDownload}
+                        onClick={handleFetchPreview}
                         disabled={!selectedTopic || isExporting}
-                        className="w-full bg-primary hover:bg-accent text-white font-bold py-2.5 px-4 rounded-lg transition-all disabled:bg-slate-400 flex items-center justify-center gap-2"
+                        className="w-full bg-slate-800 hover:bg-black text-white font-bold py-2.5 px-4 rounded-lg transition-all disabled:bg-slate-400 flex items-center justify-center gap-2"
                     >
-                        {isExporting ? "Processing..." : "Download JSON"}
+                        {isExporting ? "Fetching..." : "Preview Questions"}
                     </button>
                 </div>
             </div>
-            <p className="mt-3 text-xs text-slate-500">
-                This will download all past questions tagged with the selected topic across all available papers.
-            </p>
+
+            {previewData && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                        <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                            Found <span className="text-primary">{previewData.length}</span> questions for "{selectedTopic}"
+                        </span>
+                        <button
+                            onClick={handleDownload}
+                            className="bg-primary hover:bg-accent text-white font-bold py-1.5 px-6 rounded-md text-sm transition-all"
+                        >
+                            Download JSON
+                        </button>
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900 divide-y divide-slate-50 dark:divide-slate-800">
+                        {previewData.slice(0, 50).map((q, i) => (
+                            <div key={q.id || i} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">
+                                        {q.subject} • {q.year}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono">{q.id}</span>
+                                </div>
+                                <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 italic">
+                                    {q.question.replace(/<[^>]*>/g, '').slice(0, 150)}...
+                                </p>
+                            </div>
+                        ))}
+                        {previewData.length > 50 && (
+                            <div className="p-4 text-center text-xs text-slate-400 italic">
+                                ... and {previewData.length - 50} more questions
+                            </div>
+                        )}
+                        {previewData.length === 0 && (
+                            <div className="p-8 text-center text-slate-400 italic">
+                                No questions found for this topic yet.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {!previewData && (
+                <p className="text-xs text-slate-500">
+                    Select a topic and click "Preview" to see the questions before downloading the full dataset.
+                </p>
+            )}
         </div>
     );
 };
+
 
 
 interface AdminStats {
