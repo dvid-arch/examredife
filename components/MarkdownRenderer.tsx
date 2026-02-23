@@ -14,7 +14,6 @@ const MarkdownRenderer: React.FC<{
   renderOptions?: boolean; // Control whether to render options internally
   onCheckpointResult?: (isCorrect: boolean) => void;
 }> = ({ content, forceLightMode, inlineQuestions = [], renderOptions = true, onCheckpointResult }) => {
-  // Normalize LaTeX delimiters for remark-math ($ instead of \( or \[)
   const normalizeLatex = (text: string) => {
     if (!text) return '';
     let normalized = text
@@ -25,13 +24,12 @@ const MarkdownRenderer: React.FC<{
       .replace(/\\\]/g, '$$ ');   // Replace \] with "$$ "
 
     // Fix escaped braces within math mode which break grouping (e.g. x^\{3\} -> x^{3})
-    // This is a common data mangling issue
-    normalized = normalized.replace(/\$([^\$]+)\$/g, (match, p1) => {
-      return '$' + p1.replace(/\\\{/g, '{').replace(/\\\}/g, '}') + '$';
+    // This handles both $...$ and $$...$$
+    normalized = normalized.replace(/\$(\$)?([^\$]+)\$(\$)?/g, (match, d1, p1, d2, d3) => {
+      const content = p1.replace(/\\\{/g, '{').replace(/\\\}/g, '}');
+      const delim = d1 ? '$$' : '$';
+      return delim + content + delim;
     });
-
-    // Fallback for user-reported case: (\frac... without backslash
-    normalized = normalized.replace(/\((\\frac)/g, ' $$1');
 
     return normalized;
   };
