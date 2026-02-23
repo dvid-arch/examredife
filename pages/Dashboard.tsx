@@ -79,7 +79,7 @@ const WelcomeBanner = () => {
     const strokeDashoffset = 100 - scorePercentage;
 
     return (
-        <div data-tour-id="welcome-banner" className="bg-primary text-white p-8 rounded-2xl shadow-lg shadow-primary/20 relative overflow-hidden mb-8">
+        <div data-tour-id="welcome-banner" className="bg-primary text-white p-8 rounded-2xl shadow-lg shadow-primary/20 relative overflow-hidden mb-8 bg-grain">
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white opacity-10 rounded-full blur-2xl"></div>
 
