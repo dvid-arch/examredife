@@ -200,8 +200,8 @@ const GuideReader: React.FC = () => {
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[32px] shadow-xl sm:shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
-                    <div className="p-6 sm:p-10 lg:p-12 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/30 dark:to-slate-900">
-                        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-800 dark:text-white mb-3 sm:mb-4 leading-tight tracking-tight">
+                    <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/30 dark:to-slate-900">
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white mb-3 sm:mb-4 leading-tight tracking-tight">
                             {topic.title}
                         </h1>
                         <div className="flex flex-wrap items-center gap-4 text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
@@ -218,7 +218,7 @@ const GuideReader: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-5 sm:p-10 lg:p-12 prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary border-b border-slate-100 dark:border-slate-800 prose-img:rounded-3xl prose-img:shadow-lg prose-p:leading-relaxed sm:prose-p:leading-loose text-[15px] sm:text-base">
+                    <div className="p-4 sm:p-6 lg:p-8 prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary border-b border-slate-100 dark:border-slate-800 prose-img:rounded-3xl prose-img:shadow-lg prose-p:leading-relaxed sm:prose-p:leading-loose text-[15px] sm:text-base">
                         <MarkdownRenderer
                             content={contentToRender.trim()}
                             inlineQuestions={topic.inlineQuestions}
@@ -241,7 +241,7 @@ const GuideReader: React.FC = () => {
                     </div>
 
                     {topic.videos && topic.videos.length > 0 && (
-                        <div className="px-5 sm:px-10 lg:px-12 py-8 sm:py-12 space-y-6 sm:space-y-8 border-b border-slate-100 dark:border-slate-800">
+                        <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8 border-b border-slate-100 dark:border-slate-800">
                             <h2 className="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
@@ -285,7 +285,7 @@ const GuideReader: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="px-4 sm:px-10 lg:px-12 py-8 sm:py-12">
+                    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
                         <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[24px] p-5 sm:p-8 shadow-sm">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                                 <div className="text-center sm:text-left">
@@ -339,7 +339,7 @@ const GuideReader: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="m-4 sm:m-8 lg:m-12 p-5 sm:p-8 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center xl:flex-row xl:items-start justify-between gap-6">
+                    <div className="m-4 sm:m-6 lg:m-8 p-4 sm:p-6 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center xl:flex-row xl:items-start justify-between gap-6">
                         <div className="text-center xl:text-left">
                             <h3 className="text-lg font-black text-slate-800 dark:text-white">
                                 {nextTopic ? 'Next Topic' : 'You\'ve reached the end!'}
