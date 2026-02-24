@@ -3,41 +3,33 @@ import { STANDARD_SUBJECTS } from '../constants/subjects.ts';
 
 interface OnboardingSubjectModalProps {
     isOpen: boolean;
-    examType?: 'JAMB' | 'WAEC' | 'University';
     onSave: (subjects: string[]) => Promise<void>;
 }
 
-const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen, examType = 'JAMB', onSave }) => {
-    const isJamb = examType === 'JAMB';
-    const targetCount = isJamb ? 4 : 5; // Assuming WAEC/Uni want 5 subjects for now, or keep 4
-
-    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(isJamb ? ['English'] : []);
+const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen, onSave }) => {
+    const [selectedSubjects, setSelectedSubjects] = useState<string[]>(['English']);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Reset/Initialize subjects when modal opens or examType changes
+    // Keep English always selected when modal opens
     useEffect(() => {
         if (isOpen) {
-            if (isJamb) {
-                setSelectedSubjects(['English']);
-            } else {
-                setSelectedSubjects([]);
-            }
+            setSelectedSubjects(['English']);
         }
-    }, [isOpen, isJamb, examType]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
-    // Filter out English for the rendered list since it's hardcoded to be selected for JAMB
+    // Filter out English for the rendered list since it's hardcoded to be selected
     const availableSubjects = [...STANDARD_SUBJECTS].sort();
 
     const handleToggleSubject = (subject: string) => {
-        if (isJamb && subject === 'English') return; // Cannot toggle English for JAMB
+        if (subject === 'English') return; // Cannot toggle English
 
         setSelectedSubjects(prev => {
             if (prev.includes(subject)) {
                 return prev.filter(s => s !== subject);
             }
-            if (prev.length < targetCount) {
+            if (prev.length < 4) {
                 return [...prev, subject];
             }
             return prev;
@@ -45,7 +37,7 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
     };
 
     const handleConfirm = async () => {
-        if (selectedSubjects.length !== targetCount) return;
+        if (selectedSubjects.length !== 4) return;
         setIsSaving(true);
         try {
             await onSave(selectedSubjects);
@@ -54,7 +46,7 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
         }
     };
 
-    const isComplete = selectedSubjects.length === targetCount;
+    const isComplete = selectedSubjects.length === 4;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -70,10 +62,10 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
                         </svg>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-                        Choose Your {examType} Subjects
+                        Choose Your UTME Subjects
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400">
-                        Let's personalize your dashboard. Please select exactly {targetCount} subjects.
+                        Let's personalize your dashboard and estimated score. Please select exactly 4 target subjects.
                     </p>
                 </div>
 
@@ -82,17 +74,17 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
                     <div className="mb-6 flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-700">
                         <div>
                             <span className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider block mb-1">Selections</span>
-                            {isJamb && <span className="text-xs text-slate-500">English is compulsory for UTME.</span>}
+                            <span className="text-xs text-slate-500">English is compulsory for UTME.</span>
                         </div>
                         <div className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${isComplete ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                            {selectedSubjects.length} / {targetCount} Selected
+                            {selectedSubjects.length} / 4 Selected
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {availableSubjects.map(subject => {
                             const isSelected = selectedSubjects.includes(subject);
-                            const isCompulsory = isJamb && subject === 'English';
+                            const isEnglish = subject === 'English';
 
                             return (
                                 <button
@@ -103,8 +95,8 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
                                             ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-300 shadow-sm'
                                             : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 text-slate-600 dark:text-slate-300 hover:border-blue-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                                         } 
-                                        ${isCompulsory ? 'opacity-70 cursor-not-allowed !border-blue-500 !bg-blue-50/50' : ''}
-                                        ${!isSelected && selectedSubjects.length >= targetCount ? 'opacity-50 cursor-not-allowed hover:border-gray-200' : ''}
+                                        ${isEnglish ? 'opacity-70 cursor-not-allowed !border-blue-500 !bg-blue-50/50' : ''}
+                                        ${!isSelected && selectedSubjects.length >= 4 ? 'opacity-50 cursor-not-allowed hover:border-gray-200' : ''}
                                     `}
                                 >
                                     <div className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5
@@ -117,7 +109,7 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
                                         )}
                                     </div>
                                     <span className="leading-tight">{subject}</span>
-                                    {isCompulsory && (
+                                    {isEnglish && (
                                         <span className="absolute top-2 right-2 text-[9px] uppercase font-bold text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">Compulsory</span>
                                     )}
                                 </button>
@@ -149,7 +141,7 @@ const OnboardingSubjectModal: React.FC<OnboardingSubjectModalProps> = ({ isOpen,
                         ) : isComplete ? (
                             'Continue to Dashboard'
                         ) : (
-                            `Select ${targetCount - selectedSubjects.length} more subject${targetCount - selectedSubjects.length === 1 ? '' : 's'} to continue`
+                            `Select ${4 - selectedSubjects.length} more subject${4 - selectedSubjects.length === 1 ? '' : 's'} to continue`
                         )}
                     </button>
                     {!isComplete && (

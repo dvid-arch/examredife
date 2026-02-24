@@ -131,7 +131,6 @@ export interface User {
   lastMessageDate: string; // YYYY-MM-DD format
   role: 'user' | 'admin';
   preferredSubjects?: string[];
-  examType?: 'JAMB' | 'WAEC' | 'University';
   studyPlan?: {
     targetScore: number;
     weakSubjects: string[];

@@ -11,7 +11,6 @@ import { DashboardSkeleton } from '../components/Skeletons.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import { StudyGuide } from '../types.ts';
 import OnboardingSubjectModal from '../components/OnboardingSubjectModal.tsx';
-import OnboardingExamModal from '../components/OnboardingExamModal.tsx';
 
 // FIX: Changed icon components to accept props to allow className to be passed via React.cloneElement.
 const PracticeIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>;
@@ -25,6 +24,17 @@ const ChallengeIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http:/
 const CareerIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
 const DictionaryIcon = (props: React.ComponentProps<"svg">) => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
 
+const tiles = [
+    { title: 'Practice For UTME', description: 'Simulate exams & create custom quizzes.', colorClass: 'bg-blue-500', path: '/practice', icon: <PracticeIcon />, tourId: 'practice-tile' },
+    { title: 'Classroom', description: 'Access curated study guides and materials.', colorClass: 'bg-pink-500', path: '/study-guides', icon: <ClassroomIcon /> },
+    { title: 'Question Search', description: 'Find any past question in seconds.', colorClass: 'bg-green-500', path: '/question-search', icon: <SearchIcon /> },
+    { title: 'Performance Analysis', description: 'Track your scores and identify weak spots.', colorClass: 'bg-orange-500', path: '/performance', icon: <PerformanceIcon /> },
+    { title: 'Educational Games', description: 'Learn while having fun with interactive games.', colorClass: 'bg-yellow-500', path: '/games', icon: <GamesIcon /> },
+    { title: 'UTME Literature Books', description: 'Review key themes from official books.', colorClass: 'bg-purple-500', path: '/literature', icon: <BookIcon /> },
+    { title: 'UTME Challenge', description: 'Compete on the leaderboard in real-time.', colorClass: 'bg-red-500', path: '/challenge', icon: <ChallengeIcon /> },
+    { title: 'Career & Institutions', description: 'Explore university and course information.', colorClass: 'bg-indigo-500', path: '/career-institutions', icon: <CareerIcon /> },
+    { title: 'Dictionary', description: 'Look up words and definitions instantly.', colorClass: 'bg-teal-500', path: '/dictionary', icon: <DictionaryIcon /> },
+];
 
 // FIX: Changed icon prop type to be more specific, allowing React.cloneElement to pass a className without a type error.
 const DashboardTile: React.FC<{ title: string; description: string; colorClass: string; path: string; icon: React.ReactElement<{ className?: string }>; tourId?: string; }> = ({ title, description, colorClass, path, icon, tourId }) => (
@@ -34,13 +44,20 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
             <div className="absolute -right-6 -bottom-6 text-gray-50/50 dark:text-gray-700/30 group-hover:text-gray-100/50 dark:group-hover:text-gray-600/30 transition-colors">
                 {React.cloneElement(icon, { className: "h-32 w-32" })}
             </div>
-            <div className="relative z-10 hidden sm:block">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-primary/20`}>
-                    {React.cloneElement(icon, { className: "h-6 w-6" })}
+            <div className="relative z-10 hidden sm:block"> {/* Hide icon on very small screens if needed, but usually keep */}
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass.replace('bg-', 'text-').replace('500', '600')} bg-opacity-10 bg-${colorClass.split('-')[1]}-50`}>
+                    {/* We need to restructure how colorClass is used or pass a lighter bg class. 
+                        For now, let's just make the icon generic primary or parse the color.
+                        Simpler approach: Use the passed colorClass for the ICON COLOR, not background.
+                     */}
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-${colorClass.split('-')[1]}-200`}>
+                        {React.cloneElement(icon, { className: "h-6 w-6" })}
+                    </div>
                 </div>
             </div>
+            {/* Mobile layout adjustment: Icon and Text inline? No, keep stacked for cards. */}
             <div className="relative z-10 sm:hidden">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-primary/20`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md`}>
                     {React.cloneElement(icon, { className: "h-5 w-5" })}
                 </div>
             </div>
@@ -56,7 +73,6 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
 const WelcomeBanner = () => {
     const { isAuthenticated, user } = useAuth();
     const { streak, estimatedScore } = useUserProgress();
-    const examName = user?.examType || 'UTME';
 
     // Calculate percentage for progress circle (400 is max score)
     const scorePercentage = (estimatedScore / 400) * 100;
@@ -75,7 +91,7 @@ const WelcomeBanner = () => {
                         </h1>
                         <p className="text-blue-50 text-lg max-w-xl font-medium leading-relaxed">
                             {isAuthenticated
-                                ? `Your AI study assistant is ready. What would you like to learn for your ${examName} today?`
+                                ? "Your AI study assistant is ready. What would you like to learn today?"
                                 : "The smartest way to prepare for your exams. Join thousands of students acing their tests."
                             }
                         </p>
@@ -127,21 +143,6 @@ const Dashboard: React.FC = () => {
     const { recentActivity, studyProgress, calculateTopicStatus } = useUserProgress();
     const { guides, fetchGuides, isLoading: isGuidesLoading } = usePastQuestions();
     const [showTour, setShowTour] = useState(false);
-    const [isSavingExam, setIsSavingExam] = useState(false);
-
-    const examName = user?.examType || 'UTME';
-
-    const tiles = [
-        { title: `Practice For ${examName}`, description: 'Simulate exams & create custom quizzes.', colorClass: 'bg-blue-500', path: '/practice', icon: <PracticeIcon />, tourId: 'practice-tile' },
-        { title: 'Classroom', description: 'Access curated study guides and materials.', colorClass: 'bg-pink-500', path: '/study-guides', icon: <ClassroomIcon /> },
-        { title: 'Question Search', description: 'Find any past question in seconds.', colorClass: 'bg-green-500', path: '/question-search', icon: <SearchIcon /> },
-        { title: 'Performance Analysis', description: 'Track your scores and identify weak spots.', colorClass: 'bg-orange-500', path: '/performance', icon: <PerformanceIcon /> },
-        { title: 'Educational Games', description: 'Learn while having fun with interactive games.', colorClass: 'bg-yellow-500', path: '/games', icon: <GamesIcon /> },
-        { title: `${examName} Literature Books`, description: 'Review key themes from official books.', colorClass: 'bg-purple-500', path: '/literature', icon: <BookIcon /> },
-        { title: `${examName} Challenge`, description: 'Compete on the leaderboard in real-time.', colorClass: 'bg-red-500', path: '/challenge', icon: <ChallengeIcon /> },
-        { title: 'Career & Institutions', description: 'Explore university and course information.', colorClass: 'bg-indigo-500', path: '/career-institutions', icon: <CareerIcon /> },
-        { title: 'Dictionary', description: 'Look up words and definitions instantly.', colorClass: 'bg-teal-500', path: '/dictionary', icon: <DictionaryIcon /> },
-    ];
 
     // State for calculated weak areas
     const [weakAreas, setWeakAreas] = useState<{ id: string, title: string, subject: string, link: string }[]>([]);
@@ -270,19 +271,7 @@ const Dashboard: React.FC = () => {
 
     if (isAuthLoading) return <DashboardSkeleton />;
 
-    const needsExamSelection = isAuthenticated && !user?.examType;
-    const needsSubjectSelection = isAuthenticated && user?.examType && (!user?.preferredSubjects || user.preferredSubjects.length < (user.examType === 'JAMB' ? 4 : 5));
-
-    const handleSaveExam = async (examType: 'JAMB' | 'WAEC' | 'University') => {
-        if (updateUser) {
-            setIsSavingExam(true);
-            try {
-                await updateUser({ examType });
-            } finally {
-                setIsSavingExam(false);
-            }
-        }
-    };
+    const needsSubjectSelection = isAuthenticated && (!user?.preferredSubjects || user.preferredSubjects.length < 4);
 
     const handleSaveSubjects = async (subjects: string[]) => {
         if (updateUser) {
@@ -292,13 +281,8 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <OnboardingExamModal
-                isOpen={needsExamSelection}
-                onSave={handleSaveExam}
-            />
             <OnboardingSubjectModal
                 isOpen={needsSubjectSelection}
-                examType={user?.examType}
                 onSave={handleSaveSubjects}
             />
             {showTour && <OnboardingTour steps={tourSteps} onComplete={handleTourComplete} />}
