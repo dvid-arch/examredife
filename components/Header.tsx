@@ -10,8 +10,8 @@ import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import ThemeToggle from './ThemeToggle.tsx';
 import OfflineIndicator from './OfflineIndicator.tsx';
 
-const Logo = () => (
-    <div className="flex items-center px-1 select-none">
+const Logo = ({ examType }: { examType?: string }) => (
+    <div className="flex flex-col items-center px-1 select-none leading-none">
         <div className="font-black text-2xl tracking-tight flex items-center" style={{ fontFamily: "'Nunito', 'Segoe UI', sans-serif" }}>
             <span className="text-slate-700 dark:text-slate-100">Exam</span>
             <span className="text-blue-500">R</span>
@@ -19,6 +19,11 @@ const Logo = () => (
             <span className="text-yellow-400">d</span>
             <span className="text-green-500">i</span>
         </div>
+        {examType && (
+            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] -mt-0.5 ml-auto">
+                {examType}
+            </div>
+        )}
     </div>
 );
 
@@ -47,8 +52,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         // Special cases that are not in NAV_ITEMS or need an override
         if (path.startsWith('/games/memory-match')) return 'Memory Match';
         if (path.startsWith('/games/subject-sprint')) return 'Subject Sprint';
-        if (path === '/challenge') return 'UTME Challenge';
-        if (path === '/literature') return 'UTME Literature Books';
+        const examName = user?.examType || 'UTME';
+        if (path === '/challenge') return `${examName} Challenge`;
+        if (path === '/literature') return `${examName} Literature Books`;
         if (path === '/dictionary') return 'Dictionary';
 
         // Find matching nav item, prioritizing more specific paths
@@ -82,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 "Unlimited AI Tutor Access",
                 "Generate Custom Study Guides",
                 "Save All Results & Track Performance",
-                "Compete on the UTME Challenge Leaderboard"
+                `Compete on the ${user?.examType || 'UTME'} Challenge Leaderboard`
             ]
         });
     };
@@ -121,7 +127,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                             <MenuIcon />
                         </button>
                         <Link to="/dashboard" className="md:hidden flex-shrink-0 hover:opacity-80 transition-opacity">
-                            <Logo />
+                            <Logo examType={user?.examType} />
                         </Link>
                         {/* Display Page Title on Desktop */}
                         <h1 className="hidden md:block text-lg lg:text-xl font-bold text-slate-800 dark:text-white whitespace-nowrap">

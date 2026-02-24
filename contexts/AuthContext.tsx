@@ -13,6 +13,7 @@ export interface UserProfile extends User {
     email: string;
     role: 'user' | 'admin';
     isVerified?: boolean;
+    examType?: 'JAMB' | 'WAEC' | 'University';
 }
 
 interface AuthContextType {

@@ -18,8 +18,8 @@ const AdminIcon = () => (
     </svg>
 );
 
-const Logo = () => (
-    <div className="flex items-center px-4 mb-6 select-none">
+const Logo = ({ examType }: { examType?: string }) => (
+    <div className="flex flex-col items-center px-4 mb-6 select-none leading-none">
         <div className="font-black text-2xl md:text-3xl tracking-tight flex items-center" style={{ fontFamily: "'Nunito', 'Segoe UI', sans-serif" }}>
             <span className="text-slate-700 dark:text-slate-100">Exam</span>
             <span className="text-blue-500">R</span>
@@ -27,6 +27,11 @@ const Logo = () => (
             <span className="text-yellow-400">d</span>
             <span className="text-green-500">i</span>
         </div>
+        {examType && (
+            <div className="text-[10px] md:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] -mt-0.5 ml-auto md:ml-24">
+                {examType}
+            </div>
+        )}
     </div>
 );
 
@@ -66,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate }) => {
                 "Unlimited AI Tutor Access",
                 "Generate Custom Study Guides",
                 "Save All Results & Track Performance",
-                "Compete on the UTME Challenge Leaderboard"
+                `Compete on the ${user?.examType || 'UTME'} Challenge Leaderboard`
             ]
         });
     };
@@ -86,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate }) => {
             md:relative md:translate-x-0 md:z-auto`}
             >
                 <Link to="/dashboard" onClick={onClose} className="hover:opacity-80 transition-opacity">
-                    <Logo />
+                    <Logo examType={user?.examType} />
                 </Link>
                 <nav className="flex-1 space-y-2 overflow-y-auto">
                     {NAV_ITEMS.map((item) => (
