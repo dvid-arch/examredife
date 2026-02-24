@@ -25,9 +25,9 @@ const GuideBuilder: React.FC = () => {
                 let fetchedGuide = null;
                 try {
                     const allGuides = await apiService<StudyGuide[]>('/data/guides');
-                    fetchedGuide = allGuides.find(g => g.id === id);
+                    fetchedGuide = allGuides.find(g => g.id.toLowerCase() === id.toLowerCase());
                 } catch (e) {
-                    fetchedGuide = allStudyGuides.find(g => g.id === id);
+                    fetchedGuide = allStudyGuides.find(g => g.id.toLowerCase() === id.toLowerCase());
                 }
 
                 if (fetchedGuide) {
