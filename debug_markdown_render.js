@@ -5,9 +5,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
-const content = "3 \\(\\frac{2}{3}\\)";
+const content = "3 \\(\\frac{2}{3}\\)\n\n```solution\nStep 1: Multiply B by 2\n2B = 2 × $\\begin{pmatrix}1 & 4 & -2\\\\-3 & 3 & -1\\end{pmatrix}$\n```";
 
 const normalizeLatex = (text) => {
+    if (!text) return '';
     return text
         .replace(/\\\(/g, '$')
         .replace(/\\\)/g, '$')
