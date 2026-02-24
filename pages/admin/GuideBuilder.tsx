@@ -58,7 +58,8 @@ const GuideBuilder: React.FC = () => {
             alert('Guide saved successfully!');
         } catch (err) {
             console.error(err);
-            alert('Failed to save guide. It may only exist locally.');
+            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            alert(`Failed to save guide: ${errorMsg}`);
         } finally {
             setIsSaving(false);
         }
