@@ -1,3 +1,14 @@
+/* CSS Variables for Dynamic Theming */
+:root {
+  --primary: #1a73e8;
+  --primary-light: #e8f0fe;
+  --primary-dark: #1557b0;
+  --secondary: #ea4335;
+  --secondary-light: #fce8e6;
+  --accent: #34a853;
+  --accent-light: #e6f4ea;
+}
+
 /* Additional custom styles for ExamRedi */
 /* Tailwind CSS is loaded via CDN in index.html */
 

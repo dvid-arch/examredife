@@ -35,12 +35,12 @@ const DashboardTile: React.FC<{ title: string; description: string; colorClass: 
                 {React.cloneElement(icon, { className: "h-32 w-32" })}
             </div>
             <div className="relative z-10 hidden sm:block">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-${colorClass.split('-')[1]}-200`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-primary/20`}>
                     {React.cloneElement(icon, { className: "h-6 w-6" })}
                 </div>
             </div>
             <div className="relative z-10 sm:hidden">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorClass} text-white shadow-md shadow-primary/20`}>
                     {React.cloneElement(icon, { className: "h-5 w-5" })}
                 </div>
             </div>

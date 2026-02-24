@@ -121,6 +121,54 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
+    // --- Theme Injection ---
+    useEffect(() => {
+        const root = document.documentElement;
+        const examType = user?.examType || 'JAMB';
+
+        const themes = {
+            JAMB: {
+                '--primary': '#1a73e8',
+                '--primary-light': '#e8f0fe',
+                '--primary-dark': '#1557b0',
+                '--secondary': '#ea4335',
+                '--secondary-light': '#fce8e6',
+                '--accent': '#34a853',
+                '--accent-light': '#e6f4ea',
+            },
+            WAEC: {
+                '--primary': '#991b1b',
+                '--primary-light': '#fef2f2',
+                '--primary-dark': '#7f1d1d',
+                '--secondary': '#dc2626',
+                '--secondary-light': '#fee2e2',
+                '--accent': '#2563eb',
+                '--accent-light': '#eff6ff',
+            },
+            University: {
+                '--primary': '#0d9488',
+                '--primary-light': '#ecfeff',
+                '--primary-dark': '#0f766e',
+                '--secondary': '#0891b2',
+                '--secondary-light': '#ecfeff',
+                '--accent': '#7c3aed',
+                '--accent-light': '#f5f3ff',
+            }
+        };
+
+        const theme = themes[examType as keyof typeof themes] || themes.JAMB;
+
+        Object.entries(theme).forEach(([key, value]) => {
+            root.style.setProperty(key, value);
+        });
+
+        // Update meta theme-color
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', theme['--primary']);
+        }
+    }, [user?.examType]);
+
     // --- Universal Auth Signaling ---
     // Listen for ?auth=login or ?auth=register in the URL to auto-open the modal
     // This is useful after redirects (e.g., from Reset Password or Email Verification)
