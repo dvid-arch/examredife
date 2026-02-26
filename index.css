@@ -1,5 +1,10 @@
 /* Additional custom styles for ExamRedi */
 /* Tailwind CSS is loaded via CDN in index.html */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
 
 @keyframes bounce-slow {
 
