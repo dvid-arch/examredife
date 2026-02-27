@@ -425,6 +425,7 @@ const PaperEditor: React.FC = () => {
 
     const [paper, setPaper] = useState<PastPaper | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
     const [showBulkUpload, setShowBulkUpload] = useState(false);
     const [allTopicsMap, setAllTopicsMap] = useState<Record<string, { label: string; topics: { slug: string; label: string }[] }>>({});
     const [apiError, setApiError] = useState<string | null>(null);
@@ -604,7 +605,7 @@ const PaperEditor: React.FC = () => {
 
                     <div className="space-y-6">
                         {paper.questions.length > 0 ? paper.questions.map((q, i) => {
-                            const [isEditing, setIsEditing] = useState(false);
+                            const isEditing = editingQuestionId === q.id;
 
                             return (
                                 <div key={q.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
@@ -618,9 +619,9 @@ const PaperEditor: React.FC = () => {
                                                     questions: paper.questions.map(pq => pq.id === updatedQuestion.id ? updatedQuestion : pq)
                                                 };
                                                 setPaper(updatedPaper);
-                                                setIsEditing(false);
+                                                setEditingQuestionId(null);
                                             }}
-                                            onCancel={() => setIsEditing(false)}
+                                            onCancel={() => setEditingQuestionId(null)}
                                         />
                                     ) : (
                                         <>
@@ -637,7 +638,7 @@ const PaperEditor: React.FC = () => {
                                                             correctAnswer={q.answer}
                                                         />
                                                         <button
-                                                            onClick={() => setIsEditing(true)}
+                                                            onClick={() => setEditingQuestionId(q.id)}
                                                             className="ml-4 flex items-center gap-1.5 text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 hover:border-primary/50 transition-all shadow-sm bg-white dark:bg-slate-800"
                                                         >
                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
