@@ -51,15 +51,15 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
 
       {/* Render Options if available and requested */}
       {renderOptions && question.options && Object.keys(question.options).length > 0 && (
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           {Object.entries(question.options).map(([key, option]) => {
             const isCorrect = key === correctAnswer;
             return (
-              <div key={key} className={`flex items-start gap-3 p-3 rounded-lg border transition-all ${isCorrect
+              <div key={key} className={`flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-lg border transition-all ${isCorrect
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 ring-1 ring-green-100 dark:ring-green-900/30'
                 : forceLightMode ? 'bg-slate-50 border-slate-200' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                 }`}>
-                <span className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${isCorrect
+                <span className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-[10px] sm:text-xs font-bold ${isCorrect
                   ? 'bg-green-500 text-white'
                   : forceLightMode ? 'bg-slate-200 text-slate-600' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                   }`}>

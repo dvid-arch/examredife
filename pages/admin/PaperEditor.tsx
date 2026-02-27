@@ -595,20 +595,20 @@ const PaperEditor: React.FC = () => {
                     </Card>
                 )}
 
-                <Card className="shadow-md">
-                    <div className="flex items-center justify-between mb-6 pb-4 border-b dark:border-slate-700">
+                <Card className="shadow-md overflow-hidden !p-0 sm:!p-6">
+                    <div className="flex items-center justify-between mb-2 sm:mb-6 pb-4 border-b dark:border-slate-700 px-4 pt-4 sm:px-0 sm:pt-0">
                         <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Existing Questions</h3>
                         <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-black px-3 py-1 rounded-full text-sm">
                             {paper.questions.length} Total
                         </span>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-0 sm:space-y-6 flex flex-col divide-y sm:divide-y-0 dark:divide-slate-700/50 divide-slate-200">
                         {paper.questions.length > 0 ? paper.questions.map((q, i) => {
                             const isEditing = editingQuestionId === q.id;
 
                             return (
-                                <div key={q.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                <div key={q.id} className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-800/50 sm:border border-slate-200 dark:border-slate-700 sm:rounded-xl shadow-none sm:shadow-sm">
                                     {isEditing ? (
                                         <QuestionEditForm
                                             question={q}
@@ -625,21 +625,21 @@ const PaperEditor: React.FC = () => {
                                         />
                                     ) : (
                                         <>
-                                            <div className="flex items-start gap-4">
-                                                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full font-bold text-slate-600 dark:text-slate-300">
+                                            <div className="flex items-start gap-3 sm:gap-4 relative">
+                                                <div className="flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 text-xs sm:text-base flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full font-bold text-slate-600 dark:text-slate-300 mt-1 sm:mt-0">
                                                     {i + 1}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex justify-between items-start">
                                                         <QuestionRenderer
                                                             question={q}
-                                                            className="font-semibold text-slate-800 dark:text-slate-200 text-lg mb-4 flex-1"
+                                                            className="font-semibold text-slate-800 dark:text-slate-200 text-base sm:text-lg mb-4 flex-1"
                                                             imageClassName="max-w-md rounded-lg mt-2 mb-4 border border-slate-200 dark:border-slate-600 shadow-sm"
                                                             correctAnswer={q.answer}
                                                         />
                                                         <button
                                                             onClick={() => setEditingQuestionId(q.id)}
-                                                            className="ml-4 flex items-center gap-1.5 text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 hover:border-primary/50 transition-all shadow-sm bg-white dark:bg-slate-800"
+                                                            className="ml-3 sm:ml-4 flex items-center gap-1.5 text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/10 px-2 sm:px-3 py-1.5 rounded-lg border border-primary/20 hover:border-primary/50 transition-all shadow-sm bg-white dark:bg-slate-800"
                                                         >
                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                                                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.171V17h2.829l8.38-8.379-2.83-2.828z" />
