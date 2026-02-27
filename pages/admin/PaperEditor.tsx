@@ -180,6 +180,129 @@ const BulkUploadWizard: React.FC<BulkUploadWizardProps> = ({ paper, onComplete, 
     );
 };
 
+// --- QuestionEditForm Component ---
+interface QuestionEditFormProps {
+    question: PastQuestion;
+    paperId: string;
+    onSave: (updatedQuestion: PastQuestion) => void;
+    onCancel: () => void;
+}
+const QuestionEditForm: React.FC<QuestionEditFormProps> = ({ question, paperId, onSave, onCancel }) => {
+    const [qText, setQText] = useState(question.question);
+    const [qOptions, setQOptions] = useState<{ [key: string]: { text: string } }>(question.options || {});
+    const [qAnswer, setQAnswer] = useState(question.answer);
+    const [qExplanation, setQExplanation] = useState(question.explanation || '');
+    const [qImage, setQImage] = useState(question.questionDiagram || '');
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleOptionChange = (key: string, value: string) => {
+        setQOptions(prev => ({
+            ...prev,
+            [key]: { ...prev[key], text: value }
+        }));
+    };
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const updated = await apiService<PastQuestion>(`/admin/papers/${paperId}/questions/${question.id}`, {
+                method: 'PUT',
+                body: {
+                    question: qText,
+                    options: qOptions,
+                    answer: qAnswer,
+                    explanation: qExplanation,
+                    image: qImage,
+                }
+            });
+            onSave(updated);
+        } catch (err: any) {
+            alert(`Failed to update question: ${err.message || 'Unknown error'}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    return (
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 mb-4">
+            <h4 className="font-bold text-lg text-slate-800 dark:text-slate-100">Edit Question ({question.id})</h4>
+
+            <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Question Text (Markdown)</label>
+                <textarea
+                    value={qText}
+                    onChange={e => setQText(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary min-h-[100px]"
+                />
+            </div>
+
+            <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Options</label>
+                <div className="space-y-3">
+                    {Object.entries(qOptions).map(([key, opt]) => (
+                        <div key={key} className="flex items-center gap-3">
+                            <span className="font-bold w-6 text-center text-slate-600 dark:text-slate-400">{key}:</span>
+                            <input
+                                type="text"
+                                value={opt.text}
+                                onChange={e => handleOptionChange(key, e.target.value)}
+                                className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary"
+                            />
+                            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                                <input
+                                    type="radio"
+                                    name={`correct-${question.id}`}
+                                    checked={qAnswer === key}
+                                    onChange={() => setQAnswer(key)}
+                                    className="text-primary focus:ring-primary"
+                                />
+                                Correct
+                            </label>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Explanation (Markdown)</label>
+                <textarea
+                    value={qExplanation}
+                    onChange={e => setQExplanation(e.target.value)}
+                    placeholder="Provide an explanation for the correct answer..."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
+                />
+            </div>
+
+            <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Image URL (Optional)</label>
+                <input
+                    type="text"
+                    value={qImage}
+                    onChange={e => setQImage(e.target.value)}
+                    placeholder="Enter image URL or Base64 string..."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary"
+                />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t dark:border-slate-700">
+                <button
+                    onClick={onCancel}
+                    className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="bg-primary hover:bg-accent text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:bg-slate-400"
+                >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 // --- QuestionTaggingRow Component ---
 interface QuestionTaggingRowProps {
     question: PastQuestion;
@@ -480,40 +603,73 @@ const PaperEditor: React.FC = () => {
                     </div>
 
                     <div className="space-y-6">
-                        {paper.questions.length > 0 ? paper.questions.map((q, i) => (
-                            <div key={q.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
-                                <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full font-bold text-slate-600 dark:text-slate-300">
-                                        {i + 1}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <QuestionRenderer
-                                            question={q}
-                                            className="font-semibold text-slate-800 dark:text-slate-200 text-lg mb-4"
-                                            imageClassName="max-w-md rounded-lg mt-2 mb-4 border border-slate-200 dark:border-slate-600 shadow-sm"
-                                            correctAnswer={q.answer}
-                                        />
+                        {paper.questions.length > 0 ? paper.questions.map((q, i) => {
+                            const [isEditing, setIsEditing] = useState(false);
 
-                                        <div className="p-3 mt-6 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-600 shadow-sm">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Topic Tagging</span>
-                                                {paperTopics.length === 0 && (
-                                                    <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-md font-bold">
-                                                        No topics available for mapping
-                                                    </span>
-                                                )}
+                            return (
+                                <div key={q.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
+                                    {isEditing ? (
+                                        <QuestionEditForm
+                                            question={q}
+                                            paperId={paper.id || (paper as any)._id}
+                                            onSave={(updatedQuestion) => {
+                                                const updatedPaper = {
+                                                    ...paper,
+                                                    questions: paper.questions.map(pq => pq.id === updatedQuestion.id ? updatedQuestion : pq)
+                                                };
+                                                setPaper(updatedPaper);
+                                                setIsEditing(false);
+                                            }}
+                                            onCancel={() => setIsEditing(false)}
+                                        />
+                                    ) : (
+                                        <>
+                                            <div className="flex items-start gap-4">
+                                                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-full font-bold text-slate-600 dark:text-slate-300">
+                                                    {i + 1}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start">
+                                                        <QuestionRenderer
+                                                            question={q}
+                                                            className="font-semibold text-slate-800 dark:text-slate-200 text-lg mb-4 flex-1"
+                                                            imageClassName="max-w-md rounded-lg mt-2 mb-4 border border-slate-200 dark:border-slate-600 shadow-sm"
+                                                            correctAnswer={q.answer}
+                                                        />
+                                                        <button
+                                                            onClick={() => setIsEditing(true)}
+                                                            className="ml-4 flex items-center gap-1.5 text-xs font-bold text-primary dark:text-primary-light hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 hover:border-primary/50 transition-all shadow-sm bg-white dark:bg-slate-800"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.171V17h2.829l8.38-8.379-2.83-2.828z" />
+                                                            </svg>
+                                                            Edit
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="p-3 mt-6 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-600 shadow-sm">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">Topic Tagging</span>
+                                                            {paperTopics.length === 0 && (
+                                                                <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 px-2 py-1 rounded-md font-bold">
+                                                                    No topics available for mapping
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <QuestionTaggingRow
+                                                            question={q}
+                                                            subject={paper.subject}
+                                                            availableTopics={paperTopics}
+                                                            onSave={(topics) => handleTagUpdate(q.id, topics)}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <QuestionTaggingRow
-                                                question={q}
-                                                subject={paper.subject}
-                                                availableTopics={paperTopics}
-                                                onSave={(topics) => handleTagUpdate(q.id, topics)}
-                                            />
-                                        </div>
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
-                            </div>
-                        )) : (
+                            )
+                        }) : (
                             <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
                                 <p className="text-slate-500 dark:text-slate-400 font-medium">No questions have been added to this paper yet.</p>
                                 <button onClick={() => setShowBulkUpload(true)} className="mt-4 text-primary font-bold hover:underline">
