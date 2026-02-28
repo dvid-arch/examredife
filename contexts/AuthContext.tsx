@@ -1,10 +1,10 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { useToasts } from './ToastContext.tsx';
 import { User } from '../types.ts';
-import apiService, { resetSessionFlag } from '../services/apiService.ts';
+import apiService from '../services/apiService.ts';
 
 // The User type from backend might be slightly different.
 // The backend returns this from /profile
@@ -30,7 +30,6 @@ interface AuthContextType {
     loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>;
     isLoading: boolean;
     justRegistered: boolean;
-    fetchUserProfile: () => Promise<UserProfile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,8 +43,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [justRegistered, setJustRegistered] = useState(false);
-    const isHandlingExpiryRef = useRef(false);
-    const isAuthenticatedRef = useRef(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { success, error: toastError } = useToasts();
@@ -55,7 +52,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const profile = await apiService<UserProfile>('/auth/profile');
             setUser(profile);
             setIsAuthenticated(true);
-            isAuthenticatedRef.current = true;
             localStorage.setItem('examRediUser', JSON.stringify(profile));
             return profile;
         } catch (error) {
@@ -173,13 +169,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Listen for session expiry event from apiService
     useEffect(() => {
         const handleSessionExpired = () => {
-            // If already handling or not authenticated, ignore to prevent loops/spam
-            if (isHandlingExpiryRef.current) return;
-
-            console.warn('Session expired event received. Clearing state.');
-            isHandlingExpiryRef.current = true;
-
-            const wasAuthenticated = isAuthenticatedRef.current || !!localStorage.getItem('authToken');
+            console.warn('Session expired event received. Clearing state and prompting login.');
 
             // Clear auth data
             localStorage.removeItem('examRediUser');
@@ -188,23 +178,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             setUser(null);
             setIsAuthenticated(false);
-            isAuthenticatedRef.current = false;
 
-            // Only show toast and prompt login if the user was actually logged in
-            if (wasAuthenticated) {
-                toastError("Your session has expired. Please log in again.");
+            // Show toast
+            toastError("Your session has expired. Please log in again.");
 
-                // Open login modal
-                setTimeout(() => {
-                    if (!isAuthModalOpen) {
-                        window.history.pushState({ modal: 'auth' }, '');
-                        setIsAuthModalOpen(true);
-                    }
-                }, 100);
-            } else {
-                // If they weren't authenticated, just reset the flag quickly
-                isHandlingExpiryRef.current = false;
-            }
+            // Open login modal
+            setTimeout(() => {
+                if (!isAuthModalOpen) {
+                    window.history.pushState({ modal: 'auth' }, '');
+                    setIsAuthModalOpen(true);
+                }
+            }, 100);
         };
 
         window.addEventListener('auth:session-expired', handleSessionExpired);
@@ -225,10 +209,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('refreshToken');
             throw new Error('Invalid credentials');
         }
-
-        // Successfully logged in - reset the expiry handling flags
-        isHandlingExpiryRef.current = false;
-        resetSessionFlag();
 
         setIsAuthModalOpen(false);
 
@@ -341,7 +321,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
             setIsAuthenticated(false);
-            isAuthenticatedRef.current = false;
             setUser(null);
             navigate('/dashboard', { replace: true });
         }
@@ -407,7 +386,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: remaining > 0, remaining };
     };
 
-    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, loginWithTokens, isLoading, justRegistered, fetchUserProfile };
+    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, loginWithTokens, isLoading, justRegistered };
 
     return (
         <AuthContext.Provider value={value}>

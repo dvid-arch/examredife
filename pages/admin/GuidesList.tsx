@@ -4,7 +4,6 @@ import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
 import { StudyGuide } from '../../types.ts';
 import { allStudyGuides } from '../../data/studyGuides.ts';
-import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
 
 // --- Guide Modal ---
 interface GuideModalProps {
@@ -51,7 +50,6 @@ const GuideModal: React.FC<GuideModalProps> = ({ guide, onSave, onClose }) => {
 
 // --- GuidesList component ---
 const GuidesList: React.FC = () => {
-    const { guides: allGuides, isLoading: isCtxLoading, fetchGuides, invalidateCache } = usePastQuestions();
     const navigate = useNavigate();
     const [guides, setGuides] = useState<StudyGuide[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -59,19 +57,20 @@ const GuidesList: React.FC = () => {
     const [editingGuide, setEditingGuide] = useState<StudyGuide | null>(null);
 
     useEffect(() => {
+        const fetchGuides = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiService<StudyGuide[]>('/data/guides');
+                setGuides(data.length > 0 ? data : allStudyGuides);
+            } catch (error) {
+                console.error("Failed to fetch guides", error);
+                setGuides(allStudyGuides);
+            } finally {
+                setIsLoading(false);
+            }
+        };
         fetchGuides();
-    }, [fetchGuides]);
-
-    useEffect(() => {
-        setGuides(allGuides.length > 0 ? allGuides : allStudyGuides);
-        setIsLoading(isCtxLoading);
-    }, [allGuides, isCtxLoading]);
-
-    const handleRefresh = async () => {
-        setIsLoading(true);
-        await fetchGuides(true);
-        setIsLoading(false);
-    };
+    }, []);
 
     const openGuideModal = (guide: StudyGuide | null) => {
         setEditingGuide(guide);
@@ -92,14 +91,12 @@ const GuidesList: React.FC = () => {
                     body: guideToSave
                 });
                 setGuides(guides.map(g => g.id === guideToSave.id ? savedGuide : g));
-                invalidateCache('guides');
             } else {
                 savedGuide = await apiService<StudyGuide>('/admin/guides', {
                     method: 'POST',
                     body: guideToSave
                 });
                 setGuides([savedGuide, ...guides]);
-                invalidateCache('guides');
             }
             closeGuideModal();
         } catch (err) {
@@ -111,8 +108,7 @@ const GuidesList: React.FC = () => {
         if (window.confirm('Are you sure you want to delete this guide?')) {
             try {
                 await apiService(`/admin/guides/${guideId}`, { method: 'DELETE' });
-                invalidateCache('guides');
-                await fetchGuides(true);
+                setGuides(prev => prev.filter(g => g.id !== guideId));
             } catch (err) {
                 alert(err instanceof Error ? err.message : 'Failed to delete guide');
             }
@@ -126,22 +122,13 @@ const GuidesList: React.FC = () => {
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Study Guides</h1>
                     <p className="text-slate-500 dark:text-slate-400 mt-1">Manage all available study guides and topics.</p>
                 </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <button
-                        onClick={handleRefresh}
-                        disabled={isLoading}
-                        className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-2 px-4 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50"
-                    >
-                        {isLoading ? '...' : 'Refresh'}
-                    </button>
-                    <button
-                        onClick={() => openGuideModal(null)}
-                        className="flex items-center gap-2 bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors shadow-md flex-1 md:flex-none justify-center"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
-                        Create New Guide
-                    </button>
-                </div>
+                <button
+                    onClick={() => openGuideModal(null)}
+                    className="flex items-center gap-2 bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors shadow-md w-full md:w-auto justify-center"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
+                    Create New Guide
+                </button>
             </div>
 
             <Card className="shadow-sm border-t-4 border-t-primary">

@@ -30,8 +30,6 @@ interface UserProgressContextType {
     updateConfidence: (topicId: string, confidence: ConfidenceLevel, subject?: string) => Promise<void>;
     calculateTopicStatus: (topicId: string) => ConfidenceLevel | 'stale' | null;
     estimatedScore: number;
-    isLoading: boolean;
-    hasSynced: boolean;
 }
 
 const UserProgressContext = createContext<UserProgressContextType | undefined>(undefined);
@@ -44,8 +42,6 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[] }>({ dismissedNudges: [], unlockedNudges: [] });
     const [studyProgress, setStudyProgress] = useState<{ [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } }>({});
     const [estimatedScore, setEstimatedScore] = useState(150); // Base score
-    const [isLoading, setIsLoading] = useState(false);
-    const [hasSynced, setHasSynced] = useState(false);
 
     // Calculate Estimated Score based on progress and activity
     const calculateScore = useCallback((
@@ -189,7 +185,6 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     }, [calculateScore]);
 
     const syncProgress = useCallback(async () => {
-        setIsLoading(true);
         if (isAuthenticated) {
             try {
                 const data = await apiService<{
@@ -221,34 +216,19 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
 
                 localStorage.setItem('examRediStreak', data.streak.toString());
                 localStorage.setItem('examRediStreakHistory', JSON.stringify(data.streakHistory || []));
+                localStorage.setItem('examRediRecentActivity', JSON.stringify(data.recentActivity || []));
+            } catch (error) {
+                console.error("Failed to sync progress with backend:", error);
                 loadFromLocal();
-            } finally {
-                setIsLoading(false);
-                setHasSynced(true);
             }
         } else {
             loadFromLocal();
-            setHasSynced(true);
-            setIsLoading(false);
         }
     }, [isAuthenticated, loadFromLocal, calculateScore]);
 
     useEffect(() => {
         syncProgress();
     }, [syncProgress]);
-
-    // Cleanup state on logout
-    useEffect(() => {
-        if (!isAuthenticated) {
-            setStreak(0);
-            setStreakHistory([]);
-            setRecentActivity([]);
-            setEngagement({ dismissedNudges: [], unlockedNudges: [] });
-            setStudyProgress({});
-            setEstimatedScore(150);
-            setHasSynced(false);
-        }
-    }, [isAuthenticated]);
 
     const addActivity = async (activity: Omit<RecentActivity, 'timestamp'>) => {
         // Automatic Mastery Logic: If score is 100% and it's a quiz, mark as mastered
@@ -397,9 +377,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
             updateEngagementState,
             updateConfidence,
             calculateTopicStatus,
-            estimatedScore,
-            isLoading,
-            hasSynced
+            estimatedScore
         }}>
             {children}
         </UserProgressContext.Provider>

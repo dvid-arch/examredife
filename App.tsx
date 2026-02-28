@@ -17,9 +17,7 @@ import { UserProgressProvider } from './contexts/UserProgressContext.tsx';
 import { ToastProvider } from './contexts/ToastContext.tsx';
 import { PastQuestionsProvider } from './contexts/PastQuestionsContext.tsx';
 import { EngagementProvider } from './contexts/EngagementContext.tsx';
-import { PreloadProvider } from './contexts/PreloadContext.tsx';
 import SmartNudge from './components/SmartNudge.tsx';
-import Preloader from './components/Preloader.tsx';
 
 // Pages - Lazy load all pages for faster initial load
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
@@ -80,10 +78,7 @@ const RootLayout: React.FC = () => {
             <UserProgressProvider>
               <EngagementProvider>
                 <PwaInstallProvider>
-                  <PreloadProvider>
-                    <Preloader />
-                    <Outlet />
-                  </PreloadProvider>
+                  <Outlet />
                   <PwaInstallBanner />
                 </PwaInstallProvider>
               </EngagementProvider>
