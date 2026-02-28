@@ -4,7 +4,7 @@ import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { useToasts } from './ToastContext.tsx';
 import { User } from '../types.ts';
-import apiService from '../services/apiService.ts';
+import apiService, { resetSessionFlag } from '../services/apiService.ts';
 
 // The User type from backend might be slightly different.
 // The backend returns this from /profile
@@ -200,10 +200,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         window.history.pushState({ modal: 'auth' }, '');
                         setIsAuthModalOpen(true);
                     }
-                    // Reset expiry handling flag after a delay to allow future legitimate triggers
-                    setTimeout(() => {
-                        isHandlingExpiryRef.current = false;
-                    }, 5000);
                 }, 100);
             } else {
                 // If they weren't authenticated, just reset the flag quickly
@@ -229,6 +225,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('refreshToken');
             throw new Error('Invalid credentials');
         }
+
+        // Successfully logged in - reset the expiry handling flags
+        isHandlingExpiryRef.current = false;
+        resetSessionFlag();
 
         setIsAuthModalOpen(false);
 

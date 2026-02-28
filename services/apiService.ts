@@ -10,10 +10,16 @@ interface RequestOptions extends RequestInit {
 
 // Singleton state for token refresh
 let isRefreshing = false;
+let isSessionDead = false;
 let failedQueue: Array<{
     resolve: (token: string) => void;
     reject: (error: any) => void;
 }> = [];
+
+// Reset session dead flag on successful login or refresh (exported for use in AuthContext)
+export const resetSessionFlag = () => {
+    isSessionDead = false;
+};
 
 const processQueue = (error: any, token: string | null = null) => {
     failedQueue.forEach(prom => {
@@ -101,7 +107,10 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                         processQueue(new Error("Session expired."));
 
                         // Dispatch event for UI to handle (e.g. show login modal)
-                        window.dispatchEvent(new CustomEvent('auth:session-expired'));
+                        if (!isSessionDead) {
+                            isSessionDead = true;
+                            window.dispatchEvent(new CustomEvent('auth:session-expired'));
+                        }
 
                         throw new Error("Session expired. Please log in again.");
                     }
@@ -109,6 +118,9 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                     const newTokens = await refreshResponse.json();
                     localStorage.setItem('authToken', newTokens.accessToken);
                     localStorage.setItem('refreshToken', newTokens.refreshToken);
+
+                    // Reset flag on successful recovery
+                    isSessionDead = false;
 
                     // Process queued requests with new token
                     processQueue(null, newTokens.accessToken);
@@ -119,8 +131,12 @@ const apiService = async <T>(endpoint: string, options: RequestOptions = {}, isR
                 } catch (error) {
                     console.error("Session refresh failed:", error);
                     processQueue(error);
-                    // Dispatch event for UI to handle
-                    window.dispatchEvent(new CustomEvent('auth:session-expired'));
+                    // Dispatch event for UI to handle only if we actually HAD a session to lose
+                    const hasSession = !!getRefreshToken();
+                    if (!isSessionDead && hasSession) {
+                        isSessionDead = true;
+                        window.dispatchEvent(new CustomEvent('auth:session-expired'));
+                    }
                     throw error;
                 } finally {
                     isRefreshing = false;

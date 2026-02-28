@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { useAuth } from './AuthContext.tsx';
 import { usePastQuestions } from './PastQuestionsContext.tsx';
 import { useUserProgress } from './UserProgressContext.tsx';
@@ -19,6 +19,7 @@ export const PreloadProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [isFirstVisit, setIsFirstVisit] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [retryCount, setRetryCount] = useState(0);
+    const hasRunRef = useRef(false);
 
     useEffect(() => {
         const visited = localStorage.getItem('examRedi_hasVisited');
@@ -33,22 +34,29 @@ export const PreloadProvider: React.FC<{ children: ReactNode }> = ({ children })
     const { syncProgress } = useUserProgress();
 
     useEffect(() => {
+        // Prevent multiple runs except on explicit retry
+        if (hasRunRef.current && retryCount === 0) return;
+        hasRunRef.current = true;
+
         const preload = async () => {
             try {
                 setError(null);
-                setProgress(5); // Initial kick-off
+                setProgress(5);
 
-                // 1. Auth Sync (Check if token is valid and get user profile)
-                // We assume AuthContext already has its own internal check, but we might want to wait for it.
-                // If fetchUserProfile is exported, we can call it here.
+                // 1. Auth Sync
                 setProgress(15);
-                const profile = await (fetchUserProfile as any)();
+                let profile = null;
+                try {
+                    profile = await (fetchUserProfile as any)();
+                } catch (e) {
+                    console.warn("Auth sync during preload failed", e);
+                }
                 setProgress(30);
 
                 // 2. Data Fetching (Parallel)
                 const dataTasks = [
-                    fetchPapers().then(() => setProgress(prev => Math.min(prev + 25, 80))),
-                    fetchGuides().then(() => setProgress(prev => Math.min(prev + 25, 80)))
+                    fetchPapers().catch(e => console.warn("Papers fetch failed:", e)).then(() => setProgress(prev => Math.min(prev + 25, 80))),
+                    fetchGuides().catch(e => console.warn("Guides fetch failed:", e)).then(() => setProgress(prev => Math.min(prev + 25, 80)))
                 ];
 
                 await Promise.all(dataTasks);
@@ -56,24 +64,32 @@ export const PreloadProvider: React.FC<{ children: ReactNode }> = ({ children })
 
                 // 3. Progress Sync (If authenticated)
                 if (profile || isAuthenticated) {
-                    await syncProgress();
+                    try {
+                        await syncProgress();
+                    } catch (e) {
+                        console.warn("Progress sync failed:", e);
+                    }
                 }
                 setProgress(100);
 
-                // Delay a bit for smooth transition
                 setTimeout(() => {
                     setIsComplete(true);
                 }, 500);
 
             } catch (err: any) {
                 console.error('Preloading failed:', err);
-                setError(err.message || 'Failed to prepare your study session. Please check your connection.');
-                // Don't stop the app entirely, but maybe show an error in the preloader
+                const isAuthError = err.message?.toLowerCase().includes('session expired');
+                if (!isAuthError) {
+                    setError(err.message || 'Failed to prepare your study session. Please check your connection.');
+                } else {
+                    // Let AuthContext handle the expired session
+                    setIsComplete(true);
+                }
             }
         };
 
         preload();
-    }, [retryCount, fetchUserProfile, fetchPapers, fetchGuides, syncProgress, isAuthenticated]);
+    }, [retryCount, fetchUserProfile, fetchPapers, fetchGuides, syncProgress]);
 
     const retry = () => {
         setRetryCount(prev => prev + 1);
