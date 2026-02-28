@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
@@ -44,6 +44,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [justRegistered, setJustRegistered] = useState(false);
+    const isHandlingExpiryRef = useRef(false);
+    const isAuthenticatedRef = useRef(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { success, error: toastError } = useToasts();
@@ -53,6 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const profile = await apiService<UserProfile>('/auth/profile');
             setUser(profile);
             setIsAuthenticated(true);
+            isAuthenticatedRef.current = true;
             localStorage.setItem('examRediUser', JSON.stringify(profile));
             return profile;
         } catch (error) {
@@ -170,7 +173,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Listen for session expiry event from apiService
     useEffect(() => {
         const handleSessionExpired = () => {
-            console.warn('Session expired event received. Clearing state and prompting login.');
+            // If already handling or not authenticated, ignore to prevent loops/spam
+            if (isHandlingExpiryRef.current) return;
+
+            console.warn('Session expired event received. Clearing state.');
+            isHandlingExpiryRef.current = true;
+
+            const wasAuthenticated = isAuthenticatedRef.current || !!localStorage.getItem('authToken');
 
             // Clear auth data
             localStorage.removeItem('examRediUser');
@@ -179,17 +188,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             setUser(null);
             setIsAuthenticated(false);
+            isAuthenticatedRef.current = false;
 
-            // Show toast
-            toastError("Your session has expired. Please log in again.");
+            // Only show toast and prompt login if the user was actually logged in
+            if (wasAuthenticated) {
+                toastError("Your session has expired. Please log in again.");
 
-            // Open login modal
-            setTimeout(() => {
-                if (!isAuthModalOpen) {
-                    window.history.pushState({ modal: 'auth' }, '');
-                    setIsAuthModalOpen(true);
-                }
-            }, 100);
+                // Open login modal
+                setTimeout(() => {
+                    if (!isAuthModalOpen) {
+                        window.history.pushState({ modal: 'auth' }, '');
+                        setIsAuthModalOpen(true);
+                    }
+                    // Reset expiry handling flag after a delay to allow future legitimate triggers
+                    setTimeout(() => {
+                        isHandlingExpiryRef.current = false;
+                    }, 5000);
+                }, 100);
+            } else {
+                // If they weren't authenticated, just reset the flag quickly
+                isHandlingExpiryRef.current = false;
+            }
         };
 
         window.addEventListener('auth:session-expired', handleSessionExpired);
@@ -322,6 +341,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('authToken');
             localStorage.removeItem('refreshToken');
             setIsAuthenticated(false);
+            isAuthenticatedRef.current = false;
             setUser(null);
             navigate('/dashboard', { replace: true });
         }
