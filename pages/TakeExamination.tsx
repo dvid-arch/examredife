@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import { useEngagement } from '../contexts/EngagementContext.tsx';
+import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import { evaluateNudgeTrigger, NUDGE_REGISTRY } from '../constants/engagementRules.ts';
 import QuizResults from '../components/QuizResults.tsx';
 
@@ -84,6 +85,7 @@ const TakeExamination: React.FC = () => {
     const { isAuthenticated, user, requestLogin } = useAuth();
     const { showInstallBanner } = usePwaInstall();
     const { addActivity } = useUserProgress();
+    const { fetchPapers } = usePastQuestions();
 
     // Validate that the route was accessed properly with required state
     const validatePracticeState = useCallback((state: any) => {
@@ -422,11 +424,10 @@ const TakeExamination: React.FC = () => {
                 preparedQuestions = customQuestions;
             } else {
                 try {
-                    // Try to fetch from API first
+                    // Use context fetcher (benefits from IndexedDB and staleness logic)
                     let papers: PastPaper[] = [];
                     try {
-                        const apiData = await apiService<PastPaper[]>('/data/papers');
-                        papers = apiData;
+                        papers = await fetchPapers();
                     } catch (e) {
                         console.error("Failed to fetch papers in TakeExamination", e);
                         papers = [];

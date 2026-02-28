@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import apiService from '../../services/apiService.ts';
 import { PastPaper } from '../../types.ts';
+import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
 
 const PapersList: React.FC = () => {
+    const { papers: allPapers, isLoading: isCtxLoading, fetchPapers, invalidateCache } = usePastQuestions();
     const [papers, setPapers] = useState<PastPaper[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -16,27 +18,29 @@ const PapersList: React.FC = () => {
 
     const navigate = useNavigate();
 
+    // Sync context papers to local state for internal filtering/deletion if needed
+    // but better to just use context papers directly for the list
     useEffect(() => {
-        const fetchPapers = async () => {
-            setIsLoading(true);
-            try {
-                const data = await apiService<PastPaper[]>('/data/papers');
-                setPapers(data || []);
-            } catch (error) {
-                console.error("Failed to fetch papers", error);
-                setPapers([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchPapers();
-    }, []);
+    }, [fetchPapers]);
+
+    useEffect(() => {
+        setPapers(allPapers);
+        setIsLoading(isCtxLoading);
+    }, [allPapers, isCtxLoading]);
+
+    const handleRefresh = async () => {
+        setIsLoading(true);
+        await fetchPapers(true);
+        setIsLoading(false);
+    };
 
     const handleDeletePaper = async (paperId: string) => {
         if (window.confirm('Are you sure you want to delete this paper?')) {
             try {
                 await apiService(`/admin/papers/${paperId}`, { method: 'DELETE' });
-                setPapers(prev => prev.filter(p => p.id !== paperId || (p as any)._id !== paperId));
+                invalidateCache('papers');
+                await fetchPapers(true);
             } catch (err) {
                 alert(err instanceof Error ? err.message : 'Failed to delete paper');
             }
@@ -68,9 +72,18 @@ const PapersList: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Past Papers</h1>
-                <button onClick={() => setIsPaperModalOpen(true)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent w-full md:w-auto">
-                    Add New Paper
-                </button>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <button
+                        onClick={handleRefresh}
+                        disabled={isLoading}
+                        className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-2 px-4 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-700 disabled:opacity-50"
+                    >
+                        {isLoading ? '...' : 'Refresh'}
+                    </button>
+                    <button onClick={() => setIsPaperModalOpen(true)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-accent flex-1 md:flex-none">
+                        Add New Paper
+                    </button>
+                </div>
             </div>
 
             <Card>

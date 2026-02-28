@@ -30,6 +30,7 @@ interface AuthContextType {
     loginWithTokens: (accessToken: string, refreshToken: string) => Promise<void>;
     isLoading: boolean;
     justRegistered: boolean;
+    fetchUserProfile: () => Promise<UserProfile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -386,7 +387,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { success: remaining > 0, remaining };
     };
 
-    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, loginWithTokens, isLoading, justRegistered };
+    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, loginWithTokens, isLoading, justRegistered, fetchUserProfile };
 
     return (
         <AuthContext.Provider value={value}>
