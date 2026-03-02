@@ -3,8 +3,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 
-import { useAuth } from '../contexts/AuthContext.tsx';
-
 const Logo = () => (
     <div className="flex items-center space-x-2">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-7 w-7">
@@ -19,7 +17,6 @@ const Logo = () => (
 
 const LandingHeader: React.FC = () => {
     const { canInstall, showInstallBanner } = usePwaInstall();
-    const { isAuthenticated, requestLogin } = useAuth();
 
     return (
         <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-20">
@@ -34,14 +31,8 @@ const LandingHeader: React.FC = () => {
                             Install App
                         </button>
                     )}
-                    {isAuthenticated ? (
-                        <Link to="/dashboard" className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors">Dashboard</Link>
-                    ) : (
-                        <>
-                            <button onClick={requestLogin} className="font-semibold text-primary hover:underline">Login</button>
-                            <button onClick={requestLogin} className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors">Get Started</button>
-                        </>
-                    )}
+                    <Link to="/login" className="font-semibold text-primary hover:underline">Login</Link>
+                    <Link to="/register" className="bg-primary text-white font-bold py-2 px-5 rounded-lg hover:bg-accent transition-colors">Get Started</Link>
                 </div>
             </div>
         </header>
@@ -59,8 +50,6 @@ const FeatureCard: React.FC<{ title: string; description: string; icon: React.Re
 );
 
 const LandingPage: React.FC = () => {
-    const { isAuthenticated, requestLogin } = useAuth();
-
     return (
         <div className="bg-slate-50 min-h-screen">
             <LandingHeader />
@@ -75,15 +64,9 @@ const LandingPage: React.FC = () => {
                             ExamRedi provides everything you need to succeed. From interactive practice sessions and AI tutors to dynamic study guides and educational games.
                         </p>
                         <div className="mt-10">
-                            {isAuthenticated ? (
-                                <Link to="/dashboard" className="bg-primary text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-accent transition-transform hover:scale-105 inline-block">
-                                    Go to Dashboard
-                                </Link>
-                            ) : (
-                                <button onClick={requestLogin} className="bg-primary text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-accent transition-transform hover:scale-105 inline-block">
-                                    Start Studying for Free
-                                </button>
-                            )}
+                            <Link to="/register" className="bg-primary text-white font-bold py-4 px-10 rounded-lg text-lg hover:bg-accent transition-transform hover:scale-105 inline-block">
+                                Start Studying for Free
+                            </Link>
                         </div>
                     </div>
                 </section>

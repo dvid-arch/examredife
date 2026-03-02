@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/clerk-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { useToasts } from './ToastContext.tsx';
@@ -7,6 +7,7 @@ import { User } from '../types.ts';
 import apiService from '../services/apiService.ts';
 
 // The User type from backend might be slightly different.
+// The backend returns this from /profile
 export interface UserProfile extends User {
     id: string;
     email: string;
@@ -33,128 +34,296 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { isLoaded: isClerkLoaded, user: clerkUser } = useUser();
-    const { isLoaded: isAuthLoaded, isSignedIn, signOut, getToken } = useClerkAuth();
-    const { signIn, isLoaded: isSignInLoaded } = useSignIn();
-    const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
 
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [justRegistered, setJustRegistered] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
     const { success, error: toastError } = useToasts();
 
-    const isLoading = !isClerkLoaded || !isAuthLoaded;
-
-    // Map Clerk user to UserProfile
-    useEffect(() => {
-        if (isSignedIn && clerkUser) {
-            const profile: UserProfile = {
-                id: clerkUser.id,
-                email: clerkUser.primaryEmailAddress?.emailAddress || '',
-                role: (clerkUser.publicMetadata.role as 'user' | 'admin') || 'user',
-                firstName: clerkUser.firstName || '',
-                lastName: clerkUser.lastName || '',
-                isVerified: !!clerkUser.emailAddresses.find(e => e.emailAddress === clerkUser.primaryEmailAddress?.emailAddress)?.verification.status === 'verified',
-                // Keep other fields from metadata if they exist
-                ...(clerkUser.publicMetadata as any)
-            };
-            setUser(profile);
-            localStorage.setItem('examRediUser', JSON.stringify(profile));
-
-            // Sync with backend on first load if needed
-            fetchBackendUserProfile();
-        } else {
-            setUser(null);
-            localStorage.removeItem('examRediUser');
-        }
-    }, [isSignedIn, clerkUser]);
-
-    const fetchBackendUserProfile = async () => {
+    const fetchUserProfile = async () => {
         try {
-            const token = await getToken();
-            if (!token) return;
-
             const profile = await apiService<UserProfile>('/auth/profile');
-            // Merge backend metadata (credits, etc.) with Clerk user data
-            setUser(prev => prev ? { ...prev, ...profile } : profile);
+            setUser(profile);
+            setIsAuthenticated(true);
+            localStorage.setItem('examRediUser', JSON.stringify(profile));
+            return profile;
         } catch (error) {
-            console.error("Failed to sync profile with backend", error);
+            // If the failure is a network error (backend down / proxy ECONNREFUSED),
+            // don't immediately log out the user — just return null and keep client state.
+            const msg = (error && (error as any).message) || '';
+            const isNetworkError = /failed to fetch|networkerror|ec[oa]nnrefused/i.test(msg);
+            console.error("Failed to fetch user profile.", error);
+            if (isNetworkError) {
+                // Don't clear local session on transient network/backend errors.
+                // Just return null; callers should handle null profile.
+                return null;
+            }
+
+            // For other errors (e.g., 401/403), perform logout to clear invalid session
+            await logout();
+            return null;
         }
     };
 
+    // Check for persisted user token on initial load
+    useEffect(() => {
+        const checkAuth = async () => {
+            setIsLoading(true);
+            const token = localStorage.getItem('authToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+
+            console.log('Initial auth check - tokens present:', !!token, !!refreshToken);
+
+            if (token && refreshToken) {
+                await fetchUserProfile();
+            }
+
+            setIsLoading(false);
+        };
+        checkAuth();
+    }, []);
+
+    // Listen for storage changes (e.g., logout from another tab)
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'authToken' || e.key === 'refreshToken' || e.key === 'examRediUser') {
+                console.log('Storage changed for key:', e.key, 'old value existed:', !!e.oldValue, 'new value exists:', !!e.newValue);
+                if (!e.newValue && e.oldValue) {
+                    // Token was removed
+                    console.log('Token was cleared, logging out');
+                    setIsAuthenticated(false);
+                    setUser(null);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    // Close modals when navigating to a new page or using back button
+    useEffect(() => {
+        const handlePopState = (e: PopStateEvent) => {
+            // If we are popping a state that was pushed for a modal, just close the modals
+            setIsAuthModalOpen(false);
+            setIsUpgradeModalOpen(false);
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    // --- Universal Auth Signaling ---
     // Listen for ?auth=login or ?auth=register in the URL to auto-open the modal
+    // This is useful after redirects (e.g., from Reset Password or Email Verification)
     useEffect(() => {
         if (isLoading) return;
 
-        // Since we use HashRouter, the query params are often after the #
-        const hash = window.location.hash;
-        const queryPart = hash.includes('?') ? hash.split('?')[1] : '';
-        const params = new URLSearchParams(queryPart || window.location.search);
+        const params = new URLSearchParams(location.search || location.hash.split('?')[1]);
         const authAction = params.get('auth');
 
-        if (authAction === 'login' && !isSignedIn && !isAuthModalOpen) {
+        if (authAction === 'login' && !isAuthenticated && !isAuthModalOpen) {
+            console.log('Universal Auth Trigger: Opening login modal');
             window.history.pushState({ modal: 'auth' }, '');
             setIsAuthModalOpen(true);
 
-            // Clean up the URL by removing the auth param
-            const newParams = new URLSearchParams(params);
-            newParams.delete('auth');
-            const newQuery = newParams.toString();
-            const basePath = hash.split('?')[0];
-            window.location.hash = newQuery ? `${basePath}?${newQuery}` : basePath;
+            // Clean up the URL to prevent re-triggering, keeping the same pathname
+            navigate(location.pathname, { replace: true });
         }
-    }, [isLoading, isSignedIn, isAuthModalOpen]);
+    }, [isLoading, isAuthenticated, isAuthModalOpen, location.search, location.hash, location.pathname, navigate]);
+
+    // When the user returns to the tab or the window gains focus, try to refresh profile
+    // This helps avoid being unexpectedly logged out after the access token expires while the tab was inactive.
+    useEffect(() => {
+        const handleVisibilityOrFocus = () => {
+            if (document.visibilityState === 'visible') {
+                const token = localStorage.getItem('authToken');
+                const refreshToken = localStorage.getItem('refreshToken');
+                console.log('Tab became visible/focused. Tokens present:', !!token, !!refreshToken);
+                if (token && refreshToken) {
+                    // attempt to refresh profile (apiService will rotate tokens if needed)
+                    fetchUserProfile().catch((error) => {
+                        console.error('Profile refresh failed on tab focus:', error);
+                        /* ignore errors here — fetchUserProfile will handle logout */
+                    });
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+        window.addEventListener('focus', handleVisibilityOrFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+            window.removeEventListener('focus', handleVisibilityOrFocus);
+        };
+    }, []);
+
+    // Listen for session expiry event from apiService
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            console.warn('Session expired event received. Clearing state and prompting login.');
+
+            // Clear auth data
+            localStorage.removeItem('examRediUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+
+            setUser(null);
+            setIsAuthenticated(false);
+
+            // Show toast
+            toastError("Your session has expired. Please log in again.");
+
+            // Open login modal
+            setTimeout(() => {
+                if (!isAuthModalOpen) {
+                    window.history.pushState({ modal: 'auth' }, '');
+                    setIsAuthModalOpen(true);
+                }
+            }, 100);
+        };
+
+        window.addEventListener('auth:session-expired', handleSessionExpired);
+        return () => window.removeEventListener('auth:session-expired', handleSessionExpired);
+    }, [isAuthModalOpen, toastError]);
+
+    const handleAuthSuccess = async (data: any, navigatePath = '/dashboard') => {
+        const { accessToken, refreshToken, ...userData } = data;
+
+        localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+
+        // Verify the login by fetching the profile
+        const profile = await fetchUserProfile();
+        if (!profile) {
+            // Clear tokens since invalid
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            throw new Error('Invalid credentials');
+        }
+
+        setIsAuthModalOpen(false);
+
+        if (userData.role === 'admin') {
+            navigate('/admin/dashboard', { replace: true });
+        } else {
+            navigate(navigatePath, { replace: true });
+        }
+    };
+
+    const loginWithTokens = async (accessToken: string, refreshToken: string) => {
+        localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        await fetchUserProfile();
+    };
 
     const login = async (details: AuthDetails) => {
-        if (!isSignInLoaded) return;
+
         try {
-            const result = await signIn.create({
-                identifier: details.email,
-                password: details.password,
+            const data = await apiService('/auth/login', {
+                method: 'POST',
+                body: details,
+                useAuth: false,
+            });
+            setJustRegistered(false);
+            await handleAuthSuccess(data);
+        } catch (error: any) {
+            // Log the raw error for debugging
+            console.error('Login error (raw):', error);
+            console.error('Login error details:', {
+                message: error?.message,
+                name: error?.name,
+                stack: error?.stack,
+                fullError: error
             });
 
-            if (result.status === "complete") {
-                setIsAuthModalOpen(false);
-                window.location.hash = '#/dashboard';
+            // Clear any stale user data and tokens on failed login
+            localStorage.removeItem('examRediUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            setUser(null);
+            setIsAuthenticated(false);
+
+            // Provide user-friendly error messages
+            const errorMessage = error?.message || 'Login failed';
+            if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                throw new Error('Invalid email or password. Please check your credentials and try again.');
+            } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                throw new Error('Network error. Please check your internet connection and try again.');
             } else {
-                console.log("Incomplete login:", result);
-                throw new Error("Additional verification required. Please use the login page.");
+                throw new Error(errorMessage);
             }
-        } catch (error: any) {
-            console.error('Login error:', error);
-            throw new Error(error.errors?.[0]?.message || 'Login failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const register = async (details: AuthDetails) => {
-        if (!isSignUpLoaded) return;
         try {
-            const result = await signUp.create({
-                emailAddress: details.email,
-                password: details.password,
+            const data = await apiService('/auth/register', {
+                method: 'POST',
+                body: details,
+                useAuth: false,
+            });
+            setJustRegistered(true);
+            await handleAuthSuccess(data);
+        } catch (error: any) {
+            // Log the raw error for debugging
+            console.error('Registration error (raw):', error);
+            console.error('Registration error details:', {
+                message: error?.message,
+                name: error?.name,
+                stack: error?.stack,
+                fullError: error
             });
 
-            // In a real flow, Clerk might require email verification here.
-            // For now, assume simple complete or handled by Clerk component.
-            if (result.status === "complete") {
-                setJustRegistered(true);
-                setIsAuthModalOpen(false);
-                window.location.hash = '#/dashboard';
+            // Clear any stale user data and tokens on failed register
+            localStorage.removeItem('examRediUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            setUser(null);
+            setIsAuthenticated(false);
+
+            // Provide user-friendly error messages
+            const errorMessage = error?.message || 'Registration failed';
+            if (errorMessage.includes('409') || errorMessage.includes('already exists')) {
+                throw new Error('An account with this email already exists. Please try logging in instead.');
+            } else if (errorMessage.includes('400') || errorMessage.includes('validation')) {
+                throw new Error('Please check your information and try again.');
+            } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                throw new Error('Network error. Please check your internet connection and try again.');
             } else {
-                throw new Error("Registration started. Check your email for verification.");
+                throw new Error(errorMessage);
             }
-        } catch (error: any) {
-            console.error('Registration error:', error);
-            throw new Error(error.errors?.[0]?.message || 'Registration failed');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const logout = async () => {
-        await signOut();
-        window.location.hash = '#/dashboard';
+        try {
+            // Invalidate the refresh token on the backend
+            await apiService('/auth/logout', {
+                method: 'POST',
+            });
+        } catch (error) {
+            console.error("Logout failed on backend, clearing client session anyway.", error);
+        } finally {
+            localStorage.removeItem('examRediUser');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            setIsAuthenticated(false);
+            setUser(null);
+            navigate('/dashboard', { replace: true });
+        }
     };
 
     const requestLogin = () => {
@@ -173,60 +342,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const upgradeToPro = async () => {
-        console.log("Upgrade requested.");
+        // This is now handled manually via WhatsApp in the UI.
+        // We keep this function as a placeholder or for future use.
+        console.log("Upgrade to Pro requested. User should follow WhatsApp flow.");
     };
 
     const updateUser = async (details: Partial<UserProfile>) => {
         if (user) {
             try {
-                // Update in backend
+                // Persist update to backend
                 const updatedUser = await apiService<UserProfile>('/user/profile', {
                     method: 'PUT',
                     body: details
                 });
-                setUser(prev => prev ? { ...prev, ...updatedUser } : updatedUser);
+                setUser(updatedUser);
+                localStorage.setItem('examRediUser', JSON.stringify(updatedUser));
             } catch (error) {
                 console.error("Failed to update user profile on backend:", error);
-                setUser(prev => prev ? { ...prev, ...details } : null);
+                // Fallback to local-only update or alert user
+                const optimisticUser = { ...user, ...details };
+                setUser(optimisticUser);
+                localStorage.setItem('examRediUser', JSON.stringify(optimisticUser));
             }
         }
     };
 
     const useAiCredit = async () => {
-        await fetchBackendUserProfile();
+        // Credit usage is handled on the backend during the API call.
+        // We refetch the profile to get the latest credit count.
+        await fetchUserProfile();
     };
 
     const incrementMessageCount = async (): Promise<{ success: boolean; remaining: number }> => {
-        await fetchBackendUserProfile();
-        if (!user) return { success: false, remaining: 0 };
-        if (user.subscription === 'pro') return { success: true, remaining: Infinity };
+        // Message count is handled on the backend. We refetch the profile.
+        const updatedProfile = await fetchUserProfile();
+        if (!updatedProfile) return { success: false, remaining: 0 };
+
+        if (updatedProfile.subscription === 'pro') return { success: true, remaining: Infinity };
 
         const FREE_TIER_MESSAGES = 5;
-        const remaining = FREE_TIER_MESSAGES - (user.dailyMessageCount || 0);
+        const remaining = FREE_TIER_MESSAGES - updatedProfile.dailyMessageCount;
+
         return { success: remaining > 0, remaining };
     };
 
-    const loginWithTokens = async (accessToken: string, refreshToken: string) => {
-        // NO LONGER USED with Clerk
-        console.warn("loginWithTokens is legacy and not supported with Clerk.");
-    };
-
-    const value = {
-        isAuthenticated: !!isSignedIn,
-        user,
-        login,
-        register,
-        logout,
-        requestLogin,
-        requestUpgrade,
-        upgradeToPro,
-        updateUser,
-        useAiCredit,
-        incrementMessageCount,
-        loginWithTokens,
-        isLoading,
-        justRegistered
-    };
+    const value = { isAuthenticated, user, login, register, logout, requestLogin, requestUpgrade, upgradeToPro, updateUser, useAiCredit, incrementMessageCount, loginWithTokens, isLoading, justRegistered };
 
     return (
         <AuthContext.Provider value={value}>
