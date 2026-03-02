@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { useUser, useAuth, useSignIn, useSignUp } from '@clerk/clerk-react';
+import { useUser, useAuth as useClerkAuth, useSignIn, useSignUp } from '@clerk/clerk-react';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { useToasts } from './ToastContext.tsx';
@@ -35,7 +35,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { isLoaded: isClerkLoaded, user: clerkUser } = useUser();
-    const { isLoaded: isAuthLoaded, isSignedIn, signOut, getToken } = useAuth();
+    const { isLoaded: isAuthLoaded, isSignedIn, signOut, getToken } = useClerkAuth();
     const { signIn, isLoaded: isSignInLoaded } = useSignIn();
     const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
 
