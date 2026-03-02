@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser, useAuth, useSignIn, useSignUp } from '@clerk/clerk-react';
 import AuthModal, { AuthDetails } from '../components/AuthModal.tsx';
 import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
@@ -45,8 +44,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [upgradeRequest, setUpgradeRequest] = useState<UpgradeRequest | null>(null);
     const [justRegistered, setJustRegistered] = useState(false);
-    const navigate = useNavigate();
-    const location = useLocation();
     const { success, error: toastError } = useToasts();
 
     const isLoading = !isClerkLoaded || !isAuthLoaded;
@@ -92,15 +89,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         if (isLoading) return;
 
-        const params = new URLSearchParams(location.search || location.hash.split('?')[1]);
+        // Since we use HashRouter, the query params are often after the #
+        const hash = window.location.hash;
+        const queryPart = hash.includes('?') ? hash.split('?')[1] : '';
+        const params = new URLSearchParams(queryPart || window.location.search);
         const authAction = params.get('auth');
 
         if (authAction === 'login' && !isSignedIn && !isAuthModalOpen) {
             window.history.pushState({ modal: 'auth' }, '');
             setIsAuthModalOpen(true);
-            navigate(location.pathname, { replace: true });
+
+            // Clean up the URL by removing the auth param
+            const newParams = new URLSearchParams(params);
+            newParams.delete('auth');
+            const newQuery = newParams.toString();
+            const basePath = hash.split('?')[0];
+            window.location.hash = newQuery ? `${basePath}?${newQuery}` : basePath;
         }
-    }, [isLoading, isSignedIn, isAuthModalOpen, location.search, location.hash, location.pathname, navigate]);
+    }, [isLoading, isSignedIn, isAuthModalOpen]);
 
     const login = async (details: AuthDetails) => {
         if (!isSignInLoaded) return;
@@ -112,7 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (result.status === "complete") {
                 setIsAuthModalOpen(false);
-                navigate('/dashboard', { replace: true });
+                window.location.hash = '#/dashboard';
             } else {
                 console.log("Incomplete login:", result);
                 throw new Error("Additional verification required. Please use the login page.");
@@ -136,7 +142,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (result.status === "complete") {
                 setJustRegistered(true);
                 setIsAuthModalOpen(false);
-                navigate('/dashboard', { replace: true });
+                window.location.hash = '#/dashboard';
             } else {
                 throw new Error("Registration started. Check your email for verification.");
             }
@@ -148,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = async () => {
         await signOut();
-        navigate('/dashboard', { replace: true });
+        window.location.hash = '#/dashboard';
     };
 
     const requestLogin = () => {

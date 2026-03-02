@@ -9,14 +9,6 @@ import ScrollToTop from './components/ScrollToTop.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Contexts
-import { AuthProvider } from './contexts/AuthContext.tsx';
-import { PwaInstallProvider } from './contexts/PwaContext.tsx';
-import { ThemeProvider } from './contexts/ThemeContext.tsx';
-import { UserProgressProvider } from './contexts/UserProgressContext.tsx';
-import { ToastProvider } from './contexts/ToastContext.tsx';
-import { PastQuestionsProvider } from './contexts/PastQuestionsContext.tsx';
-import { EngagementProvider } from './contexts/EngagementContext.tsx';
 import SmartNudge from './components/SmartNudge.tsx';
 
 // Pages - Lazy load all pages for faster initial load
@@ -43,6 +35,7 @@ const QuestionSearch = lazy(() => import('./pages/QuestionSearch.tsx'));
 const Profile = lazy(() => import('./pages/Profile.tsx'));
 const Literature = lazy(() => import('./pages/Literature.tsx'));
 const Dictionary = lazy(() => import('./pages/Dictionary.tsx'));
+const LandingPage = lazy(() => import('./pages/LandingPage.tsx'));
 
 
 // Admin - Lazy load admin pages
@@ -65,25 +58,13 @@ const PageLoader = () => (
   </div>
 );
 
-// --- Root Layout with Providers ---
+// --- Root Layout (Shell for non-main routes) ---
 const RootLayout: React.FC = () => {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <PastQuestionsProvider>
-            <UserProgressProvider>
-              <EngagementProvider>
-                <PwaInstallProvider>
-                  <Outlet />
-                  <PwaInstallBanner />
-                </PwaInstallProvider>
-              </EngagementProvider>
-            </UserProgressProvider>
-          </PastQuestionsProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+    <>
+      <Outlet />
+      <PwaInstallBanner />
+    </>
   );
 };
 
@@ -165,9 +146,11 @@ const MainLayout: React.FC = () => {
 const router = createHashRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />} errorElement={<ErrorBoundary />}>
+      {/* Public Landing Page */}
+      <Route path="/" element={<Suspense fallback={<PageLoader />}><LandingPage /></Suspense>} />
+
       {/* Main App Routes */}
       <Route element={<MainLayout />}>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Suspense fallback={<PageLoader />}><Dashboard /></Suspense>} />
         <Route path="/journey" element={<Suspense fallback={<PageLoader />}><Journey /></Suspense>} />
         <Route path="/flashcards" element={<Suspense fallback={<PageLoader />}><Flashcards /></Suspense>} />
