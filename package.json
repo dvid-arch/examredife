@@ -10,6 +10,7 @@
     "mobile:sync": "npm run build && cd mobile && npx cap sync"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.3",
     "@google/genai": "^1.28.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",

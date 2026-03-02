@@ -50,7 +50,6 @@ const Profile: React.FC = () => {
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>(user?.preferredSubjects || []);
     const [examDate, setExamDate] = useState(user?.studyPlan?.examDate ? new Date(user.studyPlan.examDate).toISOString().split('T')[0] : '');
     const [targetScore, setTargetScore] = useState(user?.studyPlan?.targetScore || 250);
-    const [biometricsEnabled, setBiometricsEnabled] = useState(localStorage.getItem('examRediBiometricsEnabled') === 'true');
 
     const availableSubjects = [...STANDARD_SUBJECTS].sort();
 
@@ -116,24 +115,6 @@ const Profile: React.FC = () => {
         if (window.confirm('Are you sure you want to log out?')) {
             logout();
             navigate('/dashboard');
-        }
-    };
-
-    const handleBiometricToggle = async () => {
-        if (!biometricsEnabled) {
-            // SIMULATION: In a real app, use WebAuthn API
-            info("Please follow your device's prompt to register biometrics...");
-
-            setTimeout(() => {
-                // Mock success
-                localStorage.setItem('examRediBiometricsEnabled', 'true');
-                setBiometricsEnabled(true);
-                success("Biometric login enabled successfully!");
-            }, 1500);
-        } else {
-            localStorage.removeItem('examRediBiometricsEnabled');
-            setBiometricsEnabled(false);
-            success("Biometric login disabled.");
         }
     };
 
@@ -341,22 +322,6 @@ const Profile: React.FC = () => {
                             <h2 className="text-xl font-bold text-slate-800 dark:text-white border-b dark:border-slate-700 pb-2 mb-4">Device Settings</h2>
 
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                                    <div>
-                                        <p className="font-semibold text-slate-800 dark:text-white">Biometric Login</p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">Use FaceID or Fingerprint to log in</p>
-                                    </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={biometricsEnabled}
-                                            onChange={handleBiometricToggle}
-                                        />
-                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/10 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                                    </label>
-                                </div>
-
                                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
                                     <div>
                                         <p className="font-semibold text-slate-800 dark:text-white">Push Notifications</p>
