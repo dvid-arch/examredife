@@ -76,6 +76,17 @@ const Quizzes: React.FC = () => {
     }, [subjects, yearsBySubject]);
 
 
+    const [adminStandardSelections, setAdminStandardSelections] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (subjects.length > 0 && adminStandardSelections.length === 0) {
+            const english = subjects.find(s => ['english', 'english language', 'use of english'].includes(s.toLowerCase()));
+            if (english) {
+                setAdminStandardSelections([english]);
+            }
+        }
+    }, [subjects]);
+
     // State for Custom Mode
     // Updated structure: Year AND Count per subject
     type CustomSelection = {
@@ -126,7 +137,9 @@ const Quizzes: React.FC = () => {
     const [examMode, setExamMode] = useState<'study' | 'practice' | 'mock'>('practice');
 
     const handleStartStandardExam = () => {
-        const selections = subjects.map(subject => ({
+        const activeSubjects = isAdmin ? subjects.filter(s => adminStandardSelections.includes(s)) : subjects;
+
+        const selections = activeSubjects.map(subject => ({
             subject,
             year: standardSelections[subject]?.year ?? 'random',
             count: standardSelections[subject]?.count ?? (subject === 'English' ? 60 : 40),
@@ -279,50 +292,73 @@ const Quizzes: React.FC = () => {
                                         const subjectYears = getYearsForSubject(subject);
                                         const currentYear = standardSelections[subject]?.year ?? 'random';
                                         const isCompulsory = subject === 'English' || subject === 'English Language';
+                                        const isSelectedByAdmin = adminStandardSelections.includes(subject);
+
                                         return (
-                                            <div key={subject} className={`flex items-center justify-between gap-4 p-4 rounded-lg border-2 ${isCompulsory
-                                                ? 'border-primary/50 bg-primary/5 dark:bg-primary/10'
-                                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50'
+                                            <div key={subject} className={`flex items-center justify-between gap-4 p-4 rounded-lg border-2 transition-all ${isAdmin && isSelectedByAdmin ? 'border-primary bg-primary/5 dark:bg-primary/10' :
+                                                isAdmin && !isSelectedByAdmin ? 'border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/30 opacity-60' :
+                                                    isCompulsory ? 'border-primary/50 bg-primary/5 dark:bg-primary/10' :
+                                                        'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50'
                                                 }`}>
-                                                <div className="flex items-center gap-3">
-                                                    {isCompulsory && (
-                                                        <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">Compulsory</span>
+                                                <label className={`flex items-center gap-3 min-w-0 pr-4 ${isAdmin ? 'cursor-pointer' : ''}`}>
+                                                    {isAdmin && (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelectedByAdmin}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    if (adminStandardSelections.length >= 4) {
+                                                                        alert("You can only select up to 4 subjects for Standard Practice.");
+                                                                        return;
+                                                                    }
+                                                                    setAdminStandardSelections([...adminStandardSelections, subject]);
+                                                                } else {
+                                                                    setAdminStandardSelections(adminStandardSelections.filter(s => s !== subject));
+                                                                }
+                                                            }}
+                                                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer shrink-0"
+                                                        />
                                                     )}
-                                                    <span className="font-semibold text-slate-800 dark:text-white">{subject}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex flex-col">
-                                                        <label className="text-[10px] uppercase text-gray-500 font-bold mb-1">Year</label>
-                                                        <select
-                                                            value={String(currentYear)}
-                                                            onChange={(e) => setStandardSelections(prev => ({
-                                                                ...prev,
-                                                                [subject]: { ...prev[subject], year: e.target.value === 'random' ? 'random' : Number(e.target.value) }
-                                                            }))}
-                                                            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                                        >
-                                                            {subjectYears.map(year => (
-                                                                <option key={year} value={year}>{year}</option>
-                                                            ))}
-                                                            <option value="random">Random Year</option>
-                                                        </select>
+                                                    {isCompulsory && !isAdmin && (
+                                                        <span className="text-[10px] uppercase font-bold text-primary bg-primary/10 px-2 py-0.5 rounded shrink-0">Compulsory</span>
+                                                    )}
+                                                    <span className={`font-semibold text-slate-800 dark:text-white truncate ${isAdmin ? 'select-none' : ''}`}>{subject}</span>
+                                                </label>
+                                                {(!isAdmin || isSelectedByAdmin) && (
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                        <div className="flex flex-col">
+                                                            <label className="text-[10px] uppercase text-gray-500 font-bold mb-1">Year</label>
+                                                            <select
+                                                                value={String(currentYear)}
+                                                                onChange={(e) => setStandardSelections(prev => ({
+                                                                    ...prev,
+                                                                    [subject]: { ...prev[subject], year: e.target.value === 'random' ? 'random' : Number(e.target.value) }
+                                                                }))}
+                                                                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                            >
+                                                                {subjectYears.map(year => (
+                                                                    <option key={year} value={year}>{year}</option>
+                                                                ))}
+                                                                <option value="random">Random Year</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <label className="text-[10px] uppercase text-gray-500 font-bold mb-1">Questions</label>
+                                                            <select
+                                                                value={standardSelections[subject]?.count ?? (isCompulsory ? 60 : 40)}
+                                                                onChange={(e) => setStandardSelections(prev => ({
+                                                                    ...prev,
+                                                                    [subject]: { ...prev[subject], count: Number(e.target.value) }
+                                                                }))}
+                                                                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                            >
+                                                                {(isCompulsory ? [10, 40, 60, 100] : [10, 20, 30, 40, 50]).map(num => (
+                                                                    <option key={num} value={num}>{num}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                        <label className="text-[10px] uppercase text-gray-500 font-bold mb-1">Questions</label>
-                                                        <select
-                                                            value={standardSelections[subject]?.count ?? (isCompulsory ? 60 : 40)}
-                                                            onChange={(e) => setStandardSelections(prev => ({
-                                                                ...prev,
-                                                                [subject]: { ...prev[subject], count: Number(e.target.value) }
-                                                            }))}
-                                                            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                                                        >
-                                                            {(isCompulsory ? [10, 40, 60, 100] : [10, 20, 30, 40, 50]).map(num => (
-                                                                <option key={num} value={num}>{num}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
                                         );
                                     })}

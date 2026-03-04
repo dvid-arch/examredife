@@ -242,11 +242,10 @@ const QuestionEditForm: React.FC<QuestionEditFormProps> = ({ question, paperId, 
                     {Object.entries(qOptions).map(([key, opt]) => (
                         <div key={key} className="flex items-center gap-3">
                             <span className="font-bold w-6 text-center text-slate-600 dark:text-slate-400">{key}:</span>
-                            <input
-                                type="text"
+                            <textarea
                                 value={opt.text}
                                 onChange={e => handleOptionChange(key, e.target.value)}
-                                className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-2 outline-none focus:ring-2 focus:ring-primary"
+                                className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary min-h-[60px]"
                             />
                             <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
                                 <input
