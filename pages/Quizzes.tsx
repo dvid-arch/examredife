@@ -370,7 +370,7 @@ const Quizzes: React.FC = () => {
                             <div className="flex justify-end mt-6">
                                 <button
                                     onClick={handleStartStandardExam}
-                                    disabled={subjects.length !== 4}
+                                    disabled={isAdmin ? adminStandardSelections.length !== 4 : subjects.length !== 4}
                                     className="bg-primary text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                 >
                                     Get Started
