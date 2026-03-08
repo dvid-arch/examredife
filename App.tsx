@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
-import { Route, Navigate, Outlet, createHashRouter, createRoutesFromElements, RouterProvider, useLocation } from 'react-router-dom';
+import { Route, Navigate, Outlet, createBrowserRouter, createRoutesFromElements, RouterProvider, useLocation } from 'react-router-dom';
 
 // Components
 import Header from './components/Header.tsx';
@@ -164,8 +164,8 @@ const MainLayout: React.FC = () => {
   );
 };
 
-// Create router with data API to support useBlocker and other modern features
-const router = createHashRouter(
+// Create browser router for clean SEO friendly URLs
+const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<RootLayout />} errorElement={<ErrorBoundary />}>
       {/* Main App Routes */}

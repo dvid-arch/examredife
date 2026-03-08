@@ -1,9 +1,9 @@
 
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 import OnboardingTour from '../components/OnboardingTour.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import VerificationBanner from '../components/VerificationBanner.tsx';
@@ -139,6 +139,10 @@ const WelcomeBanner = () => {
 };
 
 const Dashboard: React.FC = () => {
+    useSEO({
+        title: 'Dashboard',
+        description: 'Track your learning progress, access past questions, and engage with AI study tools on your ExamRedi dashboard.'
+    });
     const { isAuthenticated, user, updateUser, isLoading: isAuthLoading } = useAuth();
     const { recentActivity, studyProgress, calculateTopicStatus } = useUserProgress();
     const { guides, fetchGuides, isLoading: isGuidesLoading } = usePastQuestions();
