@@ -141,6 +141,113 @@ const QuestionExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
 
 
 
+const PaperExport: React.FC<{ topicsData: any }> = ({ topicsData }) => {
+    const [selectedSubject, setSelectedSubject] = useState("");
+    const [examType, setExamType] = useState("UTME");
+    const [startYear, setStartYear] = useState("");
+    const [endYear, setEndYear] = useState("");
+    const [isExporting, setIsExporting] = useState(false);
+
+    const subjects = topicsData ? Object.keys(topicsData).map(key => ({
+        key,
+        label: topicsData[key].label
+    })) : [];
+
+    const handleDownload = async () => {
+        setIsExporting(true);
+        try {
+            const queryParams = new URLSearchParams();
+            if (selectedSubject) queryParams.append('subject', selectedSubject);
+            if (examType) queryParams.append('type', examType);
+            if (startYear) queryParams.append('startYear', startYear);
+            if (endYear) queryParams.append('endYear', endYear);
+
+            const data = await apiService<any[]>(`/admin/export-papers?${queryParams.toString()}`);
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const fileName = `${selectedSubject || 'all'}_${examType}_${startYear || 'start'}_to_${endYear || 'end'}.json`.toLowerCase().replace(/\s+/g, '_');
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error: any) {
+            console.error(`[AdminExport] Paper export failed:`, error);
+            alert(`Export failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    return (
+        <div className="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-xl border border-dashed border-blue-200 dark:border-blue-800/50 mt-8">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Paper Batch Export (Full JSON)
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Subject</label>
+                    <select
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                        value={selectedSubject}
+                        onChange={(e) => setSelectedSubject(e.target.value)}
+                    >
+                        <option value="">All Subjects</option>
+                        {subjects.map(s => <option key={s.key} value={s.label}>{s.label}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Exam Type</label>
+                    <select
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                        value={examType}
+                        onChange={(e) => setExamType(e.target.value)}
+                    >
+                        <option value="UTME">UTME</option>
+                        <option value="WASSCE">WASSCE</option>
+                        <option value="NECO">NECO</option>
+                        <option value="POST-UTME">POST-UTME</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start Year</label>
+                    <input
+                        type="number"
+                        placeholder="e.g. 2000"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                        value={startYear}
+                        onChange={(e) => setStartYear(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End Year</label>
+                    <input
+                        type="number"
+                        placeholder="e.g. 2025"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                        value={endYear}
+                        onChange={(e) => setEndYear(e.target.value)}
+                    />
+                </div>
+            </div>
+            <button
+                onClick={handleDownload}
+                disabled={isExporting}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+                {isExporting ? "Processing Export..." : "Download Papers JSON"}
+            </button>
+            <p className="text-[10px] text-slate-500 mt-3 italic">
+                This will export the complete paper structure including all questions, options, answers, and tags for the selected criteria.
+            </p>
+        </div>
+    );
+};
+
 interface AdminStats {
     users: number;
     papers: number;
@@ -242,8 +349,9 @@ const AdminDashboard: React.FC = () => {
                     <Link to="/admin/guides" className="flex-1 bg-slate-100 dark:bg-slate-700 p-4 rounded-lg font-semibold text-slate-700 dark:text-slate-200 text-center hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Manage Guides</Link>
                 </div>
 
-                <div className="border-t border-slate-100 dark:border-slate-700 pt-8">
+                <div className="border-t border-slate-100 dark:border-slate-700 pt-8 space-y-8">
                     <QuestionExport topicsData={topicsData} />
+                    <PaperExport topicsData={topicsData} />
                 </div>
             </Card>
 
