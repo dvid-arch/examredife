@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card.tsx';
 import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
 import { useAuth } from '../../contexts/AuthContext.tsx';
+import SchemaMarkup from '../../components/SchemaMarkup.tsx';
 
 const GuideIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -13,6 +14,23 @@ const GuideIcon = () => (
 const StudyGuideLibrary: React.FC = () => {
     const { guides, isLoading, fetchGuides } = usePastQuestions();
     const { user } = useAuth();
+
+    // Prepare Schema Data for the entire Library
+    const librarySchema = useMemo(() => ({
+        "name": "ExamRedi Study Guides",
+        "description": "Comprehensive AI-powered study guides for various academic subjects.",
+        "provider": {
+            "@type": "Organization",
+            "name": "ExamRedi",
+            "url": "https://examredi.vercel.app"
+        },
+        "hasPart": guides.map(g => ({
+            "@type": "Course",
+            "name": g.subject,
+            "description": `Comprehensive study guide for ${g.subject}`,
+            "url": `https://examredi.vercel.app/study-guides/${g.id}`
+        }))
+    }), [guides]);
     const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
@@ -32,6 +50,7 @@ const StudyGuideLibrary: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            <SchemaMarkup type="Course" data={librarySchema} />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Study Library</h1>

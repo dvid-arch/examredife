@@ -4,6 +4,8 @@ import Card from '../../components/Card.tsx';
 import { usePastQuestions } from '../../contexts/PastQuestionsContext.tsx';
 import { SUBJECTS, getSubjectKey } from '../../constants/subjects.ts';
 import apiService from '../../services/apiService.ts';
+import SchemaMarkup from '../../components/SchemaMarkup.tsx';
+import { useMemo } from 'react';
 
 interface JambSubjectTopics {
     slug: string;
@@ -52,8 +54,25 @@ const SubjectIndex: React.FC = () => {
         : 0;
     const coveragePct = jambTotal > 0 ? Math.round((jambCovered / jambTotal) * 100) : 0;
 
+    const subjectSchema = useMemo(() => ({
+        "name": `${subjectName} Study Guide`,
+        "description": `Comprehensive study material and topics for ${subjectName}.`,
+        "provider": {
+            "@type": "Organization",
+            "name": "ExamRedi",
+            "url": "https://examredi.vercel.app"
+        },
+        "hasPart": topics.map(t => ({
+            "@type": "Course",
+            "name": t.title,
+            "description": t.description,
+            "url": `https://examredi.vercel.app/study-guides/${category}/${t.id}`
+        }))
+    }), [subjectName, topics, category]);
+
     return (
         <div className="space-y-6">
+            <SchemaMarkup type="Course" data={subjectSchema} />
             <div className="flex items-center gap-4 mb-2">
                 <button
                     onClick={() => navigate('/study-guides')}

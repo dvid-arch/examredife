@@ -5,6 +5,7 @@ import { PastPaper } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import useSEO from '../hooks/useSEO.ts';
+import SchemaMarkup from '../components/SchemaMarkup.tsx';
 
 
 const Quizzes: React.FC = () => {
@@ -16,7 +17,20 @@ const Quizzes: React.FC = () => {
         title: "Practice Questions",
         description: "Interactive practice tests and past questions for ExamRedi."
     });
+
     const { papers: allPapers, isLoading, fetchPapers } = usePastQuestions();
+
+    // Prepare Schema Data
+    const quizSchemaData = useMemo(() => ({
+        "name": "ExamRedi Practice Questions",
+        "description": "Interactive practice tests and past questions for UTME, WASSCE, and other Nigerian exams.",
+        "educationalAlignment": [
+            { "@type": "AlignmentObject", "educationalFramework": "JAMB UTME", "targetName": "University Tertiary Matriculation Examination" },
+            { "@type": "AlignmentObject", "educationalFramework": "WAEC WASSCE", "targetName": "West African Senior School Certificate Examination" }
+        ],
+        "interactivityType": "active",
+        "learningResourceType": "Assessment"
+    }), []);
     const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>((tab === 'custom') ? 'custom' : 'standard');
 
     useEffect(() => {
@@ -257,6 +271,7 @@ const Quizzes: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            <SchemaMarkup type="Quiz" data={quizSchemaData} />
             <Card>
                 <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Practice For UTME</h1>
                 <p className="text-slate-600 dark:text-slate-400 mt-2">Choose your practice mode. Take a standard exam simulation or create a custom quiz tailored to your needs.</p>

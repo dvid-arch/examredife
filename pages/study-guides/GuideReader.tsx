@@ -4,12 +4,17 @@ import MarkdownRenderer from '../../components/MarkdownRenderer.tsx';
 import apiService from '../../services/apiService.ts';
 import { StudyGuide, Topic, ConfidenceLevel } from '../../types.ts';
 import { useUserProgress } from '../../contexts/UserProgressContext.tsx';
+import { useAuth } from '../../contexts/AuthContext.tsx';
+import useSEO from '../../hooks/useSEO.ts';
+import SchemaMarkup from '../../components/SchemaMarkup.tsx';
+import { useMemo } from 'react';
 
 const GuideReader: React.FC = () => {
     const { category, slug } = useParams<{ category: string, slug: string }>();
     const location = useLocation();
     const navigate = useNavigate();
     const { addActivity, studyProgress, updateConfidence, calculateTopicStatus } = useUserProgress();
+    const { user } = useAuth();
 
     // State management for flat data
     const [allTopics, setAllTopics] = useState<Topic[]>([]);
@@ -18,6 +23,36 @@ const GuideReader: React.FC = () => {
     const [isLoading, setIsLoading] = useState(!topic);
     const [toc, setToc] = useState<{ id: string; text: string; level: number }[]>([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    useSEO({
+        title: topic?.title || "Study Guide",
+        description: topic?.description || `Master ${topic?.title || 'this topic'} with ExamRedi study guides.`
+    });
+
+    // Prepare Article Schema for the specific topic
+    const topicSchema = useMemo(() => {
+        if (!topic) return null;
+        return {
+            "headline": topic.title,
+            "description": topic.description,
+            "author": {
+                "@type": "Organization",
+                "name": "ExamRedi"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "ExamRedi",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://examredi.vercel.app/logo.png"
+                }
+            },
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": `https://examredi.vercel.app/study-guides/${category}/${topic.id}`
+            }
+        };
+    }, [topic, category]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -87,11 +122,20 @@ const GuideReader: React.FC = () => {
     if (isLoading) return <div className="p-12 text-center text-slate-500 font-medium">Loading lesson...</div>;
     if (!topic) return <div className="p-12 text-center text-red-500 font-bold">Topic not found.</div>;
 
-    const contentToRender = topic.content || `# ${topic.title}\n\n${topic.description || '*No detailed description available yet.*'}`;
+    const isGuest = !user;
+    const fullContent = topic.content || `# ${topic.title}\n\n${topic.description || '*No detailed description available yet.*'}`;
+
+    // For SEO & Guest Preview: Show first 500 characters + a CTA
+    const contentToRender = isGuest
+        ? fullContent.slice(0, 500) + "..."
+        : fullContent;
 
     // Determine next step (next topic in the subject list)
     const currentIndex = allTopics.findIndex(t => t.id === topic.id);
     const nextTopic = (currentIndex !== -1 && currentIndex < allTopics.length - 1) ? allTopics[currentIndex + 1] : null;
+
+    // Determine if next button should be shown (guests only see one topic)
+    const showNext = !isGuest && nextTopic;
 
     return (
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 pb-10 sm:pb-20 px-2 sm:px-4 lg:px-0 relative">
@@ -169,6 +213,7 @@ const GuideReader: React.FC = () => {
 
             {/* Main Content */}
             <div className="flex-1 min-w-0 flex flex-col space-y-4 sm:space-y-6">
+                {topicSchema && <SchemaMarkup type="Article" data={topicSchema} />}
 
                 {/* Header Actions */}
                 <div className="flex justify-between items-center bg-white/80 backdrop-blur-md dark:bg-slate-900/80 p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-800 sticky top-2 z-30 lg:relative lg:top-0 lg:z-auto lg:bg-transparent lg:shadow-none lg:border-none lg:p-0">
@@ -221,7 +266,7 @@ const GuideReader: React.FC = () => {
                     <div className="p-4 sm:p-6 lg:p-8 prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary border-b border-slate-100 dark:border-slate-800 prose-img:rounded-3xl prose-img:shadow-lg prose-p:leading-relaxed sm:prose-p:leading-loose text-[15px] sm:text-base">
                         <MarkdownRenderer
                             content={contentToRender.trim()}
-                            inlineQuestions={topic.inlineQuestions}
+                            inlineQuestions={isGuest ? [] : topic.inlineQuestions}
                             onCheckpointResult={(isCorrect) => {
                                 if (isCorrect) {
                                     addActivity({
@@ -238,6 +283,32 @@ const GuideReader: React.FC = () => {
                                 }
                             }}
                         />
+
+                        {isGuest && (
+                            <div className="mt-8 p-8 rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-2 border-primary/20 backdrop-blur-sm relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+                                <div className="relative z-10 text-center space-y-4">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary text-white rounded-2xl shadow-xl shadow-primary/30 mb-2 rotate-3 group-hover:rotate-0 transition-transform">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-2xl font-black text-slate-800 dark:text-white">Master this topic with AI</h3>
+                                    <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto font-medium">
+                                        You're reading a public preview. Sign up to unlock full guides, interactive AI explanations, and practice questions.
+                                    </p>
+                                    <div className="pt-4">
+                                        <button
+                                            onClick={() => navigate('/auth')}
+                                            className="px-8 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/40 hover:scale-105 active:scale-95 transition-all text-lg"
+                                        >
+                                            Get Full Access
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500">Free to start • No credit card required</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {topic.videos && topic.videos.length > 0 && (
@@ -342,23 +413,27 @@ const GuideReader: React.FC = () => {
                     <div className="m-4 sm:m-6 lg:m-8 p-4 sm:p-6 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center xl:flex-row xl:items-start justify-between gap-6">
                         <div className="text-center xl:text-left">
                             <h3 className="text-lg font-black text-slate-800 dark:text-white">
-                                {nextTopic ? 'Next Topic' : 'You\'ve reached the end!'}
+                                {showNext ? 'Next Topic' : 'Ready for more?'}
                             </h3>
                             <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                                {nextTopic
+                                {showNext
                                     ? `Up next: ${nextTopic.title}`
-                                    : `You've completed all JAMB topics for ${subjectName}.`}
+                                    : isGuest
+                                        ? "Sign up to access all topics and AI help."
+                                        : `You've completed all JAMB topics for ${subjectName}.`}
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full xl:w-auto">
-                            <Link
-                                to={`/practice/topic/${category}/${topic.id}`}
-                                className="flex-1 sm:flex-initial bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:scale-105 active:scale-95 transition-all text-sm text-center"
-                            >
-                                Practice this Topic
-                            </Link>
+                            {!isGuest && (
+                                <Link
+                                    to={`/practice/topic/${category}/${topic.id}`}
+                                    className="flex-1 sm:flex-initial bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:scale-105 active:scale-95 transition-all text-sm text-center"
+                                >
+                                    Practice this Topic
+                                </Link>
+                            )}
 
-                            {nextTopic ? (
+                            {showNext ? (
                                 <Link
                                     to={`/study-guides/${category}/${nextTopic.id}`}
                                     className="flex-1 sm:flex-initial bg-primary text-white font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:bg-accent hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 text-sm text-center"
@@ -367,10 +442,10 @@ const GuideReader: React.FC = () => {
                                 </Link>
                             ) : (
                                 <Link
-                                    to={`/practice/topic/${category}/${topic.id}`}
+                                    to={isGuest ? "/auth" : `/practice/topic/${category}/${topic.id}`}
                                     className="flex-1 sm:flex-initial bg-primary text-white font-black py-3 sm:py-4 px-6 sm:px-8 rounded-2xl hover:bg-accent hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 text-sm text-center"
                                 >
-                                    Take Final Mastery Quiz
+                                    {isGuest ? "Sign Up Now" : "Take Final Mastery Quiz"}
                                 </Link>
                             )}
                         </div>
