@@ -3,6 +3,7 @@ import Card from '../components/Card.tsx';
 import { sendMessageToAI } from '../services/aiService.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import useSEO from '../hooks/useSEO.ts';
+import SpeechButton from '../components/SpeechButton.tsx';
 
 const Dictionary: React.FC = () => {
     useSEO({
@@ -68,7 +69,10 @@ const Dictionary: React.FC = () => {
                             </div>
                         ) : (
                             <div className="prose dark:prose-invert max-w-none">
-                                <h2 className="text-2xl font-bold text-primary mb-4 capitalize">{word}</h2>
+                                <div className="flex items-center justify-between gap-4 mb-4">
+                                    <h2 className="text-2xl font-bold text-primary capitalize">{word}</h2>
+                                    <SpeechButton text={`${word}. ${definition}`} size="sm" variant="ghost" className="bg-slate-50 dark:bg-slate-800/50" />
+                                </div>
                                 <MarkdownRenderer content={definition} />
                             </div>
                         )}

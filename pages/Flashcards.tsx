@@ -9,6 +9,7 @@ import { Flashcard as FlashcardType, FlashcardDeck } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import useSEO from '../hooks/useSEO.ts';
 import apiService from '../services/apiService.ts';
+import SpeechButton from '../components/SpeechButton.tsx';
 
 // --- ICONS ---
 const PlusIcon = () => (
@@ -184,11 +185,10 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
                 </div>
             </div>
 
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto relative group">
                 <div
                     onClick={handleFlip}
                     className={`w-full aspect-video rounded-2xl p-4 flex items-center justify-center text-center shadow-lg transition-transform duration-500 cursor-pointer select-none ${isFlipped ? 'bg-primary-light dark:bg-primary/20 [transform:rotateY(180deg)]' : 'bg-white dark:bg-slate-700 [transform:rotateY(0deg)]'}`}
-                    // FIX: Corrected the typo in 'transformStyle' from 'preserve-d' to 'preserve-3d' for the card flip animation.
                     style={{ transformStyle: 'preserve-3d' }}
                 >
                     <div className={`transition-opacity duration-300 ${isFlipped ? 'opacity-0' : 'opacity-100'}`} style={{ backfaceVisibility: 'hidden', transform: 'rotateY(0deg)' }}>
@@ -197,6 +197,17 @@ const StudySession: React.FC<StudySessionProps> = ({ deck, onFinish }) => {
                     <div className={`absolute top-0 left-0 w-full h-full p-4 flex items-center justify-center opacity-0 transition-opacity duration-300 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                         <p className="text-xl md:text-2xl text-slate-700 dark:text-slate-200">{currentCard.back}</p>
                     </div>
+                </div>
+
+                {/* Speech Button positioned overlay */}
+                <div className="absolute top-4 right-4 z-10">
+                    <SpeechButton
+                        text={isFlipped ? currentCard.back : currentCard.front}
+                        size="sm"
+                        variant="secondary"
+                        showText={false}
+                        className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
                 </div>
             </div>
 

@@ -7,6 +7,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import useSEO from '../hooks/useSEO.ts';
 import UserAvatar from '../components/UserAvatar.tsx';
+import SpeechButton from '../components/SpeechButton.tsx';
 
 // --- ICONS ---
 const ChatIcon = () => (
@@ -342,7 +343,12 @@ const ExamWithAI: React.FC = () => {
                                 : 'bg-gradient-to-br from-white via-purple-50/50 to-blue-50/50 dark:from-slate-800 dark:via-slate-700/80 dark:to-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-md border border-purple-200/30 dark:border-purple-800/30 backdrop-blur-sm'
                                 }`}>
                                 {msg.role === 'model' ? (
-                                    <MarkdownRenderer content={msg.text} />
+                                    <>
+                                        <MarkdownRenderer content={msg.text} />
+                                        <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-700 flex justify-end">
+                                            <SpeechButton text={msg.text} size="sm" variant="ghost" className="opacity-70 hover:opacity-100" />
+                                        </div>
+                                    </>
                                 ) : (
                                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                                 )}

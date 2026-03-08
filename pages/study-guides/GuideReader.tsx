@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext.tsx';
 import useSEO from '../../hooks/useSEO.ts';
 import SchemaMarkup from '../../components/SchemaMarkup.tsx';
 import { useMemo } from 'react';
+import SpeechButton from '../../components/SpeechButton.tsx';
 
 const GuideReader: React.FC = () => {
     const { category, slug } = useParams<{ category: string, slug: string }>();
@@ -246,9 +247,18 @@ const GuideReader: React.FC = () => {
 
                 <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[32px] shadow-xl sm:shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
                     <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/30 dark:to-slate-900">
-                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white mb-3 sm:mb-4 leading-tight tracking-tight">
-                            {topic.title}
-                        </h1>
+                        <div className="flex items-center justify-between gap-4 mb-3 sm:mb-4">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white leading-tight tracking-tight">
+                                {topic.title}
+                            </h1>
+                            <SpeechButton
+                                text={fullContent}
+                                variant="ghost"
+                                size="sm"
+                                showText={false}
+                                className="bg-white/50 dark:bg-slate-800/50"
+                            />
+                        </div>
                         <div className="flex flex-wrap items-center gap-4 text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
                             <span className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-md">
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
@@ -358,10 +368,22 @@ const GuideReader: React.FC = () => {
 
                     <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
                         <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[24px] p-5 sm:p-8 shadow-sm">
-                            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                                <div className="text-center sm:text-left">
-                                    <h3 className="text-xl font-black text-slate-800 dark:text-white mb-1">How's your confidence?</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Be honest! We use this to help you focus on your weak areas.</p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                                <div className="min-w-0">
+                                    <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-3">
+                                        {subjectName}
+                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tight">
+                                            {topic.title}
+                                        </h1>
+                                        <SpeechButton
+                                            text={fullContent}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="mt-1"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {[

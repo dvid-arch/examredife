@@ -1,6 +1,7 @@
 import React from 'react';
 import MarkdownRenderer from './MarkdownRenderer.tsx';
 import { PastQuestion } from '../types.ts';
+import SpeechButton from './SpeechButton.tsx';
 
 interface QuestionRendererProps {
   question: PastQuestion;
@@ -14,6 +15,18 @@ interface QuestionRendererProps {
 
 const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionContent, className = '', imageClassName = '', forceLightMode = false, renderOptions = true, correctAnswer }) => {
   const content = questionContent || question?.question || '';
+
+  // Prepare text for reading: Question + Options
+  const getSpeechText = () => {
+    let text = content;
+    if (renderOptions && question.options) {
+      text += '. Options are: ';
+      text += Object.entries(question.options)
+        .map(([key, opt]) => `${key}: ${opt.text}`)
+        .join('. ');
+    }
+    return text;
+  };
   const hasPlaceholder = content.includes('[IMAGE]');
   const hasDiagram = !!question.questionDiagram;
 
@@ -21,6 +34,9 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
     const parts = content.split('[IMAGE]');
     return (
       <div className={className}>
+        <div className="mb-2">
+          <SpeechButton text={getSpeechText()} size="sm" variant="ghost" showText={false} className="bg-slate-50 dark:bg-slate-800/50" />
+        </div>
         {parts.map((part, index) => (
           <React.Fragment key={index}>
             <MarkdownRenderer content={part} forceLightMode={forceLightMode} />
@@ -38,6 +54,9 @@ const QuestionRenderer: React.FC<QuestionRendererProps> = ({ question, questionC
   // Fallback to original behavior
   return (
     <div className={className}>
+      <div className="mb-2">
+        <SpeechButton text={getSpeechText()} size="sm" variant="ghost" showText={false} className="bg-slate-50 dark:bg-slate-800/50" />
+      </div>
       {content ? (
         <MarkdownRenderer content={content} forceLightMode={forceLightMode} />
       ) : (
