@@ -126,6 +126,7 @@ export interface ChallengeQuestion extends PastQuestion {
 export interface User {
   name: string;
   subscription: 'free' | 'pro';
+  photoURL?: string;
   aiCredits: number;
   dailyMessageCount: number;
   lastMessageDate: string; // YYYY-MM-DD format

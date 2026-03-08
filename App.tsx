@@ -18,6 +18,7 @@ import { ToastProvider } from './contexts/ToastContext.tsx';
 import { PastQuestionsProvider } from './contexts/PastQuestionsContext.tsx';
 import { EngagementProvider } from './contexts/EngagementContext.tsx';
 import SmartNudge from './components/SmartNudge.tsx';
+import { useVisualViewport } from './hooks/useVisualViewport.ts';
 
 // Pages - Lazy load all pages for faster initial load
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'));
@@ -93,7 +94,7 @@ const RootLayout: React.FC = () => {
 // --- Main Layout for the entire app ---
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
+  const viewportHeight = useVisualViewport();
   const location = useLocation();
 
   // Close sidebar when navigating to a new page or using back button
@@ -119,7 +120,10 @@ const MainLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-screen h-[100dvh] bg-gray-100 dark:bg-gray-950 font-sans overflow-hidden">
+    <div
+      className="flex flex-row bg-gray-100 dark:bg-gray-950 font-sans overflow-hidden w-full relative"
+      style={{ height: viewportHeight }}
+    >
       <Sidebar
         isOpen={isSidebarOpen}
         onNavigate={() => setIsSidebarOpen(false)}

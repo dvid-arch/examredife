@@ -10,6 +10,7 @@ import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import { useEngagement } from '../contexts/EngagementContext.tsx';
 import { evaluateNudgeTrigger, NUDGE_REGISTRY } from '../constants/engagementRules.ts';
 import QuizResults from '../components/QuizResults.tsx';
+import { useVisualViewport } from '../hooks/useVisualViewport.ts';
 
 import apiService from '../services/apiService.ts';
 import QuestionNavigation from '../components/QuestionNavigation.tsx';
@@ -84,6 +85,7 @@ const TakeExamination: React.FC = () => {
     const { isAuthenticated, user, requestLogin } = useAuth();
     const { showInstallBanner } = usePwaInstall();
     const { addActivity } = useUserProgress();
+    const viewportHeight = useVisualViewport();
 
     // Validate that the route was accessed properly with required state
     const validatePracticeState = useCallback((state: any) => {
@@ -717,7 +719,10 @@ const TakeExamination: React.FC = () => {
     }
 
     return (
-        <div className="relative flex flex-col h-screen h-[100dvh] bg-gray-50 font-sans text-gray-900 overflow-hidden">
+        <div
+            className="relative flex flex-col bg-gray-50 font-sans text-gray-900 overflow-hidden w-full"
+            style={{ height: viewportHeight }}
+        >
             <header className="bg-white text-gray-800 px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20 gap-2 h-16 sm:h-20">
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-light flex-shrink-0 flex items-center justify-center text-primary font-bold text-sm sm:text-base">

@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import ThemeToggle from './ThemeToggle.tsx';
 import OfflineIndicator from './OfflineIndicator.tsx';
+import UserAvatar from './UserAvatar.tsx';
 
 const Logo = () => (
     <div className="flex items-center px-1 select-none">
@@ -169,11 +170,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                                     </button>
                                 )}
                                 <div className="relative" ref={dropdownRef}>
-                                    <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
-                                        <img
-                                            src="https://picsum.photos/40"
-                                            alt="profile"
-                                            className="w-9 h-9 rounded-full object-cover"
+                                    <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center space-x-2 cursor-pointer p-1 sm:p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700">
+                                        <UserAvatar
+                                            name={user.name}
+                                            photoURL={user.photoURL}
+                                            size="sm"
                                         />
                                         <div className="hidden md:block text-left">
                                             <span className="font-semibold text-sm text-gray-700 dark:text-slate-50">{user.name}</span>

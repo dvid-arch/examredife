@@ -4,6 +4,7 @@ import { NAV_ITEMS, LogoutIcon, InstallAppIcon } from '../constants.tsx';
 import { NavItemType } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
+import UserAvatar from './UserAvatar.tsx';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -114,6 +115,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onNavigate }) => {
                         </div>
                     ) : isAuthenticated && user ? (
                         <>
+                            <div className="px-2 mb-2">
+                                <Link to="/profile" onClick={onNavigate || onClose} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors border border-gray-100 dark:border-slate-800">
+                                    <UserAvatar name={user.name} photoURL={user.photoURL} size="sm" />
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{user.name}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user.subscription} Plan</p>
+                                    </div>
+                                </Link>
+                            </div>
                             {user.subscription === 'free' ? (
                                 <button onClick={handleUpgradeClick} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-200">
                                     Upgrade to Pro
