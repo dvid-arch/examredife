@@ -143,6 +143,7 @@ const Dashboard: React.FC = () => {
     const { recentActivity, studyProgress, calculateTopicStatus } = useUserProgress();
     const { guides, fetchGuides, isLoading: isGuidesLoading } = usePastQuestions();
     const [showTour, setShowTour] = useState(false);
+    const needsSubjectSelection = isAuthenticated && (!user?.preferredSubjects || user.preferredSubjects.length < 4);
 
     // State for calculated weak areas
     const [weakAreas, setWeakAreas] = useState<{ id: string, title: string, subject: string, link: string }[]>([]);
@@ -270,8 +271,6 @@ const Dashboard: React.FC = () => {
         ];
 
     if (isAuthLoading) return <DashboardSkeleton />;
-
-    const needsSubjectSelection = isAuthenticated && (!user?.preferredSubjects || user.preferredSubjects.length < 4);
 
     const handleSaveSubjects = async (subjects: string[]) => {
         if (updateUser) {
