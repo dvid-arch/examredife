@@ -216,7 +216,7 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         const tourCompleted = localStorage.getItem('examRediOnboardingCompleted');
-        if (isAuthenticated && tourCompleted !== 'true') {
+        if (isAuthenticated && tourCompleted !== 'true' && !needsSubjectSelection) {
             const timer = setTimeout(() => {
                 if (window.innerWidth >= 768) { // Only show on desktop
                     setShowTour(true);
@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
             }, 500);
             return () => clearTimeout(timer);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, needsSubjectSelection]);
 
     const handleTourComplete = () => {
         localStorage.setItem('examRediOnboardingCompleted', 'true');
