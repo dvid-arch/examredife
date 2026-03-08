@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import { Flashcard as FlashcardType, FlashcardDeck } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 import apiService from '../services/apiService.ts';
 
 // --- ICONS ---
@@ -350,6 +351,11 @@ const Flashcards: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isReminderModalVisible, setReminderModalVisible] = useState(false);
     const { isAuthenticated, user, requestLogin } = useAuth();
+
+    useSEO({
+        title: "Flashcards",
+        description: "Master key concepts with digital flashcards for UTME and WASSCE on ExamRedi."
+    });
 
     // --- FETCH DECKS ---
     useEffect(() => {

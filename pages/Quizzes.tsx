@@ -4,12 +4,18 @@ import Card from '../components/Card.tsx';
 import { PastPaper } from '../types.ts';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 
 
 const Quizzes: React.FC = () => {
     const navigate = useNavigate();
     const { tab } = useParams<{ tab: string }>();
     const { user } = useAuth();
+
+    useSEO({
+        title: "Practice Questions",
+        description: "Interactive practice tests and past questions for ExamRedi."
+    });
     const { papers: allPapers, isLoading, fetchPapers } = usePastQuestions();
     const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>((tab === 'custom') ? 'custom' : 'standard');
 

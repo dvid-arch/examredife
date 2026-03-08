@@ -5,6 +5,7 @@ import { ChatMessage } from '../types.ts';
 import Card from '../components/Card.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 
 // --- ICONS ---
 const ChatIcon = () => (
@@ -99,6 +100,11 @@ const ExamWithAI: React.FC = () => {
     const [topic, setTopic] = useState('');
     const [showPrompts, setShowPrompts] = useState(false);
     const { isAuthenticated, requestLogin, incrementMessageCount, requestUpgrade, user } = useAuth();
+
+    useSEO({
+        title: "AI Study Buddy",
+        description: "Get instant help and personalized explanations from our AI Buddy on ExamRedi."
+    });
 
     // Load chat history from localStorage on initial render
     useEffect(() => {

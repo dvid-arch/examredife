@@ -3,9 +3,15 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import useSEO from '../hooks/useSEO.ts';
 
 const Journey: React.FC = () => {
     const { recentActivity } = useUserProgress();
+
+    useSEO({
+        title: "My Learning Journey",
+        description: "Track your study progress and activities on ExamRedi."
+    });
     const [filter, setFilter] = useState<'all' | 'quiz' | 'guide' | 'game'>('all');
 
     const filteredActivity = useMemo(() => {

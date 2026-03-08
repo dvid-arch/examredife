@@ -5,6 +5,7 @@ import { researchTopic } from '../services/aiService.ts';
 import { CareerIcon } from '../constants.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 
 const Spinner = () => (
     <div className="flex justify-center items-center py-10">
@@ -14,6 +15,11 @@ const Spinner = () => (
 
 const CareerInstitutions: React.FC = () => {
     const { isAuthenticated, user, requestLogin, requestUpgrade, useAiCredit } = useAuth();
+
+    useSEO({
+        title: "Career & Institutions",
+        description: "Research Nigerian universities and explore career paths on ExamRedi."
+    });
     const [searchType, setSearchType] = useState<'university' | 'course'>('university');
     const [query, setQuery] = useState('');
     const [result, setResult] = useState('');
@@ -42,9 +48,9 @@ const CareerInstitutions: React.FC = () => {
             });
             return;
         }
-        
+
         if (user.aiCredits <= 0) {
-             requestUpgrade({
+            requestUpgrade({
                 title: "You're out of AI Credits",
                 message: "You've used all your AI Credits for this month. Your credits will reset on your next billing cycle.",
                 featureList: [
@@ -77,10 +83,10 @@ const CareerInstitutions: React.FC = () => {
         }
     };
 
-    const placeholderText = searchType === 'university' 
-        ? "e.g., University of Lagos" 
+    const placeholderText = searchType === 'university'
+        ? "e.g., University of Lagos"
         : "e.g., Computer Science";
-    
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             {/* Left Column: Search Controls */}
@@ -88,7 +94,7 @@ const CareerInstitutions: React.FC = () => {
                 <Card>
                     <div className="p-2">
                         <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Research Center</h1>
-                        
+
                         <div className="flex border border-gray-200 dark:border-slate-700 rounded-lg p-1 mb-4 bg-gray-50 dark:bg-gray-800">
                             <button
                                 onClick={() => setSearchType('university')}
@@ -103,7 +109,7 @@ const CareerInstitutions: React.FC = () => {
                                 Course
                             </button>
                         </div>
-                        
+
                         <form onSubmit={handleSearch} className="space-y-4">
                             <div>
                                 <label htmlFor="searchQuery" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 capitalize">{searchType} Name</label>
@@ -137,9 +143,9 @@ const CareerInstitutions: React.FC = () => {
                 <Card>
                     <div className="p-4 min-h-[60vh]">
                         {!hasSearched ? (
-                             <div className="flex flex-col items-center justify-center h-full text-center">
+                            <div className="flex flex-col items-center justify-center h-full text-center">
                                 <div className="bg-primary-light text-primary rounded-full p-4 inline-block mb-6">
-                                   <CareerIcon/>
+                                    <CareerIcon />
                                 </div>
                                 <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Explore Your Future</h2>
                                 <p className="text-slate-600 dark:text-slate-300 max-w-md">

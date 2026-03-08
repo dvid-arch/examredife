@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import Card from '../components/Card.tsx';
 import { sendMessageToAI } from '../services/aiService.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import useSEO from '../hooks/useSEO.ts';
 
 const Dictionary: React.FC = () => {
+    useSEO({
+        title: "Academic Dictionary",
+        description: "Look up academic terms and concepts in our smart dictionary on ExamRedi."
+    });
     const [word, setWord] = useState('');
     const [definition, setDefinition] = useState('');
     const [isLoading, setIsLoading] = useState(false);

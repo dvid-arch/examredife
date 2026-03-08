@@ -8,6 +8,7 @@ import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import { useUserProgress } from '../contexts/UserProgressContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 
 import apiService from '../services/apiService.ts';
 
@@ -58,6 +59,11 @@ const UtmeChallenge: React.FC = () => {
     const [gameState, setGameState] = useState<GameState>(
         (searchParams.get('step') as GameState) || 'lobby'
     );
+
+    useSEO({
+        title: "UTME Challenge",
+        description: "Compete with others in a simulated UTME environment on the national leaderboard."
+    });
     const [leaderboard, setLeaderboard] = useState<LeaderboardScore[]>([]);
     const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);

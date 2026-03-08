@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
 import apiService from '../services/apiService.ts';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
+import useSEO from '../hooks/useSEO.ts';
 
 interface LiteratureBook {
     id: string;
@@ -15,6 +16,11 @@ interface LiteratureBook {
 
 const Literature: React.FC = () => {
     const navigate = useNavigate();
+
+    useSEO({
+        title: "Literature Texts",
+        description: "Study summaries and themes of recommended literature books on ExamRedi."
+    });
     const [books, setBooks] = useState<LiteratureBook[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedBook, setSelectedBook] = useState<LiteratureBook | null>(null);

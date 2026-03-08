@@ -9,11 +9,17 @@ import { OverviewTab } from '../components/performance/OverviewTab.tsx';
 import { MasteryTab } from '../components/performance/MasteryTab.tsx';
 import { HistoryTab } from '../components/performance/HistoryTab.tsx';
 import { SUBJECTS, isSubject, getSubjectKey } from '../constants/subjects.ts';
+import useSEO from '../hooks/useSEO.ts';
 
 type TabType = 'overview' | 'mastery' | 'history';
 
 const Performance: React.FC = () => {
     const { isAuthenticated, user, requestLogin, requestUpgrade, isLoading } = useAuth();
+
+    useSEO({
+        title: "My Performance",
+        description: "Detailed analytics and mastery breakdown of your study progress on ExamRedi."
+    });
     const { streakHistory, streak } = useUserProgress();
     const [results, setResults] = useState<any[]>([]);
     const [isDataLoading, setIsDataLoading] = useState(true);

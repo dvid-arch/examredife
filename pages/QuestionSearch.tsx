@@ -4,6 +4,7 @@ import Card from '../components/Card.tsx';
 import QuestionRenderer from '../components/QuestionRenderer.tsx';
 import MarkdownRenderer from '../components/MarkdownRenderer.tsx';
 import { useAuth } from '../contexts/AuthContext.tsx';
+import useSEO from '../hooks/useSEO.ts';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import apiService from '../services/apiService.ts';
 import { StudyGuide, PastPaper, PastQuestion } from '../types.ts';
@@ -40,6 +41,11 @@ const BookOpenIcon = () => (
 const QuestionSearch: React.FC = () => {
     const location = useLocation();
     const { isAuthenticated, requestLogin } = useAuth();
+
+    useSEO({
+        title: "Question Search",
+        description: "Find specific past questions and answers instantly on ExamRedi."
+    });
     const { papers: allPapers, guides: allGuides, isLoading, fetchPapers, fetchGuides } = usePastQuestions();
 
     // UI State
