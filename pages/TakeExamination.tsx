@@ -86,6 +86,7 @@ const TakeExamination: React.FC = () => {
     const { showInstallBanner } = usePwaInstall();
     const { addActivity } = useUserProgress();
     const viewportHeight = useVisualViewport();
+    const examHeight = viewportHeight.height;
 
     // Validate that the route was accessed properly with required state
     const validatePracticeState = useCallback((state: any) => {
@@ -721,7 +722,7 @@ const TakeExamination: React.FC = () => {
     return (
         <div
             className="relative flex flex-col bg-gray-50 font-sans text-gray-900 overflow-hidden w-full"
-            style={{ height: viewportHeight }}
+            style={{ height: examHeight }}
         >
             <header className="bg-white text-gray-800 px-4 py-3 sm:px-6 sm:py-4 flex justify-between items-center shadow-sm flex-shrink-0 z-20 gap-2 h-16 sm:h-20">
                 <div className="flex items-center gap-3 min-w-0">

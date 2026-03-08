@@ -102,7 +102,7 @@ const ExamWithAI: React.FC = () => {
     const [topic, setTopic] = useState('');
     const [showPrompts, setShowPrompts] = useState(false);
     const { isAuthenticated, requestLogin, incrementMessageCount, requestUpgrade, user, useAiCredit } = useAuth();
-    const viewportHeight = useVisualViewport();
+    const { height: viewportHeight, offsetTop: viewportOffsetTop } = useVisualViewport();
 
     // Monitor viewport for mobile keyboard
     useEffect(() => {
@@ -320,8 +320,8 @@ const ExamWithAI: React.FC = () => {
 
     return (
         <div
-            className="fixed inset-x-0 top-0 flex flex-col bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 z-[60] overflow-hidden overscroll-none"
-            style={{ height: viewportHeight }}
+            className="fixed inset-x-0 flex flex-col bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 z-[60] overflow-hidden overscroll-none"
+            style={{ height: viewportHeight, top: `${viewportOffsetTop}px` }}
         >
             {/* Header - Fixed height */}
             <div className="flex-shrink-0 p-4 border-b border-purple-200/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm flex justify-between items-center">

@@ -3,22 +3,32 @@ import { useState, useEffect } from 'react';
 /**
  * Hook to track the visual viewport height, especially useful for mobile keyboards.
  */
+export interface ViewportData {
+    height: string;
+    offsetTop: number;
+}
+
 export const useVisualViewport = () => {
-    const [viewportHeight, setViewportHeight] = useState<string>('100dvh');
+    const [viewport, setViewport] = useState<ViewportData>({
+        height: '100dvh',
+        offsetTop: 0
+    });
 
     useEffect(() => {
-        if (!window.visualViewport) {
-            // Fallback for browsers without visualViewport support
-            return;
-        }
+        if (!window.visualViewport) return;
 
         const handleResize = () => {
             if (window.visualViewport) {
-                setViewportHeight(`${window.visualViewport.height}px`);
+                // Prevent browser from scrolling the layout viewport
+                window.scrollTo(0, 0);
+
+                setViewport({
+                    height: `${window.visualViewport.height}px`,
+                    offsetTop: window.visualViewport.offsetTop
+                });
             }
         };
 
-        // Initial set
         handleResize();
 
         window.visualViewport.addEventListener('resize', handleResize);
@@ -30,7 +40,7 @@ export const useVisualViewport = () => {
         };
     }, []);
 
-    return viewportHeight;
+    return viewport;
 };
 
 export default useVisualViewport;

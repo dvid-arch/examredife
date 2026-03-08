@@ -94,7 +94,7 @@ const RootLayout: React.FC = () => {
 // --- Main Layout for the entire app ---
 const MainLayout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const viewportHeight = useVisualViewport();
+  const { height: viewportHeight } = useVisualViewport();
   const location = useLocation();
 
   // Close sidebar when navigating to a new page or using back button
