@@ -5,6 +5,7 @@ import UpgradeModal, { UpgradeRequest } from '../components/UpgradeModal.tsx';
 import { useToasts } from './ToastContext.tsx';
 import { User } from '../types.ts';
 import apiService from '../services/apiService.ts';
+import { clearCache } from '../services/db.ts';
 
 // The User type from backend might be slightly different.
 // The backend returns this from /profile
@@ -179,6 +180,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(null);
             setIsAuthenticated(false);
 
+            // Clear data caches on session expiry to ensure role-based data is fresh on next login
+            clearCache('papers_v3').catch(err => console.error('[Auth] Failed to clear papers cache on expiry:', err));
+            clearCache('guides_v4').catch(err => console.error('[Auth] Failed to clear guides cache on expiry:', err));
+
             // Show toast
             toastError("Your session has expired. Please log in again.");
 
@@ -216,6 +221,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             navigate('/admin/dashboard', { replace: true });
         } else {
             navigate(navigatePath, { replace: true });
+        }
+
+        // Clear paper/guide cache on login to ensure role-based visibility is fresh
+        try {
+            await clearCache('papers_v3');
+            await clearCache('guides_v4');
+            console.log('[Auth] Caches cleared on successful login');
+        } catch (err) {
+            console.error('[Auth] Failed to clear caches on login:', err);
         }
     };
 
@@ -322,6 +336,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.removeItem('refreshToken');
             setIsAuthenticated(false);
             setUser(null);
+
+            // Clear data caches on logout
+            await clearCache('papers_v3');
+            await clearCache('guides_v4');
+            console.log('[Auth] Caches cleared on logout');
+
             navigate('/dashboard', { replace: true });
         }
     };
