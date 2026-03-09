@@ -86,7 +86,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose, request })
                             </p>
                         </div>
                         <a
-                            href={`https://wa.me/2348000000000?text=${encodeURIComponent('Hello, I want to upgrade my ExamRedi account to Pro.')}`}
+                            href={`https://wa.me/2349031608725?text=${encodeURIComponent('Hello, I want to upgrade my ExamRedi account to Pro.')}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-[#25D366] text-white font-bold py-3 px-6 rounded-lg hover:bg-[#128C7E] transition-colors text-lg flex items-center justify-center gap-2"
