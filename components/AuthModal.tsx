@@ -198,7 +198,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                                 autoComplete={view === 'login' ? "username" : "email"}
                             />
                             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-                            {view === 'login' && <p className="text-xs text-slate-500 mt-1 text-center">Hint: Use 'pro@examredi.com' and any password for the Pro account.</p>}
                         </div>
 
                         {view !== 'forgot' && (
