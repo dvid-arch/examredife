@@ -22,11 +22,11 @@ interface UserProgressContextType {
     streak: number;
     streakHistory: string[];
     recentActivity: RecentActivity[];
-    engagement: { dismissedNudges: string[], unlockedNudges: string[] };
+    engagement: { dismissedNudges: string[], unlockedNudges: string[], nudgeDismissalTimes?: Record<string, string> };
     studyProgress: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } };
     addActivity: (activity: Omit<RecentActivity, 'timestamp'>) => void;
     syncProgress: () => Promise<void>;
-    updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[] }) => void;
+    updateEngagementState: (engagement: { dismissedNudges: string[], unlockedNudges: string[], nudgeDismissalTimes?: Record<string, string> }) => void;
     updateConfidence: (topicId: string, confidence: ConfidenceLevel, subject?: string) => Promise<void>;
     calculateTopicStatus: (topicId: string) => ConfidenceLevel | 'stale' | null;
     estimatedScore: number;
@@ -39,7 +39,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [streak, setStreak] = useState(0);
     const [streakHistory, setStreakHistory] = useState<string[]>([]);
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-    const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[] }>({ dismissedNudges: [], unlockedNudges: [] });
+    const [engagement, setEngagement] = useState<{ dismissedNudges: string[], unlockedNudges: string[], nudgeDismissalTimes?: Record<string, string> }>({ dismissedNudges: [], unlockedNudges: [], nudgeDismissalTimes: {} });
     const [studyProgress, setStudyProgress] = useState<{ [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } }>({});
     const [estimatedScore, setEstimatedScore] = useState(150); // Base score
 
@@ -168,7 +168,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         }
         if (savedEngagement) {
             try {
-                setEngagement(JSON.parse(savedEngagement));
+                setEngagement(JSON.parse(savedEngagement) || { dismissedNudges: [], unlockedNudges: [], nudgeDismissalTimes: {} });
             } catch (e) {
                 setEngagement({ dismissedNudges: [], unlockedNudges: [] });
             }
@@ -191,7 +191,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     streak: number,
                     streakHistory?: string[],
                     recentActivity: RecentActivity[],
-                    engagement?: { dismissedNudges: string[], unlockedNudges: string[] },
+                    engagement?: { dismissedNudges: string[], unlockedNudges: string[], nudgeDismissalTimes?: Record<string, string> },
                     studyProgress?: { [key: string]: { confidence: ConfidenceLevel, lastReviewed: string, subject?: string } },
                     estimatedScore?: number
                 }>('/user/progress');
@@ -262,7 +262,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
                     streak: number,
                     streakHistory: string[],
                     recentActivity: RecentActivity[],
-                    engagement: { dismissedNudges: string[], unlockedNudges: string[] },
+                    engagement: { dismissedNudges: string[], unlockedNudges: string[], nudgeDismissalTimes?: Record<string, string> },
                     estimatedScore?: number
                 }>('/user/progress', {
                     method: 'PUT',
@@ -293,7 +293,7 @@ export const UserProgressProvider: React.FC<{ children: ReactNode }> = ({ childr
         localStorage.setItem('examRediLastPractice', Date.now().toString());
     };
 
-    const updateEngagementState = (newEngagement: { dismissedNudges: string[], unlockedNudges: string[] }) => {
+    const updateEngagementState = (newEngagement: { dismissedNudges: string[], unlockedNudges: string[], nudgeDismissalTimes?: Record<string, string> }) => {
         setEngagement(newEngagement);
         localStorage.setItem('examRediEngagement', JSON.stringify(newEngagement));
     };

@@ -247,7 +247,8 @@ const GuideReader: React.FC = () => {
 
                 <div className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[32px] shadow-xl sm:shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800">
                     <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800/30 dark:to-slate-900">
-                        <div className="flex items-center justify-between gap-4 mb-3 sm:mb-4">
+                        {/* Title row */}
+                        <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
                             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white leading-tight tracking-tight">
                                 {topic.title}
                             </h1>
@@ -256,21 +257,65 @@ const GuideReader: React.FC = () => {
                                 variant="ghost"
                                 size="sm"
                                 showText={false}
-                                className="bg-white/50 dark:bg-slate-800/50"
+                                className="shrink-0 mt-1 bg-white/50 dark:bg-slate-800/50"
                             />
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium">
+
+                        {/* Meta badges */}
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-medium mb-5">
                             <span className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-md">
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                                 JAMB Topic
                             </span>
-                            <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2.5 py-1 rounded-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 ~8 min read
                             </span>
                         </div>
+
+                        {/* Confidence buttons */}
+                        {user && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 mr-1">How well do you know this?</span>
+                                {[
+                                    { id: 'lost' as ConfidenceLevel, label: 'Lost', icon: '🔴', selectedClass: 'bg-red-50 dark:bg-red-900/20 border-red-300 text-red-600' },
+                                    { id: 'shaky' as ConfidenceLevel, label: 'Shaky', icon: '🟡', selectedClass: 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 text-amber-600' },
+                                    { id: 'confident' as ConfidenceLevel, label: 'Got It!', icon: '🟢', selectedClass: 'bg-green-50 dark:bg-green-900/20 border-green-300 text-green-600' }
+                                ].map((level) => {
+                                    const currentStatus = calculateTopicStatus(topic.id);
+                                    const isSelected = studyProgress?.[topic.id]?.confidence === level.id;
+                                    const isStale = isSelected && currentStatus === 'stale';
+                                    return (
+                                        <button
+                                            key={level.id}
+                                            onClick={() => updateConfidence(topic.id, level.id)}
+                                            className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all hover:scale-105 active:scale-95 ${isSelected
+                                                    ? isStale
+                                                        ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 text-orange-600 shadow-sm'
+                                                        : `${level.selectedClass} shadow-sm`
+                                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                                                }`}
+                                        >
+                                            <span>{isStale ? '🟠' : level.icon}</span>
+                                            <span>{isStale ? 'Review!' : level.label}</span>
+                                            {isSelected && (
+                                                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-white dark:bg-slate-900 rounded-full border border-current flex items-center justify-center">
+                                                    {isStale ? (
+                                                        <span className="text-[8px] font-bold">!</span>
+                                                    ) : (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                        </svg>
+                                                    )}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div className="p-4 sm:p-6 lg:p-8 prose prose-slate dark:prose-invert max-w-none prose-headings:font-black prose-headings:tracking-tight prose-a:text-primary border-b border-slate-100 dark:border-slate-800 prose-img:rounded-3xl prose-img:shadow-lg prose-p:leading-relaxed sm:prose-p:leading-loose text-[15px] sm:text-base">
@@ -366,71 +411,7 @@ const GuideReader: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
-                        <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[24px] p-5 sm:p-8 shadow-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                                <div className="min-w-0">
-                                    <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-3">
-                                        {subjectName}
-                                    </span>
-                                    <div className="flex items-center gap-3">
-                                        <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tight">
-                                            {topic.title}
-                                        </h1>
-                                        <SpeechButton
-                                            text={fullContent}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="mt-1"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    {[
-                                        { id: 'lost' as ConfidenceLevel, label: 'Lost', icon: '🔴', color: 'bg-red-50 text-red-600 border-red-100 active:bg-red-100' },
-                                        { id: 'shaky' as ConfidenceLevel, label: 'Shaky', icon: '🟡', color: 'bg-amber-50 text-amber-600 border-amber-100 active:bg-amber-100' },
-                                        { id: 'confident' as ConfidenceLevel, label: 'Got It!', icon: '🟢', color: 'bg-green-50 text-green-600 border-green-100 active:bg-green-100' }
-                                    ].map((level) => {
-                                        const currentStatus = calculateTopicStatus(topic.id);
-                                        const isSelected = studyProgress?.[topic.id]?.confidence === level.id;
-                                        const isStale = isSelected && currentStatus === 'stale';
 
-                                        return (
-                                            <button
-                                                key={level.id}
-                                                onClick={() => updateConfidence(topic.id, level.id)}
-                                                className={`group relative flex flex-col items-center gap-1.5 px-5 py-3 rounded-2xl border-2 transition-all hover:scale-105 active:scale-95 ${isSelected
-                                                    ? isStale
-                                                        ? 'bg-orange-50 border-orange-200 text-orange-600' // Stale styling
-                                                        : `${level.color.replace('bg-', 'bg-opacity-100 bg-').replace('text-', 'text-')} border-current shadow-lg`
-                                                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 grayscale'
-                                                    }`}
-                                            >
-                                                <span className={`text-xl transition-transform group-hover:scale-110 ${isSelected ? 'scale-110 grayscale-0' : ''}`}>
-                                                    {isStale ? '🟠' : level.icon}
-                                                </span>
-                                                <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'opacity-100' : 'opacity-60'}`}>
-                                                    {isStale ? 'Review Needed' : level.label}
-                                                </span>
-                                                {isSelected && (
-                                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${isStale ? 'bg-orange-500 text-white' : 'bg-white dark:bg-slate-900 text-current'
-                                                        }`}>
-                                                        {isStale ? (
-                                                            <span className="text-[10px] font-bold">!</span>
-                                                        ) : (
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                            </svg>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <div className="m-4 sm:m-6 lg:m-8 p-4 sm:p-6 rounded-[24px] bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 flex flex-col items-center xl:flex-row xl:items-start justify-between gap-6">
                         <div className="text-center xl:text-left">

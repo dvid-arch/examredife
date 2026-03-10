@@ -22,7 +22,7 @@ export const EngagementProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Server-side cooldown check using nudgeDismissalTimes returned by backend
     const isNudgeOnCooldown = useCallback((nudgeId: string) => {
-        const dismissalTimes = (engagement as any)?.nudgeDismissalTimes;
+        const dismissalTimes = engagement?.nudgeDismissalTimes;
         if (!dismissalTimes) return false;
         const lastDismissed = dismissalTimes[nudgeId];
         if (!lastDismissed) return false;
@@ -83,6 +83,16 @@ export const EngagementProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                     dismissedNudges: [...currentDismissed, nudgeId]
                 });
             }
+        } else {
+            // Optimistically update local state for recurring dismissals to prevent loops
+            const currentTimes = engagement?.nudgeDismissalTimes || {};
+            updateEngagementState({
+                ...engagement,
+                nudgeDismissalTimes: {
+                    ...currentTimes,
+                    [nudgeId]: new Date().toISOString()
+                }
+            });
         }
 
         // Always call backend: it handles recurring (timestamp) and permanent (dismissedNudges) dismissals
