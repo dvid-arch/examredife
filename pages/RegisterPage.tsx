@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Card from '../components/Card.tsx';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface RegisterPageProps {
     onRegister: () => void;
@@ -20,17 +21,21 @@ const Logo = () => (
 );
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister }) => {
+    const { register } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [referralCode, setReferralCode] = useState('');
     const navigate = useNavigate();
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, you would register the user here
-        console.log('Registering with:', { name, email, password });
-        onRegister();
-        navigate('/dashboard', { replace: true });
+        try {
+            await register({ name, email, password, referralCode });
+            navigate('/dashboard', { replace: true });
+        } catch (error: any) {
+            alert(error.message || 'Registration failed');
+        }
     };
 
     return (
@@ -78,6 +83,18 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onRegister }) => {
                                 className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                                 required
                                 autoComplete="new-password"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="referralCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Referral Code (Optional)</label>
+                            <input
+                                id="referralCode"
+                                type="text"
+                                value={referralCode}
+                                onChange={(e) => setReferralCode(e.target.value)}
+                                placeholder="PRO-123"
+                                className="w-full bg-gray-100 dark:bg-slate-700 border-gray-200 dark:border-slate-600 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                autoComplete="off"
                             />
                         </div>
                         <button

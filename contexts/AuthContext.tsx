@@ -280,7 +280,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const register = async (details: AuthDetails) => {
+    const register = async (details: AuthDetails & { referralCode?: string }) => {
         try {
             const data = await apiService('/auth/register', {
                 method: 'POST',

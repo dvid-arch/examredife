@@ -121,11 +121,15 @@ export interface LeaderboardScore {
 
 export interface ChallengeQuestion extends PastQuestion {
   subject: string;
+  year: number;
+  exam: string;
 }
 
 export interface User {
   name: string;
   subscription: 'free' | 'pro';
+  subscriptionExpiry?: string;
+  referralCode?: string;
   photoURL?: string;
   aiCredits: number;
   dailyMessageCount: number;

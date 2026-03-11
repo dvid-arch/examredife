@@ -1,7 +1,8 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Card from './Card.tsx';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext.tsx';
 
 interface QuizResultsProps {
     finalScore: number;
@@ -18,6 +19,8 @@ const QuizResults: React.FC<QuizResultsProps> = ({
     isAuthenticated,
     requestLogin
 }) => {
+    const { user } = useAuth();
+    const isPro = user?.subscription === 'pro' || user?.role === 'admin';
     const percentage = Math.round((finalScore / totalQuestions) * 100);
 
     const feedback = useMemo(() => {
@@ -105,11 +108,17 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                         className="lg:col-span-3 space-y-4"
                     >
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white px-1">Detailed Breakdown</h3>
-                        <div className="grid grid-cols-1 gap-4">
-                            {Object.entries(topicBreakdown).map(([topic, stats]) => {
+                        <div className="grid grid-cols-1 gap-4 relative">
+                            {Object.entries(topicBreakdown).sort((a, b) => (b[1].correct / b[1].total) - (a[1].correct / a[1].total)).map(([topic, stats], index) => {
                                 const acc = Math.round((stats.correct / stats.total) * 100);
+                                const isBestTopic = index === 0;
+                                const isBlurred = !isPro && !isBestTopic && Object.keys(topicBreakdown).length > 1;
+
                                 return (
-                                    <Card key={topic} className="p-5 border-slate-100 dark:border-slate-800">
+                                    <Card
+                                        key={topic}
+                                        className={`p-5 border-slate-100 dark:border-slate-800 transition-all ${isBlurred ? 'opacity-40 blur-[2px] pointer-events-none' : ''}`}
+                                    >
                                         <div className="flex justify-between items-center mb-3">
                                             <span className="font-bold text-slate-700 dark:text-slate-200 capitalize">{topic}</span>
                                             <span className={`font-black ${acc >= 80 ? 'text-green-500' : acc >= 50 ? 'text-primary' : 'text-orange-500'}`}>
@@ -126,6 +135,23 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                                     </Card>
                                 );
                             })}
+
+                            {!isPro && Object.keys(topicBreakdown).length > 1 && (
+                                <div className="absolute inset-0 top-[120px] bg-gradient-to-t from-slate-50 dark:from-slate-950 via-transparent to-transparent flex items-center justify-center p-8">
+                                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-primary/20 text-center max-w-xs transform translate-y-12">
+                                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <h4 className="font-bold text-slate-800 dark:text-white mb-2">Unlock Topic Breakdown</h4>
+                                        <p className="text-xs text-slate-500 mb-4">Upgrade to Pro to identify exactly where you are failing and get AI study hacks for those topics.</p>
+                                        <Link to="/settings" className="block w-full bg-primary text-white font-bold py-2 rounded-lg text-sm hover:opacity-90 transition-all">
+                                            Upgrade Now
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
 

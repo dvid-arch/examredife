@@ -307,16 +307,36 @@ const Dashboard: React.FC = () => {
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                         Based on your activity, we recommend reviewing these topics:
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {weakAreas.map(area => (
-                            <Link key={area.id} to={area.link} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2 group">
-                                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider group-hover:text-primary transition-colors">{area.subject}</span>
-                                <h4 className="font-bold text-slate-800 dark:text-white leading-tight">{area.title}</h4>
-                                <div className="mt-auto pt-2 text-xs font-bold text-orange-500 flex items-center gap-1">
-                                    Review Now <span>→</span>
-                                </div>
-                            </Link>
-                        ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative">
+                        {weakAreas.map((area, idx) => {
+                            const isPro = user?.subscription === 'pro' || user?.role === 'admin';
+                            const isBlurred = !isPro && idx > 0;
+
+                            return (
+                                <Link
+                                    key={area.id}
+                                    to={isBlurred ? "/settings" : area.link}
+                                    className={`bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col gap-2 group ${isBlurred ? 'opacity-30 blur-[1px]' : ''}`}
+                                >
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider group-hover:text-primary transition-colors">{area.subject}</span>
+                                    <h4 className="font-bold text-slate-800 dark:text-white leading-tight">{area.title}</h4>
+                                    <div className="mt-auto pt-2 text-xs font-bold text-orange-500 flex items-center gap-1">
+                                        {isBlurred ? "Unlock Topic" : "Review Now"} <span>→</span>
+                                    </div>
+                                </Link>
+                            );
+                        })}
+
+                        {user?.subscription === 'free' && weakAreas.length > 1 && (
+                            <div className="absolute inset-0 left-1/3 bg-gradient-to-r from-transparent via-orange-50/80 dark:via-orange-950/80 to-orange-50 dark:to-orange-950 flex items-center justify-end pr-8 rounded-2xl">
+                                <Link to="/settings" className="bg-primary text-white font-bold py-2.5 px-6 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2">
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 116 0v2H7V7z" />
+                                    </svg>
+                                    Unlock Deep Insights
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </section>
             )}

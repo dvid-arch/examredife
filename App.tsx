@@ -47,6 +47,7 @@ const Dictionary = lazy(() => import('./pages/Dictionary.tsx'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage.tsx'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.tsx'));
 const AuthSuccess = lazy(() => import('./pages/AuthSuccess.tsx'));
+const QuestionPage = lazy(() => import('./pages/QuestionPage.tsx'));
 
 
 // Admin - Lazy load admin pages
@@ -237,6 +238,10 @@ const router = createBrowserRouter(
       <Route
         path="/auth-success"
         element={<Suspense fallback={<PageLoader />}><AuthSuccess /></Suspense>}
+      />
+      <Route
+        path="/question/:id"
+        element={<Suspense fallback={<PageLoader />}><QuestionPage /></Suspense>}
       />
 
 
