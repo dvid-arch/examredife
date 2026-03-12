@@ -61,6 +61,20 @@ const Quizzes: React.FC = () => {
         });
     }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
+    const missingSubjects = useMemo(() => {
+        if (isAdmin || !user?.preferredSubjects?.length) return [];
+
+        // Find which preferred subjects don't have ANY papers in the database
+        return user.preferredSubjects.filter(pref => {
+            const key = getSubjectKey(pref);
+            if (!key) return true; // Shouldn't happen with robust getSubjectKey but safer
+            if (key === 'english') return false; // English is always handled separately or included
+
+            // Check if ANY paper in the DB matches this key
+            return !allSubjectsFromPapers.some(dbSub => getSubjectKey(dbSub) === key);
+        });
+    }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
+
     // Standard Mode: per-subject year and count selection
     type StandardSelection = { year: 'random' | number; count: number };
     const [standardSelections, setStandardSelections] = useState<Record<string, StandardSelection>>({});
@@ -310,8 +324,17 @@ const Quizzes: React.FC = () => {
 
                             {subjects.length < 4 ? (
                                 <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl text-orange-700 dark:text-orange-300 text-sm">
-                                    ⚠️ You haven't selected 4 preferred subjects yet.{' '}
-                                    <a href="/profile" className="font-bold underline">Update your profile</a> to continue.
+                                    {missingSubjects.length > 0 ? (
+                                        <>
+                                            ⚠️ We couldn't find practice papers for: <strong>{missingSubjects.join(', ')}</strong>.
+                                            Please <a href="/profile" className="font-bold underline">select different subjects</a> to take a 4-subject exam.
+                                        </>
+                                    ) : (
+                                        <>
+                                            ⚠️ You haven't selected 4 preferred subjects yet.{' '}
+                                            <a href="/profile" className="font-bold underline">Update your profile</a> to continue.
+                                        </>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

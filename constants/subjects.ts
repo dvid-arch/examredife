@@ -69,7 +69,7 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
     agric: {
         name: 'Agricultural Science',
         color: '#4ade80', // Light Green
-        aliases: ['Agricultural Science', 'Agric']
+        aliases: ['Agricultural Science', 'Agric', 'Agriculture']
     },
     irk: {
         name: 'Islamic Religious Knowledge (IRK)',
@@ -84,7 +84,7 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
     phe: {
         name: 'Physical and Health Education',
         color: '#0ea5e9', // Sky Blue
-        aliases: ['Physical and Health Education', 'Physical and Health Education (PHE)', 'PHE']
+        aliases: ['Physical and Health Education', 'Physical and Health Education (PHE)', 'PHE', 'Physical Education']
     },
     history: {
         name: 'History',
@@ -130,11 +130,11 @@ export const getSubjectKey = (name: string): string | null => {
     for (const [key, meta] of Object.entries(SUBJECTS)) {
         if (key === lowerName) return key;
 
-        const normalizedMetaName = meta.name.toLowerCase().replace(/[^a-z0-s\s]/g, '').replace(/\s+/g, ' ');
+        const normalizedMetaName = meta.name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ');
         if (normalizedMetaName === lowerName) return key;
 
         if (meta.aliases?.some(a => {
-            const normalizedAlias = a.toLowerCase().replace(/[^a-z0-s\s]/g, '').replace(/\s+/g, ' ');
+            const normalizedAlias = a.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ');
             return normalizedAlias === lowerName;
         })) {
             return key;
