@@ -44,12 +44,12 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
     literature: {
         name: 'Literature',
         color: '#f97316', // Orange
-        aliases: ['Literature-in-English', 'Literature']
+        aliases: ['Literature-in-English', 'Literature', 'Literature in English']
     },
     crs: {
         name: 'CRS',
         color: '#6366f1', // Indigo
-        aliases: ['Christian Religious Studies', 'CRS']
+        aliases: ['Christian Religious Studies', 'CRS', 'Christian Religious Knowledge (CRK)', 'CRK']
     },
     geography: {
         name: 'Geography',
@@ -64,7 +64,7 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
     accounting: {
         name: 'Financial Accounting',
         color: '#6b7280', // Gray
-        aliases: ['Financial Accounting', 'Accounting']
+        aliases: ['Financial Accounting', 'Accounting', 'Accounts - Principles of Accounts', 'Principles of Accounts']
     },
     agric: {
         name: 'Agricultural Science',
@@ -123,9 +123,20 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
  */
 export const getSubjectKey = (name: string): string | null => {
     if (!name) return null;
-    const lowerName = name.toLowerCase().trim();
+    const lowerName = name.toLowerCase().trim()
+        .replace(/[^a-z0-9\s]/g, '') // remove special chars but keep spaces
+        .replace(/\s+/g, ' '); // normalize spaces
+
     for (const [key, meta] of Object.entries(SUBJECTS)) {
-        if (key === lowerName || meta.name.toLowerCase() === lowerName || meta.aliases?.some(a => a.toLowerCase() === lowerName)) {
+        if (key === lowerName) return key;
+
+        const normalizedMetaName = meta.name.toLowerCase().replace(/[^a-z0-s\s]/g, '').replace(/\s+/g, ' ');
+        if (normalizedMetaName === lowerName) return key;
+
+        if (meta.aliases?.some(a => {
+            const normalizedAlias = a.toLowerCase().replace(/[^a-z0-s\s]/g, '').replace(/\s+/g, ' ');
+            return normalizedAlias === lowerName;
+        })) {
             return key;
         }
     }

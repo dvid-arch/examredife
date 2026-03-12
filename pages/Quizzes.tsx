@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext.tsx';
 import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import useSEO from '../hooks/useSEO.ts';
 import SchemaMarkup from '../components/SchemaMarkup.tsx';
+import { getSubjectKey } from '../constants/subjects.ts';
 
 
 const Quizzes: React.FC = () => {
@@ -49,10 +50,15 @@ const Quizzes: React.FC = () => {
     // For non-admins: show only their 4 preferred subjects (if set) + compulsory English
     const subjects = useMemo(() => {
         if (isAdmin || !user?.preferredSubjects?.length) return allSubjectsFromPapers;
-        return allSubjectsFromPapers.filter(s =>
-            user.preferredSubjects!.includes(s) ||
-            ['english', 'english language', 'use of english'].includes(s.toLowerCase())
-        );
+
+        const preferredKeys = user.preferredSubjects.map(s => getSubjectKey(s)).filter(Boolean);
+
+        return allSubjectsFromPapers.filter(s => {
+            const paperKey = getSubjectKey(s);
+            if (!paperKey) return false;
+
+            return paperKey === 'english' || preferredKeys.includes(paperKey);
+        });
     }, [allSubjectsFromPapers, isAdmin, user?.preferredSubjects]);
 
     // Standard Mode: per-subject year and count selection
@@ -162,7 +168,7 @@ const Quizzes: React.FC = () => {
         const selections = activeSubjects.map(subject => ({
             subject,
             year: standardSelections[subject]?.year ?? 'random',
-            count: standardSelections[subject]?.count ?? (subject === 'English' ? 60 : 40),
+            count: standardSelections[subject]?.count ?? (getSubjectKey(subject) === 'english' ? 60 : 40),
         }));
 
         if (selections.length !== 4) {
