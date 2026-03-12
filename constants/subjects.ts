@@ -91,11 +91,6 @@ export const SUBJECTS: Record<string, SubjectMetadata> = {
         color: '#b45309', // Amber-Amber
         aliases: ['History']
     },
-    civic: {
-        name: 'Civic Education',
-        color: '#84cc16', // Lime
-        aliases: ['Civic Education']
-    },
     computer: {
         name: 'Computer Studies',
         color: '#64748b', // Slate
