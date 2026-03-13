@@ -72,9 +72,11 @@ const TopicPracticeSetup: React.FC = () => {
                 examTitle: `${displayTitle} Mastery Test`,
                 isTopicTest: true,
                 topicName: displayTitle,
+                topicId: topicSlug,
                 mode: mode,
                 timestamp: Date.now(),
             },
+            replace: true
         });
 
         sessionStorage.setItem('practiceStarted', 'true');

@@ -33,6 +33,7 @@ const Quizzes: React.FC = () => {
         "learningResourceType": "Assessment"
     }), []);
     const [practiceMode, setPracticeMode] = useState<'standard' | 'custom'>((tab === 'custom') ? 'custom' : 'standard');
+    const [durationHours, setDurationHours] = useState<number>(2);
 
     useEffect(() => {
         if (tab === 'custom' || tab === 'standard') {
@@ -147,8 +148,9 @@ const Quizzes: React.FC = () => {
                 // check, default to most recent year and default count
                 const subjectYears = yearsBySubject.get(subject) || [];
                 const defaultYear = subjectYears.length > 0 ? subjectYears[0] : 'random';
-                // Default count: 40, but capped at 50 for non-English (though loop below handles options)
-                newSelections[subject] = { year: defaultYear, count: 40 };
+                // Default count: 40, but 60 for English. Capped at 50 for non-English.
+                const isEnglish = subject.toLowerCase().includes('english');
+                newSelections[subject] = { year: defaultYear, count: isEnglish ? 60 : 40 };
             }
             return newSelections;
         });
@@ -198,6 +200,7 @@ const Quizzes: React.FC = () => {
                 examTitle: `UTME Standard Practice`,
                 mode: examMode,
                 timestamp: Date.now(),
+                durationHours,
             },
         });
         sessionStorage.setItem('practiceStarted', 'true');
@@ -227,6 +230,7 @@ const Quizzes: React.FC = () => {
                 examTitle: `Custom Practice`,
                 mode: examMode,
                 timestamp: Date.now(),
+                durationHours,
             },
         });
         // Mark that practice was properly started
@@ -253,6 +257,31 @@ const Quizzes: React.FC = () => {
             description: 'Timed, no corrections.'
         }
     ] as const;
+
+    const DurationSelector = () => (
+        <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Time Limit</h3>
+            <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                <span className="text-sm font-bold text-slate-500 w-8 text-right">1 hr</span>
+                <input
+                    type="range"
+                    min="1"
+                    max="4"
+                    step="1"
+                    value={durationHours}
+                    onChange={(e) => setDurationHours(Number(e.target.value))}
+                    className="flex-1 h-3 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                />
+                <span className="text-sm font-bold text-slate-500 w-8">4 hrs</span>
+                <div className="bg-primary text-white text-xl font-black rounded-xl px-4 py-2 min-w-[5rem] shadow-md text-center ml-2">
+                    {durationHours} {durationHours === 1 ? 'hr' : 'hrs'}
+                </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                Adjust the duration for your practice session. Standard practice is 2 hours.
+            </p>
+        </div>
+    );
 
     const ModeSelector = () => (
         <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
@@ -415,6 +444,7 @@ const Quizzes: React.FC = () => {
                                 </div>
                             )}
 
+                            {examMode !== 'study' && <DurationSelector />}
                             <ModeSelector />
 
                             <div className="flex justify-end mt-6">
@@ -490,6 +520,7 @@ const Quizzes: React.FC = () => {
                                     </div>
                                 </div>
 
+                                {examMode !== 'study' && <DurationSelector />}
                                 <ModeSelector />
 
                                 <div className="flex justify-end pt-2">

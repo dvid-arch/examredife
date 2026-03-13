@@ -3,7 +3,7 @@ import React from 'react';
 interface UserAvatarProps {
     name?: string;
     photoURL?: string;
-    size?: 'sm' | 'md' | 'lg';
+    size?: 'sm' | 'md' | 'lg' | 'xl';
     className?: string;
 }
 
@@ -12,6 +12,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name = 'User', photoURL, size =
         switch (size) {
             case 'sm': return 'w-8 h-8 text-xs';
             case 'lg': return 'w-12 h-12 text-lg';
+            case 'xl': return 'w-32 h-32 text-4xl';
             default: return 'w-10 h-10 text-base';
         }
     };

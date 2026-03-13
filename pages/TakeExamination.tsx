@@ -73,8 +73,12 @@ const preparePracticeQuestions = (
 };
 
 const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
+    if (h > 0) {
+        return `${h}:${m}:${s}`;
+    }
     return `${m}:${s}`;
 };
 
@@ -333,6 +337,10 @@ const TakeExamination: React.FC = () => {
         sessionStorage.removeItem('practiceEndTime');
         sessionStorage.removeItem('practiceAnswers');
 
+        if (location.state?.isTopicTest && location.state?.topicId) {
+            sessionStorage.setItem('recentlyTestedTopic', location.state.topicId);
+        }
+
         if (isAuthenticated && user) {
             if (user.subscription === 'free') {
                 showInstallBanner();
@@ -511,7 +519,10 @@ const TakeExamination: React.FC = () => {
                 }
             } else {
                 // New timer
-                const durationSeconds = questions.length * 60; // 60s per question
+                let durationSeconds = questions.length * 60; // 60s per question feedback
+                if (location.state?.durationHours) {
+                    durationSeconds = location.state.durationHours * 3600;
+                }
                 const newEndTime = Date.now() + (durationSeconds * 1000);
                 setEndTime(newEndTime);
                 sessionStorage.setItem('practiceEndTime', newEndTime.toString());

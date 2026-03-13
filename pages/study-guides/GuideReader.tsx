@@ -58,6 +58,14 @@ const GuideReader: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Check if we just finished a test for this topic and navigated back
+                const recentlyTested = sessionStorage.getItem('recentlyTestedTopic');
+                if (recentlyTested === slug) {
+                    sessionStorage.removeItem('recentlyTestedTopic');
+                    navigate(`/study-guides/${category}`, { replace: true });
+                    return;
+                }
+
                 const data: StudyGuide[] = await apiService('/data/guides');
                 const subjectGuide = data.find(g => g.id.toLowerCase() === category?.toLowerCase());
 
@@ -79,7 +87,7 @@ const GuideReader: React.FC = () => {
         };
 
         fetchData();
-    }, [category, slug]);
+    }, [category, slug, navigate]);
 
     // Update TOC based on current content (Direct Topic content)
     useEffect(() => {
