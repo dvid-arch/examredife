@@ -9,6 +9,7 @@ import { usePastQuestions } from '../contexts/PastQuestionsContext.tsx';
 import apiService from '../services/apiService.ts';
 import { StudyGuide, PastPaper, PastQuestion } from '../types.ts';
 import FilterSidebar from '../components/FilterSidebar.tsx';
+import { getSubjectKey } from '../constants/subjects.ts';
 
 // Constants
 const GUEST_RESULT_LIMIT = 3;
@@ -40,7 +41,7 @@ const BookOpenIcon = () => (
 
 const QuestionSearch: React.FC = () => {
     const location = useLocation();
-    const { isAuthenticated, requestLogin } = useAuth();
+    const { isAuthenticated, requestLogin, user } = useAuth();
 
     useSEO({
         title: "Question Search",
@@ -78,6 +79,22 @@ const QuestionSearch: React.FC = () => {
         fetchGuides();
     }, [fetchPapers, fetchGuides]);
 
+    const isAdmin = user?.role === 'admin';
+
+    const allowedSubjectsList = useMemo(() => {
+        const allSubjects = [...new Set(allPapers.map(p => p.subject))];
+        if (isAdmin || !user?.preferredSubjects?.length) {
+            return allSubjects;
+        }
+
+        const preferredKeys = user.preferredSubjects.map(s => getSubjectKey(s)).filter(Boolean);
+        return allSubjects.filter(s => {
+            const paperKey = getSubjectKey(s);
+            if (!paperKey) return false;
+            return paperKey === 'english' || preferredKeys.includes(paperKey);
+        });
+    }, [allPapers, isAdmin, user?.preferredSubjects]);
+
     const performSearch = useCallback(async (searchQuery: string) => {
         console.log("Performing search for:", searchQuery);
         if (!searchQuery.trim()) {
@@ -91,12 +108,33 @@ const QuestionSearch: React.FC = () => {
         setResultsView('questions');
 
         try {
-            const results = await apiService<SearchResult[]>(`/data/search?query=${encodeURIComponent(searchQuery)}`);
+            const rawResults = await apiService<SearchResult[]>(`/data/search?query=${encodeURIComponent(searchQuery)}`);
+            
+            // Filter search results based on allowed subjects
+            const results = isAdmin || !user?.preferredSubjects?.length 
+                ? rawResults 
+                : rawResults.filter(r => {
+                      const paperKey = getSubjectKey(r.subject);
+                      if (!paperKey) return false;
+                      const preferredKeys = user.preferredSubjects!.map(s => getSubjectKey(s)).filter(Boolean);
+                      return paperKey === 'english' || preferredKeys.includes(paperKey);
+                  });
+
             const lowerCaseQuery = searchQuery.toLowerCase();
-            const filteredGuides = allGuides.filter(g =>
+            const rawGuides = allGuides.filter(g =>
                 g.subject.toLowerCase().includes(lowerCaseQuery) ||
                 g.topics.some(t => t.title.toLowerCase().includes(lowerCaseQuery))
             );
+            
+            // Filter guides as well
+            const filteredGuides = isAdmin || !user?.preferredSubjects?.length 
+                ? rawGuides
+                : rawGuides.filter(g => {
+                      const guideKey = getSubjectKey(g.subject);
+                      if (!guideKey) return false;
+                      const preferredKeys = user.preferredSubjects!.map(s => getSubjectKey(s)).filter(Boolean);
+                      return guideKey === 'english' || preferredKeys.includes(guideKey);
+                  });
 
             setTotalResultsCount(results.length + filteredGuides.length);
 
@@ -118,7 +156,7 @@ const QuestionSearch: React.FC = () => {
             localStorage.setItem('examRediSearchHistory', JSON.stringify(newHistory));
             return newHistory;
         });
-    }, [isAuthenticated, allGuides]);
+    }, [isAuthenticated, allGuides, isAdmin, user?.preferredSubjects]);
 
     useEffect(() => {
         const initialQuery = location.state?.query;
@@ -129,22 +167,23 @@ const QuestionSearch: React.FC = () => {
     }, [location.state, performSearch, allPapers]);
 
     const subjects = useMemo(() => {
-        const uniqueSubjects = [...new Set(allPapers.map(p => p.subject))].sort();
-        return ['all', ...uniqueSubjects];
-    }, [allPapers]);
+        return ['all', ...allowedSubjectsList].sort();
+    }, [allowedSubjectsList]);
 
     const years = useMemo(() => {
-        const uniqueYears = [...new Set(allPapers.map(p => p.year))].sort((a, b) => Number(b) - Number(a));
+        const allowedPapers = allPapers.filter(paper => allowedSubjectsList.includes(paper.subject));
+        const uniqueYears = [...new Set(allowedPapers.map(p => p.year))].sort((a, b) => Number(b) - Number(a));
         return ['all', ...uniqueYears];
-    }, [allPapers]);
+    }, [allPapers, allowedSubjectsList]);
 
     const filteredPapers = useMemo(() => {
         return allPapers.filter(paper => {
+            if (!allowedSubjectsList.includes(paper.subject)) return false;
             const subjectMatch = selectedSubject === 'all' || paper.subject === selectedSubject;
             const yearMatch = selectedYear === 'all' || paper.year === Number(selectedYear);
             return subjectMatch && yearMatch;
         }).sort((a, b) => b.year - a.year || a.subject.localeCompare(b.subject));
-    }, [selectedSubject, selectedYear, allPapers]);
+    }, [selectedSubject, selectedYear, allPapers, allowedSubjectsList]);
 
     const highlightQuery = (text: string, highlight: string): string => {
         if (!highlight.trim()) return text;

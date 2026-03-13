@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePwaInstall } from '../contexts/PwaContext.tsx';
 import { STANDARD_SUBJECTS } from '../constants/subjects.ts';
 import { clearAllCache } from '../services/db.ts';
+import UserAvatar from '../components/UserAvatar.tsx';
 
 // --- Icons ---
 const EditIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536l12.232-12.232z" /></svg>;
@@ -175,10 +176,11 @@ const Profile: React.FC = () => {
             <Card className="p-0 overflow-hidden">
                 {/* Profile Header */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
-                    <img
-                        src="https://picsum.photos/128"
-                        alt="profile"
-                        className="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-slate-600 shadow-lg"
+                    <UserAvatar
+                        name={user.name}
+                        photoURL={user.photoURL}
+                        size="xl"
+                        className="border-4 border-white dark:border-slate-600 shadow-lg"
                     />
                     <div className="flex-1 text-center md:text-left">
                         {!isEditing ? (
