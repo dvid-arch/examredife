@@ -8,7 +8,6 @@ import { useAuth } from '../../contexts/AuthContext.tsx';
 import useSEO from '../../hooks/useSEO.ts';
 import SchemaMarkup from '../../components/SchemaMarkup.tsx';
 import { useMemo } from 'react';
-import SpeechButton from '../../components/SpeechButton.tsx';
 
 const GuideReader: React.FC = () => {
     const { category, slug } = useParams<{ category: string, slug: string }>();
@@ -260,13 +259,6 @@ const GuideReader: React.FC = () => {
                             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white leading-tight tracking-tight">
                                 {topic.title}
                             </h1>
-                            <SpeechButton
-                                text={fullContent}
-                                variant="ghost"
-                                size="sm"
-                                showText={false}
-                                className="shrink-0 mt-1 bg-white/50 dark:bg-slate-800/50"
-                            />
                         </div>
 
                         {/* Meta badges */}
