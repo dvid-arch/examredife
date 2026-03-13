@@ -4,16 +4,11 @@ export const useTextToSpeech = () => {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-    const heartbeatInterval = useRef<number | null>(null);
     const chunksRef = useRef<string[]>([]);
     const currentChunkIndex = useRef(0);
 
     const stop = useCallback(() => {
         window.speechSynthesis.cancel();
-        if (heartbeatInterval.current) {
-            clearInterval(heartbeatInterval.current);
-            heartbeatInterval.current = null;
-        }
         setIsSpeaking(false);
         setIsPaused(false);
         chunksRef.current = [];
@@ -71,33 +66,40 @@ export const useTextToSpeech = () => {
 
         // Chunking: Split into sentences or max ~200 characters
         // This prevents Chrome's silence-after-15s bug and 4000 char limits
-        const sentences = cleanText.split(/([.!?]+\s+)/);
+        const sentences = cleanText.match(/[^.!?]+[.!?]+|[^.!?]+/g)?.map(s => s.trim()).filter(Boolean) || [];
         const chunks: string[] = [];
-        let currentChunk = '';
 
-        for (const part of sentences) {
-            if (currentChunk.length + part.length > 200) {
-                if (currentChunk) chunks.push(currentChunk.trim());
-                currentChunk = part;
-            } else {
-                currentChunk += part;
+        for (const sentence of sentences) {
+            let text = sentence;
+            while (text.length > 0) {
+                if (text.length <= 200) {
+                    chunks.push(text);
+                    break;
+                }
+                let breakIdx = text.lastIndexOf(',', 200);
+                if (breakIdx === -1) breakIdx = text.lastIndexOf(' ', 200);
+                if (breakIdx === -1) breakIdx = 200;
+
+                chunks.push(text.substring(0, breakIdx + 1).trim());
+                text = text.substring(breakIdx + 1).trim();
             }
         }
-        if (currentChunk) chunks.push(currentChunk.trim());
 
-        chunksRef.current = chunks;
+        let combinedChunks: string[] = [];
+        let currentCombined = '';
+        for (const chunk of chunks) {
+            if (currentCombined.length + chunk.length > 200 && currentCombined) {
+                combinedChunks.push(currentCombined.trim());
+                currentCombined = chunk + ' ';
+            } else {
+                currentCombined += chunk + ' ';
+            }
+        }
+        if (currentCombined.trim()) combinedChunks.push(currentCombined.trim());
+
+        chunksRef.current = combinedChunks;
         currentChunkIndex.current = 0;
         setIsSpeaking(true);
-
-        // Heartbeat to keep speech synthesis alive in some browsers (Chrome bug)
-        if (!heartbeatInterval.current) {
-            heartbeatInterval.current = window.setInterval(() => {
-                if (window.speechSynthesis.speaking) {
-                    window.speechSynthesis.pause();
-                    window.speechSynthesis.resume();
-                }
-            }, 10000);
-        }
 
         playNextChunk();
     }, [stop, playNextChunk]);
